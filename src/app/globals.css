@@ -1,0 +1,229 @@
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+* {
+  color: #404040;
+}
+
+html,
+body {
+  /* max-width: 100vw; */
+  /* overflow: auto; */
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: #FFFFFF;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Nunito Sans', sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+.swal2-container .swal2-popup .swal2-actions button {
+  font-family: 'Nunito Sans', sans-serif !important;
+}
+
+.swal2-container .swal2-popup .swal2-icon .swal2-icon-content {
+  color: #f8bb86 !important;
+}
+
+.preloader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #fff;
+  font-size: 1.5rem;
+  z-index: 9999;
+}
+
+table thead tr th {
+  text-transform: uppercase;
+}
+
+table thead tr th, 
+table tbody tr td,
+table tbody tr td span {
+  font-family: 'Nunito Sans', sans-serif !important;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 100%;
+  color: #404040;
+}
+
+table tbody tr td.active span,
+table tbody tr td.paid span,
+table tbody tr td.completed span {
+  padding: 5px 6px;
+  border-radius: 4.5px;
+  background-color: rgba(0, 182, 155, 0.2);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 100%;
+  color: #00B69B;
+}
+
+table tbody tr td.inactive span,
+table tbody tr td.scheduled span,
+table tbody tr td.unpaid span  {
+  padding: 5px 6px;
+  border-radius: 4.5px;
+  background-color: rgba(239, 56, 38, 0.2);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 100%;
+  color: #EF3826;
+}
+
+table tbody tr td.unassigned span,
+table tbody tr td.pending span {
+  padding: 5px 6px;
+  border-radius: 4.5px;
+  background-color: rgba(0, 0, 0, 0.222);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 100%;
+}
+
+table tbody tr td.editing span,
+table tbody tr td.partial span {
+  padding: 5px 6px;
+  border-radius: 4.5px;
+  background-color: rgba(55, 73, 166, 0.2);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 100%;
+  color: #3749A6;
+}
+
+hr {
+  border: 1px solid #E0E0E0;
+  margin: 0 30px;
+  width: 100%;
+}
+
+.MuiPickersArrowSwitcher-rightArrowIcon,
+.MuiPickersArrowSwitcher-leftArrowIcon {
+  background: #E7E9EE;
+  border-radius: 3px;
+}
+
+.MuiPickersCalendarHeader-switchViewButton {
+  display: none !important;
+}
+
+.MuiPickersArrowSwitcher-button {
+  background-color: transparent !important;
+}
+
+.disabled-day {
+  background-color: #f5f5f5 !important;
+  color: #ccc !important;
+  pointer-events: none;
+}
+
+.rbc-month-view .disabled-day {
+  background-color: #f5f5f5 !important;
+}
+
+.rbc-day-bg.disabled-day {
+  background-color: #f5f5f5 !important;
+}
+
+.no-events {
+  color: #666;
+  font-style: italic;
+  padding: 10px;
+}
+
+input.error {
+  border-color: red;
+}
+
+.rbc-header {
+  background-color: #F1F4F9;
+  color: #333;
+  font-weight: 600;
+  text-align: center;
+  padding: 20px 0 !important;
+  border-bottom: 1px solid #ddd;
+}
+
+.rbc-month-view {
+  border-radius: 12px 12px 0 0;
+}
+
+.rbc-month-header {
+  border-radius: 12px 12px 0 0;
+}
+
+.rbc-month-header .rbc-header:first-child {
+  border-radius: 12px 0 0 0;
+}
+
+.rbc-month-header .rbc-header:last-child {
+  border-radius: 0 12px 0 0;
+}
+
+.dropdown {
+  width: 100%;
+  height: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-radius: 4px;
+  border: 0.6px solid #D5D5D5;
+  background: #F7FAF5;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.form-group .label {
+  color: #ADADAD;
+}
+
+.dropdown span {
+  font-family: "Nunito Sans", sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  color: #202224;
+  text-wrap: nowrap;
+}
+
+.dropdown img.rotated {
+  transform: rotate(180deg);
+}
