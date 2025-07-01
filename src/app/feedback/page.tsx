@@ -1,7 +1,8 @@
 import React from 'react';
+import { FeedbackComponent } from '@/sections/feedback';
 
 export default function Feedback() {
     return (
-        <div style={{ paddingTop: '70px' }}>Feedback Page</div>
+        <FeedbackComponent />
     )
 }

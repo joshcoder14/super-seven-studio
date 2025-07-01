@@ -17,5 +17,13 @@ export const workloadFilterOptions = [
   { value: '7', label: 'Completed' },
 ] as const;
 
+export const feedBackFilterOptions = [
+  { value: '0', label: 'All' },
+  { value: '1', label: 'Posted' },
+  { value: '2', label: 'Unposted' },
+  { value: '3', label: 'Pending' },
+] as const;
+
 export type AccountFilterOption = typeof accountFilterOptions[number];
 export type WorkloadFilterOption = typeof workloadFilterOptions[number];
+export type FeedBackFilterOption = typeof feedBackFilterOptions[number];
