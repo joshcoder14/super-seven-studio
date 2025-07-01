@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Box, TextField, Button, CircularProgress, Alert } from '@mui/material';
 import { FormContainer } from '../settings/styles';
 import { FormHeading } from '../../components/Heading/FormHeading';
+import { HeadingComponent } from '@/components/Heading';
 import { FilterBy } from '@/components/Filter';
 import { User } from '@/types/user';
 import {
@@ -18,24 +19,41 @@ import { useRouter } from 'next/navigation';
 import { paths } from '@/paths';
 import Swal from 'sweetalert2';
 import { FormSection, FormField } from '@/types/field';
+import { addEmployee, updateEmployee, updateClient } from '@/lib/api/fetchAccount';
 
 interface RegisterAccountProps {
-  account?: User | null;
-  onBackClick: () => void;
-  isEditMode?: boolean;
-  onSuccess?: () => void;
-  existingOwners?: User[];
+    account?: User | null;
+    onBackClick: () => void;
+    isEditMode?: boolean;
+    onSuccess?: () => void;
+    existingOwners?: User[];
 }
 
 export function RegisterAccount({ 
-  account, 
-  onBackClick, 
-  isEditMode = false,
-  onSuccess,
-  existingOwners = []
+    account, 
+    onBackClick, 
+    isEditMode = false,
+    onSuccess,
+    existingOwners = []
 }: RegisterAccountProps): React.JSX.Element {
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
     const ownerExists = existingOwners.some(owner => owner.user_type === '3');
-    
+    const isClient = account?.user_type === '1';
+
+    let accountUserType = '1';
+    if (account?.user_role === 'Owner') {
+        accountUserType = '3';
+    } else if (account?.user_role === 'Secretary') {
+        accountUserType = '4';
+    } else if (account?.user_role === 'Photographer') {
+        accountUserType = '5';
+    } else if (account?.user_role === 'Editor') {
+        accountUserType = '6';
+    }
+  
     const [formData, setFormData] = useState({
         firstName: account?.first_name || '',
         middleName: account?.mid_name || '',
@@ -44,14 +62,8 @@ export function RegisterAccount({
         contactNumber: account?.contact_no || '',
         address: account?.address || '',
         status: account?.status === 'active' ? '1' : account?.status ? '1' : '0',
-        userType: account?.user_type?.toString() || '4',
+        userType: accountUserType,
     });
-
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
-    const router = useRouter();
 
     const statusOptions = [
         { value: '1', label: 'Active' },
@@ -97,19 +109,19 @@ export function RegisterAccount({
             columnCount: 2,
             fields: [
                 {
-                    id: "email",
-                    name: "email",
-                    label: 'Email Address',
-                    type: "email",
-                    required: true
+                id: "email",
+                name: "email",
+                label: 'Email Address',
+                type: "email",
+                required: true
                 },
                 {
-                    id: "contactNumber",
-                    name: "contactNumber",
-                    label: 'Contact Number',
-                    type: "text",
-                    required: true,
-                    maxChar: 11
+                id: "contactNumber",
+                name: "contactNumber",
+                label: 'Contact Number',
+                type: "text",
+                required: true,
+                maxChar: 11
                 }
             ]
         },
@@ -118,11 +130,11 @@ export function RegisterAccount({
             columnCount: 1,
             fields: [
                 {
-                    id: "address",
-                    name: "address",
-                    label: 'Address',
-                    type: "text",
-                    required: true
+                id: "address",
+                name: "address",
+                label: 'Address',
+                type: "text",
+                required: true
                 }
             ]
         }
@@ -196,44 +208,9 @@ export function RegisterAccount({
         }
     };
 
-    const getCookieValue = (name: string): string | null => {
-        if (typeof document === 'undefined') return null;
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) {
-            const cookieValue = parts.pop()?.split(';').shift();
-            return cookieValue ? decodeURIComponent(cookieValue) : null;
-        }
-        return null;
-    };
-
-    const ensureCsrfToken = async (): Promise<string> => {
-        const existingToken = getCookieValue('XSRF-TOKEN');
-        if (existingToken) return existingToken;
-
-        try {
-            const response = await fetch(`/api/sanctum/csrf-cookie`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: { 'Accept': 'application/json' }
-            });
-
-            if (!response.ok) throw new Error(`CSRF fetch failed with status ${response.status}`);
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            const csrfToken = getCookieValue('XSRF-TOKEN');
-            if (!csrfToken) throw new Error('XSRF-TOKEN cookie not found');
-            return csrfToken;
-        } catch (error) {
-            console.error('CSRF Token Error:', error);
-            throw new Error('Failed to obtain CSRF token');
-        }
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
-        setSuccess(null);
         
         if (!validateForm()) {
             return;
@@ -242,52 +219,44 @@ export function RegisterAccount({
         setLoading(true);
 
         try {
-            const csrfToken = await ensureCsrfToken();
-            const accessToken = localStorage.getItem('access_token');
-
-            if (!accessToken) {
-                throw new Error('Authentication required. Please login again.');
+            let result;
+            
+            if (isClient) {
+                // Handle client update
+                if (!account?.id) {
+                    throw new Error('Client ID is required for update');
+                }
+                result = await updateClient(account.id, formData);
+            } else if (isEditMode) {
+                // Handle employee update
+                if (!account?.id) {
+                    throw new Error('Employee ID is required for update');
+                }
+                
+                // Additional validation for owner role changes
+                if (account?.user_type === '3' && formData.userType !== '3') {
+                    throw new Error('Cannot change owner role. Please delete and recreate the account.');
+                }
+                
+                if (account?.user_type !== '3' && formData.userType === '3' && ownerExists) {
+                    throw new Error('An owner already exists. Cannot change this account to owner.');
+                }
+                
+                result = await updateEmployee(account.id, formData);
+            } else {
+                // Handle new employee creation
+                if (formData.userType === '3' && ownerExists) {
+                    throw new Error('An owner already exists. Only one owner account is allowed.');
+                }
+                
+                result = await addEmployee(formData);
             }
 
-            const headers = {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'X-XSRF-TOKEN': csrfToken,
-                'Authorization': `Bearer ${accessToken}`
-            };
-
-            const payload = {
-                first_name: sanitizeInput(formData.firstName.trim()),
-                mid_name: sanitizeInput(formData.middleName.trim()),
-                last_name: sanitizeInput(formData.lastName.trim()),
-                email: sanitizeEmail(formData.email.trim()),
-                contact_no: formData.contactNumber || '',
-                address: sanitizeInput(formData.address.trim()),
-                user_type: formData.userType,
-                status: formData.status === '1',
-            };
-
-            const url = isEditMode && account 
-                ? `/api/employees/${account.id}` 
-                : '/api/employees/add';
-            
-            const method = 'POST';
-
-            const response = await fetch(url, {
-                method,
-                headers,
-                body: JSON.stringify(payload),
-                credentials: 'include'
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Operation failed');
+            if (!result.success) {
+                throw new Error(result.message);
             }
 
             if (isEditMode) {
-                // For edit mode - show success and redirect to accounts page
                 await Swal.fire({
                     title: 'Success!',
                     text: 'Account updated successfully!',
@@ -295,9 +264,8 @@ export function RegisterAccount({
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#3085d6',
                 });
-                window.location.href = paths.accounts;
+                router.push(paths.accounts);
             } else {
-                // For create mode - show password and options
                 const defaultPassword = `${formData.firstName.trim()}${formData.lastName.trim().toLowerCase()}12345`;
                 
                 const { isConfirmed } = await Swal.fire({
@@ -320,6 +288,7 @@ export function RegisterAccount({
                 if (!isConfirmed) {
                     router.push(paths.accounts);
                 } else {
+                    // Reset form for new entry
                     setFormData({
                         firstName: '',
                         middleName: '',
@@ -328,7 +297,7 @@ export function RegisterAccount({
                         contactNumber: '',
                         address: '',
                         status: '1',
-                        userType: '4',
+                        userType: '4', // Default to Secretary for new entries
                     });
                 }
             }
@@ -374,83 +343,80 @@ export function RegisterAccount({
     };
 
     return (
-        <FormContainer className="register-account">
-            <Box className="wrapper">
-                <FormHeading title={isEditMode ? "Edit Account" : "Add Account"}/>
+        <>
+            <HeadingComponent/>
+            <FormContainer className="register-account">
+                <Box className="wrapper">
+                    <FormHeading title={isEditMode ? "Edit Account" : "Add Account"}/>
 
-                {ownerExists && (
+                    {ownerExists && (
                     <Alert severity="info" sx={{ mb: 2 }}>
                         {isEditMode 
-                            ? "Note: Editing an owner account. You cannot change the user type."
-                            : "Note: An owner account already exists. You can only create non-owner accounts."}
+                        ? "Note: Editing an owner account. You cannot change the user type."
+                        : "Note: An owner account already exists. You can only create non-owner accounts."}
                     </Alert>
-                )}
+                    )}
 
-                {error && (
+                    {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
                         {error}
                     </Alert>
-                )}
-
-                {success && (
-                    <Alert severity="success" sx={{ mb: 2 }}>
-                        {success}
-                    </Alert>
-                )}
-
-                <form onSubmit={handleSubmit}>
-                    {formSections.map(section => (
-                        <Box className={`row col-${section.columnCount}`} key={section.id}>
-                            {section.fields.map(field => renderFormField(field))}
-                        </Box>
-                    ))}
-
-                    <Box className="row col-1">
-                        {isEditMode ? (
-                            <FilterBy
-                                options={statusOptions}
-                                selectedValue={formData.status}
-                                onFilterChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
-                                label="Status"
-                            />
-                        ) : (
-                            <FilterBy
-                                options={userTypeOptions}
-                                selectedValue={formData.userType}
-                                onFilterChange={(value) => setFormData(prev => ({ ...prev, userType: value }))}
-                                label="User Type"
-                                disabled={ownerExists && formData.userType === '3'}
-                            />
-                        )}
-                    </Box>
-
-                    {errors.userType && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                            {errors.userType}
-                        </Alert>
                     )}
 
-                    <Box className="row col-1 right">
-                        <Button 
-                            variant="outlined" 
-                            className="btn cancel"
-                            onClick={onBackClick}
-                            disabled={loading}
-                        >
+                    <form onSubmit={handleSubmit}>
+                        {formSections.map(section => (
+                            <Box className={`row col-${section.columnCount}`} key={section.id}>
+                                {section.fields.map(field => renderFormField(field))}
+                            </Box>
+                        ))}
+
+                        <Box className="row col-1">
+                            {isEditMode ? (
+                                <FilterBy
+                                    options={statusOptions}
+                                    selectedValue={formData.status}
+                                    onFilterChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                                    label="Status"
+                                />
+                            ) : (
+                                <FilterBy
+                                    options={userTypeOptions}
+                                    selectedValue={formData.userType}
+                                    onFilterChange={(value) => setFormData(prev => ({ ...prev, userType: value }))}
+                                    label="User Type"
+                                    disabled={ownerExists && formData.userType === '3'}
+                                />
+                            )}
+                        </Box>
+
+                        {errors.userType && (
+                            <Alert severity="error" sx={{ mb: 2 }}>
+                                {errors.userType}
+                            </Alert>
+                        )}
+
+                        <Box className="row col-1 right">
+                            <Button 
+                                variant="outlined" 
+                                className="btn cancel"
+                                onClick={onBackClick}
+                                disabled={loading}
+                            >
                             Cancel
-                        </Button>
-                        <Button 
-                            variant="contained" 
-                            className="btn register"
-                            type="submit"
-                            disabled={loading}
-                            startIcon={loading ? <CircularProgress size={20} /> : null}
-                        >
+                            </Button>
+                            <Button 
+                                variant="contained" 
+                                className="btn register"
+                                type="submit"
+                                disabled={loading}
+                                startIcon={loading ? <CircularProgress size={20} /> : null}
+                            >
                             {isEditMode ? "Update" : "Register"}
-                        </Button>
-                    </Box>
-                </form>
-            </Box>
-        </FormContainer>
+                            </Button>
+                        </Box>
+                    </form>
+                </Box>
+            </FormContainer>
+        </>
     );
 }

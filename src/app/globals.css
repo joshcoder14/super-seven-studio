@@ -227,3 +227,15 @@ input.error {
 .dropdown img.rotated {
   transform: rotate(180deg);
 }
+
+.rbc-event {
+  background-color: transparent !important;
+}
+
+.swal-overlay {
+  z-index: 100 !important;
+}
+
+.swal-popup {
+  z-index: 100 !important;
+}

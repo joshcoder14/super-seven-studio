@@ -16,6 +16,7 @@ export const Heading = styled(Box)`
 export const FormContainer = styled(Box)`
     width: 100%;
     padding: 0 29px;
+    padding-top: 40px;
 
     .wrapper {
         width: 100%;
@@ -90,7 +91,7 @@ export const FormContainer = styled(Box)`
                         background: #F7FAF5;
                         border-radius: 4px;
                         padding: 0 15px;
-                        font-weight: 400;
+                        font-weight: 500;
                         font-size: 14px;
                         line-height: 100%;
                         letter-spacing: 0px;
@@ -124,11 +125,15 @@ export const FormContainer = styled(Box)`
                             transition: max-width 0.2s ease-in-out;
                         }
 
-                        svg {
-                            position: absolute;
-                            right: 15px;
-                            top: 65%;
-                            transform: translateY(-50%);
+                        input[type="text"],
+                        input[type="password"] {
+                            background: transparent;
+                        }
+
+                        button {
+                            &:hover {
+                                background: transparent;
+                            }
                         }
                     }
                 }

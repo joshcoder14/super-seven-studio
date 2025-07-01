@@ -55,7 +55,6 @@ export function PackageHome(): React.JSX.Element {
             </PackageContent>
             
             <Box sx={{ padding: '0 30px' }}>
-                {/* <PackageTable/> */}
                 {activeTab === 'package' ? <PackageTable/> : <AddOns/>}
             </Box>
 

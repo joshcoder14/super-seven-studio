@@ -20,9 +20,10 @@ interface AccountTableProps {
   editIcon: string;
   hasSearchTerm: boolean;
   onEditClick: (account: User) => void;
+  loading: boolean;
 }
 
-export function AccountTable({ rows, emptyRows, editIcon, hasSearchTerm, onEditClick  }: AccountTableProps) {
+export function AccountTable({ rows, emptyRows, editIcon, hasSearchTerm, onEditClick, loading  }: AccountTableProps) {
   return (
     <TableContainer
       component={Paper}
@@ -70,7 +71,6 @@ export function AccountTable({ rows, emptyRows, editIcon, hasSearchTerm, onEditC
                     </Typography>
                   </TableCell>
                   <TableCell align="left">
-                    {/* <img src={editIcon} className="edit-icon" alt="edit icon" /> */}
                     <IconButton onClick={() => onEditClick(row)}>
                       <img src={editIcon} className="edit-icon" alt="edit icon" />
                     </IconButton>

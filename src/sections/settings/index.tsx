@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { SettingsContainer, ActionButton, ButtonEdit, ButtonChangePassword } from './styles';
 import { HeadingComponent } from '@/components/Heading';
 import { EditProfile } from './editProfile';
-import { ChangePassword } from './changePassword';
+import { ChangePasswordComponent } from './changePassword';
 
 export function Settings(): React.JSX.Element {
 
@@ -32,7 +32,7 @@ export function Settings(): React.JSX.Element {
 
             </ActionButton>
 
-            {activeTab === 'edit' ? <EditProfile/> : <ChangePassword/>}
+            {activeTab === 'edit' ? <EditProfile/> : <ChangePasswordComponent/>}
 
         </SettingsContainer>
     );

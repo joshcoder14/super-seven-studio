@@ -5,7 +5,6 @@ import { Filter } from './styles';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { Box } from '@mui/material';
-import { width } from '@fortawesome/free-solid-svg-icons/fa0';
 
 interface FilterOption {
   value: string;

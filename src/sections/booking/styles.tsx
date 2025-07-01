@@ -1,5 +1,144 @@
 import { Box, styled } from "@mui/material";
 
+export const CloseButton = styled(Box)`
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    cursor: pointer;
+`;
+
+export const Details = styled(Box)`
+    max-width: 354px;
+    width: 100%;
+    height: auto;
+    padding: 30px;
+    background: #FFFFFF;
+    border: 0.3px solid #E0E0E0;
+    border-radius: 25px;
+    box-shadow: 0px 12.66px 59.41px 0px #A9A9A95D;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    .reschedule-form {
+        .time-picker {
+            .form-group {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    }
+
+    .event-head {
+        display: flex;
+        flex-direction: row;
+
+        &.approved {
+            .event-icon {
+                background: #979797;
+            }
+        }
+
+        .event-icon {
+            width: 12px;
+            height: 12px;
+            background: #FF7B00;
+            border-radius: 50%;
+            margin-right: 20px;
+            margin-top: 7px;
+        }
+
+        .event-name {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+
+            h2 {
+                font-family: Nunito Sans;
+                font-weight: 700;
+                font-size: 20px;
+                color: #202224;
+            }
+
+            .event-date {
+                font-family: Nunito Sans;
+                font-weight: 500;
+                font-size: 15px;
+                color: #828282;
+            }
+        }
+    }
+    
+    .client-info {
+        width: 100%;
+        height: auto;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin-top: 20px;
+
+        img {
+            margin-right: 20px;
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+        }
+
+        span {
+            font-family: Nunito Sans;
+            font-weight: 500;
+            font-size: 16px;
+            color: #828282;
+        }
+    }
+
+    .action-btn {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 10px;
+        padding-top: 30px;
+
+        &.approved {
+            justify-content: flex-end;
+        }
+
+        .btn {
+            width: fit-content;
+            height: auto;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: Nunito Sans;
+            font-weight: 500;
+            font-size: 16px;
+            text-transform: capitalize;
+            color: #FFFFFF;
+
+            &.reschedule {
+                background: #EFC026;
+            }
+
+            &.reject {
+                background: #EF3826;
+            }
+
+            &.cancel {
+                background: #979797;
+            }
+
+            &.approve {
+                background: #2BB673;
+            }
+
+            &.update {
+                background: #3085d6;
+            }
+        }
+    }
+`;
+
 export const BookingWrapper = styled(Box)`
     width: 100%;
     height: auto;
@@ -22,7 +161,22 @@ export const BookingWrapper = styled(Box)`
             flex-direction: column;
             gap: 10px;
 
-            label {
+            .date-picker,
+            .time-picker {
+                div.MuiPickersOutlinedInput-root {
+                    width: 100%;
+                    height: 48px;
+                    background: #F7FAF5;
+                }
+            }
+
+            .package-dropdown {
+                width: 100%;
+                height: 48px;
+                background: #F7FAF5;
+            }
+
+            label, .form-label {
                 color: #ADADAD;
             }
 
@@ -59,8 +213,62 @@ export const BookingWrapper = styled(Box)`
                 background: #F7FAF5;
                 margin-top: -10px;
 
+                &.addon-list {
+                    padding: 0!important;
+                    height: auto;
+                    max-height: 168px;
+                    margin-top: 0px;
+                }
+
+                .addon-item.row {
+                    padding: 16px;
+
+                    input[type="checkbox"] {
+                        display: none;
+                    }
+
+                    label {
+                        position: relative;
+                        padding-left: 30px;
+                        cursor: pointer;
+                        user-select: none;
+                        font-family: Nunito Sans;
+                        font-weight: 400;
+                        font-size: 14px;
+                        line-height: 100%;
+                        letter-spacing: 0px;
+                        color: #202224;
+                    }
+
+                    label::before {
+                    content: '';
+                        position: absolute;
+                        left: 0;
+                        top: 0px;
+                        width: 20px;
+                        height: 20px;
+                        background-color: white;
+                        border: 1px solid #000;
+                        border-radius: 2px;
+                        box-sizing: border-box;
+                        transition: all 0.2s ease;
+                    }
+
+                    input[type="checkbox"]:checked + label::after {
+                        content: '';
+                        position: absolute;
+                        left: 7px;
+                        top: 3px;
+                        width: 4px;
+                        height: 10px;
+                        border: solid black;
+                        border-width: 0 2px 2px 0;
+                        transform: rotate(45deg);
+                    }
+                }
+
                 .row {
-                    padding: 15px 20px;
+                    padding: 20px 20px;
                     cursor: pointer;
 
                     &:hover {
@@ -144,6 +352,10 @@ export const AddBookingContainer = styled(Box)`
     flex-direction: row;
     gap: 30px;
     padding: 0 30px;
+
+    .heading {
+        padding: 0px !important;
+    }
 `;
 
 export const BigCalendar = styled(Box)`
@@ -230,12 +442,12 @@ export const StatusFilter = styled(Box)`
     background: #F7FAF5;
     border: 0.6px solid #D5D5D5;
     border-radius: 10px;
-    padding: 16px 26px;
     margin-top: 20px;
     margin-bottom: 20px;
     border-bottom: 0.6px solid #D5D5D5;
 
     .status {
+        padding: 16px 26px;
 
         label {
             font-family: Nunito Sans;
@@ -251,9 +463,8 @@ export const StatusFilter = styled(Box)`
         display: none;
         flex-direction: column;
         gap: 10px;
-        padding-top: 10px;
         border-top: 0.6px solid #D5D5D5;
-        margin-top: 15px;
+        padding: 16px 26px;
 
         &.open {
             display: flex;

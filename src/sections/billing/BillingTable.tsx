@@ -13,6 +13,8 @@ import {
   Typography
 } from '@mui/material';
 
+import { icons } from '@/icons';
+
 
 export default function BillingTable() {
 
@@ -55,7 +57,7 @@ export default function BillingTable() {
                     </TableCell>
                     <TableCell align="left" sx={{ display: 'flex', gap: '10px' }}>
                         <IconButton sx={{ paddingLeft: '5px' }}>
-                            <img src={editIcon} className="edit-icon" alt="edit icon" />
+                            <img src={icons.editIcon} className="edit-icon" alt="edit icon" />
                         </IconButton>
                     </TableCell>
                 </TableRow>
@@ -73,7 +75,7 @@ export default function BillingTable() {
                     </TableCell>
                     <TableCell align="left" sx={{ display: 'flex', gap: '10px' }}>
                         <IconButton sx={{ paddingLeft: '5px' }}>
-                            <img src={editIcon} className="edit-icon" alt="edit icon" />
+                            <img src={icons.editIcon} className="edit-icon" alt="edit icon" />
                         </IconButton>
                     </TableCell>
                 </TableRow>

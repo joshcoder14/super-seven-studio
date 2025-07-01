@@ -8,7 +8,7 @@ interface CheckboxComponentProps {
   id: string;
   name: string;
   label: string;
-  checked?: boolean;
+  checked: boolean;
   onChange?: (checked: boolean) => void;
 }
 
@@ -16,10 +16,10 @@ export default function CheckboxComponent({
   id,
   name,
   label,
-  checked = false,
+  checked = true,
   onChange,
 }: CheckboxComponentProps) {
-    const [isChecked, setIsChecked] = useState(false);
+    const [isChecked, setIsChecked] = useState(true);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newChecked = e.target.checked;

@@ -11,6 +11,7 @@ import {
   TableRow,
   Paper
 } from '@mui/material';
+import {icons} from '@/icons'
 
 
 export default function PackageTable() {
@@ -41,10 +42,10 @@ export default function PackageTable() {
                     <TableCell align="left">Package A's Details</TableCell>
                     <TableCell align="left" sx={{ display: 'flex', gap: '10px' }}>
                     <IconButton>
-                        <img src={removeIcon} className="remove-icon" alt="remove icon" />
+                        <img src={icons.removeIcon} className="remove-icon" alt="remove icon" />
                     </IconButton>
                     <IconButton>
-                        <img src={editIcon} className="edit-icon" alt="edit icon" />
+                        <img src={icons.editIcon} className="edit-icon" alt="edit icon" />
                     </IconButton>
                     </TableCell>
                 </TableRow>
@@ -54,10 +55,10 @@ export default function PackageTable() {
                     <TableCell align="left">Package B's Details</TableCell>
                     <TableCell align="left" sx={{ display: 'flex', gap: '10px' }}>
                     <IconButton>
-                        <img src={removeIcon} className="remove-icon" alt="remove icon" />
+                        <img src={icons.removeIcon} className="remove-icon" alt="remove icon" />
                     </IconButton>
                     <IconButton>
-                        <img src={editIcon} className="edit-icon" alt="edit icon" />
+                        <img src={icons.editIcon} className="edit-icon" alt="edit icon" />
                     </IconButton>
                     </TableCell>
                 </TableRow>

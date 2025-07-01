@@ -1,6 +1,5 @@
 'use client'
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { useRouter } from 'next/navigation'
 import { paths } from '@/paths'
 import { User, AuthResponse } from '@/types/user'
 
@@ -9,8 +8,8 @@ interface AuthContextType {
   user: User | null
   login: (response: AuthResponse) => Promise<void>
   logout: () => Promise<void>
-  // verifySession: () => Promise<boolean>
   loading: boolean
+  updateUser: (userData: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -19,7 +18,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
+
+  const updateUser = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
 
   // Initialize auth state
   useEffect(() => {
@@ -31,7 +34,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (accessToken && userData) {
           setIsAuthenticated(true)
           setUser(JSON.parse(userData))
-          // await verifySession() // Verify token is still valid
         }
       } catch (error) {
         console.error('Auth initialization failed:', error)
@@ -44,43 +46,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initializeAuth()
   }, [])
 
-  // const verifySession = async () => {
-  //   try {
-  //     const accessToken = localStorage.getItem('access_token')
-  //     if (!accessToken) return false
-
-  //     // Get CSRF cookie first if using Sanctum
-  //     await fetch('/api/sanctum/csrf-cookie', { credentials: 'include' })
-
-  //     const response = await fetch('/api/users/current', {
-  //       credentials: 'include',
-  //       headers: {
-  //         'Authorization': `Bearer ${accessToken}`,
-  //         'Accept': 'application/json'
-  //       }
-  //     })
-
-  //     if (response.ok) {
-  //       const { data: user } = await response.json() as { data: User }
-  //       setUser(user)
-  //       localStorage.setItem('user', JSON.stringify(user))
-  //       return true
-  //     }
-
-  //     throw new Error('Session verification failed')
-  //   } catch (error) {
-  //     console.error('Session error:', error)
-  //     await logout()
-  //     return false
-  //   }
-  // }
-
   const login = async (response: AuthResponse) => {
     localStorage.setItem('access_token', response.access_token)
     localStorage.setItem('user', JSON.stringify(response.data))
     setIsAuthenticated(true)
     setUser(response.data)
-    // await verifySession()
   }
 
   const logout = async () => {
@@ -119,7 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user,
       login,
       logout,
-      // verifySession,
+      updateUser,
       loading
     }}>
       {children}

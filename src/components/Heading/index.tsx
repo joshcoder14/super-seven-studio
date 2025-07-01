@@ -23,16 +23,28 @@ const pathTitles: Record<string, string> = {
 export function HeadingComponent(): React.JSX.Element {
   const pathname = usePathname();
   
+  // Check if path starts with /accounts
+  if (pathname.startsWith(paths.accounts)) {
+    return (
+      <Heading className="heading">
+        <Box className="title">
+          {pathTitles[paths.accounts]}
+        </Box>
+        <Typography component="hr" className='horizontal-rule'/>
+      </Heading>
+    );
+  }
+
   // Find the matching path or use the current pathname as fallback
   const currentPath = Object.values(paths).find(path => path === pathname) || paths.home;
   const title = pathTitles[currentPath] || "Home";
 
   return (
-    <Heading>
+    <Heading className="heading">
       <Box className="title">
         {title}
       </Box>
       <Typography component="hr" className='horizontal-rule'/>
     </Heading>
-  )
+  );
 }

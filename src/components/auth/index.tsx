@@ -414,6 +414,7 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
             {isLogin && (
               <Box className="form-group remember">
                 <CheckboxComponent
+                  checked={rememberMe}
                   id='remember'
                   name='remember'
                   label='Remember me'

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Heading } from "./styles";
-import { Box, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 
 export interface HeadingProps {
     title: string;

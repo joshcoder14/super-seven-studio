@@ -13,6 +13,7 @@ import {
     Typography,
     Tab
 } from '@mui/material';
+import { icons } from '@/icons';
 
 export default function AddOns() {
 
@@ -42,10 +43,10 @@ export default function AddOns() {
                     <TableCell align="left">Add-on A's Details</TableCell>
                     <TableCell align="left" sx={{ display: 'flex', gap: '10px' }}>
                     <IconButton>
-                        <img src={removeIcon} className="remove-icon" alt="remove icon" />
+                        <img src={icons.removeIcon} className="remove-icon" alt="remove icon" />
                     </IconButton>
                     <IconButton>
-                        <img src={editIcon} className="edit-icon" alt="edit icon" />
+                        <img src={icons.editIcon} className="edit-icon" alt="edit icon" />
                     </IconButton>
                     </TableCell>
                 </TableRow>
@@ -55,10 +56,10 @@ export default function AddOns() {
                     <TableCell align="left">Add-on B's Details</TableCell>
                     <TableCell align="left" sx={{ display: 'flex', gap: '10px' }}>
                     <IconButton>
-                        <img src={removeIcon} className="remove-icon" alt="remove icon" />
+                        <img src={icons.removeIcon} className="remove-icon" alt="remove icon" />
                     </IconButton>
                     <IconButton sx={{ paddingLeft: '10px' }}>
-                        <img src={editIcon} className="edit-icon" alt="edit icon" />
+                        <img src={icons.editIcon} className="edit-icon" alt="edit icon" />
                     </IconButton>
                     </TableCell>
                 </TableRow>

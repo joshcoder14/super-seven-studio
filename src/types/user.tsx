@@ -21,3 +21,14 @@ export interface User {
     status: 'active' | 'disabled' | string;
     email_verified_at?: string;
 }
+
+export interface FormDataProps {
+    firstName: string; 
+    middleName: string; 
+    lastName: string; 
+    email: string; 
+    contactNumber?: string; 
+    address: string; 
+    userType: string; 
+    status: string ;
+}

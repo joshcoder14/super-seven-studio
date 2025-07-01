@@ -40,12 +40,12 @@ export interface ModalSection {
 }
 
 export interface PackageProps {
-    id: string;
+    id: number;
     packageName: string;
 }
 
 export interface AddOnsProps {
-    id: string;
+    id: number;
     addOnName: string;
     addOnDetails: string;
     addOnPrice: string;
