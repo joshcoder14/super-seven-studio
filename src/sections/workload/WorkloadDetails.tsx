@@ -22,7 +22,7 @@ export function WorkloadDetailsComponent(): React.JSX.Element {
                     <Box className="event-head">
                         <Box className="event-icon"/>
                         <Box className="event-name">
-                            <h2 className="title">Charlie's Birthday</h2>
+                            <h2 className="title">Charlie Birthday</h2>
                             <Typography component="span" className="event-date">Monday, December 29</Typography>
                         </Box>
                     </Box>

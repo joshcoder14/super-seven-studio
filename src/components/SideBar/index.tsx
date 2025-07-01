@@ -54,6 +54,7 @@ export function NavBar(): React.JSX.Element {
                     await logout()
                     return true
                 } catch (error) {
+                    console.error('Logout failed:', error)
                     Swal.showValidationMessage('Logout failed. Please try again.')
                     return false
                 }

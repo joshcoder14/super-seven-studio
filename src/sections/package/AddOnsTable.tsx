@@ -9,9 +9,7 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Paper,
-    Typography,
-    Tab
+    Paper
 } from '@mui/material';
 import { icons } from '@/icons';
 

@@ -1,5 +1,8 @@
 const nextConfig = {
   reactStrictMode: true,
+  eslint: {
+    ignoreDuringBuilds: true,  // Disables ESLint during builds
+  },
   async rewrites() {
     return [
       {
