@@ -259,7 +259,7 @@ export function BookingComponent(): React.JSX.Element {
       if (otherPendingBookings.length > 0) {
         confirmationMessage = "This will automatically reject other pending bookings for the same date.";
       } else {
-        confirmationMessage = "Are you sure you want to approve this booking?";
+        confirmationMessage = "Approving this booking will finalize the schedule.";
       }
     } else {
       confirmationMessage = `Are you sure you want to ${action} this booking? This action cannot be undone.`;
