@@ -11,19 +11,24 @@ import {
   TableRow,
   Paper,
   Typography,
-  Tab
+  Skeleton
 } from '@mui/material';
 
 interface AccountTableProps {
   rows: User[];
-  emptyRows: number;
   editIcon: string;
   hasSearchTerm: boolean;
   onEditClick: (account: User) => void;
   loading: boolean;
 }
 
-export function AccountTable({ rows, emptyRows, editIcon, hasSearchTerm, onEditClick, loading  }: AccountTableProps) {
+export function AccountTable({ rows, editIcon, hasSearchTerm, onEditClick, loading }: AccountTableProps) {
+
+  // Function to handle null/undefined fields
+  const getDisplayValue = (value: string | null | undefined, fallback = '-') => {
+    return value || fallback;
+  };
+
   return (
     <TableContainer
       component={Paper}
@@ -48,36 +53,50 @@ export function AccountTable({ rows, emptyRows, editIcon, hasSearchTerm, onEditC
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.length === 0 && hasSearchTerm ? (
+          {loading ? (
+            // Loading skeleton
+            Array.from({ length: 5 }).map((_, index) => (
+              <TableRow key={`skeleton-${index}`}>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="circular" width={24} height={24} /></TableCell>
+              </TableRow>
+            ))
+          ) : rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} align="center" style={{ height: '60px' }}>
+              <TableCell colSpan={8} align="center" style={{ height: '60px' }}>
                 <Typography variant="body1" color="textSecondary">
-                  No data found
+                  {hasSearchTerm ? 'No matching records found' : 'No data available'}
                 </Typography>
               </TableCell>
             </TableRow>
           ) : (
-            <>
-              {rows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell align='left'>{row.id}</TableCell>
-                  <TableCell align="left">{row.full_name}</TableCell>
-                  <TableCell align="left">{row.email}</TableCell>
-                  <TableCell align="left">{row.contact_no}</TableCell>
-                  <TableCell align="left">{row.address}</TableCell>
-                  <TableCell align="left" className={row.status === '1' ? 'active' : 'inactive'}>
-                    <Typography component="span">
-                      {row.status === '1' ? 'Active' : 'Inactive'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="left">
-                    <IconButton onClick={() => onEditClick(row)}>
-                      <img src={editIcon} className="edit-icon" alt="edit icon" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </>
+            rows.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell align="left">{row.id}</TableCell>
+                <TableCell align="left">{getDisplayValue(row.full_name)}</TableCell>
+                <TableCell align="left">{getDisplayValue(row.email)}</TableCell>
+                <TableCell align="left">{getDisplayValue(row.contact_no)}</TableCell>
+                <TableCell align="left">{getDisplayValue(row.address)}</TableCell>
+                <TableCell align="left" className={row.status === '1' ? 'active' : 'inactive'}>
+                  <Typography 
+                    component="span"
+                  >
+                    {row.status === '1' ? 'Active' : 'Inactive'}
+                  </Typography>
+                </TableCell>
+                <TableCell align="left">
+                  <IconButton onClick={() => onEditClick(row)}>
+                    <img src={editIcon} className="edit-icon" alt="edit" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))
           )}
         </TableBody>
       </Table>
