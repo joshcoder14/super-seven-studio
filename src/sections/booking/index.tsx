@@ -247,11 +247,27 @@ export function BookingComponent(): React.JSX.Element {
       return;
     }
 
+    // Check if there are other pending bookings for the same date
+    const otherPendingBookings = events.filter(event => 
+      event.id !== selectedEvent.id &&
+      event.status === 'pending' &&
+      normalizeToPHDate(new Date(event.start)).getTime() === normalizeToPHDate(selectedEvent.start).getTime()
+    );
+
+    let confirmationMessage = '';
+    if (action === 'approve') {
+      if (otherPendingBookings.length > 0) {
+        confirmationMessage = "This will automatically reject other pending bookings for the same date.";
+      } else {
+        confirmationMessage = "Are you sure you want to approve this booking?";
+      }
+    } else {
+      confirmationMessage = `Are you sure you want to ${action} this booking? This action cannot be undone.`;
+    }
+
     const confirmation = await Swal.fire({
       title: `Are you sure you want to ${action} this booking?`,
-      text: action === 'approve' 
-        ? "This will automatically reject other pending bookings for the same date."
-        : "This action cannot be undone.",
+      text: confirmationMessage,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
