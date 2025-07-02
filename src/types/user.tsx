@@ -32,3 +32,21 @@ export interface FormDataProps {
     userType: string; 
     status: string ;
 }
+
+export interface ApiResponse {
+  status: boolean;
+  message: string;
+  data: {
+    data: User[];
+    links: {
+      previous: string;
+      next: string;
+    };
+    meta: {
+      current_page: number;
+      per_page: number;
+      last_page: number;
+      total: number;
+    };
+  };
+}

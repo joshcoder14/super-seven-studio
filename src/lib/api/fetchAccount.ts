@@ -1,26 +1,46 @@
-import { User } from '@/types/user';
+import { User, ApiResponse } from '@/types/user';
 import { accountFilterOptions } from '@/utils/filterOptions';
 
-export async function fetchClients(searchTerm: string): Promise<User[]> {
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) throw new Error('No access token found');
+const mapApiStatusToFrontend = (apiStatus: string | boolean | null): string => {
+  if (apiStatus === null || apiStatus === undefined) return '0';
+  if (typeof apiStatus === 'boolean') return apiStatus ? '1' : '0';
+  return apiStatus.toString().toLowerCase() === 'active' ? '1' : '0';
+};
 
-    const headers = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-    };
+export async function fetchClients(
+  searchTerm: string,
+  page: number = 1,
+  perPage: number = 10
+): Promise<ApiResponse> {
+  const accessToken = localStorage.getItem('access_token');
+  if (!accessToken) throw new Error('No access token found');
 
-    const queryString = `search[value]=${searchTerm || ''}&filters[user_type]=1`;
-    const response = await fetch(`/api/customers?${queryString}`, {
-        credentials: 'include',
-        headers
-    });
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${accessToken}`,
+  };
 
-    if (!response.ok) throw new Error('Failed to fetch client data');
+  const queryParams = new URLSearchParams();
+  queryParams.set('search[value]', searchTerm || '');
+  queryParams.set('filters[user_type]', '1');
+  queryParams.set('page', page.toString());
+  queryParams.set('per_page', perPage.toString());
 
-    const responseData = await response.json();
-    return responseData.data?.data?.map((user: any) => ({
+  const response = await fetch(`/api/customers?${queryParams.toString()}`, {
+    credentials: 'include',
+    headers,
+  });
+
+  if (!response.ok) throw new Error('Failed to fetch client data');
+  
+  const responseData = await response.json();
+  
+  return {
+    ...responseData,
+    data: {
+      ...responseData.data,
+      data: responseData.data?.data?.map((user: any) => ({
         id: user.id,
         first_name: user.first_name || '',
         last_name: user.last_name || '',
@@ -33,30 +53,46 @@ export async function fetchClients(searchTerm: string): Promise<User[]> {
         user_type: '1',
         status: user.status === 'active' || user.status === true || user.status === '1' ? '1' : '0',
         source: 'client'
-    })) || [];
+      })) || []
+    }
+  };
 }
 
-export async function fetchEmployees(searchTerm: string, filterValue: string): Promise<User[]> {
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) throw new Error('No access token found');
+export async function fetchEmployees(
+  searchTerm: string,
+  filterValue: string,
+  page: number = 1,
+  perPage: number = 10
+): Promise<ApiResponse> {
+  const accessToken = localStorage.getItem('access_token');
+  if (!accessToken) throw new Error('No access token found');
 
-    const headers = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-    };
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${accessToken}`,
+  };
 
-    const queryString = `search[value]=${searchTerm || ''}&filters[user_type]=${filterValue}`;
-    const response = await fetch(`/api/employees?${queryString}`, {
-        credentials: 'include',
-        headers
-    });
+  const queryParams = new URLSearchParams();
+  queryParams.set('search[value]', searchTerm || '');
+  queryParams.set('filters[user_type]', filterValue);
+  queryParams.set('page', page.toString());
+  queryParams.set('per_page', perPage.toString());
 
-    if (!response.ok) throw new Error('Failed to fetch employee data');
+  const response = await fetch(`/api/employees?${queryParams.toString()}`, {
+    credentials: 'include',
+    headers,
+  });
 
-    const responseData = await response.json();
-
-    return responseData.data?.data?.map((user: any) => ({
+  if (!response.ok) throw new Error('Failed to fetch employee data');
+  
+  const responseData = await response.json();
+  
+  return {
+    ...responseData,
+    data: {
+      ...responseData.data,
+      data: responseData.data?.data?.map((user: any) => ({
         id: user.id,
         full_name: user.full_name,
         email: user.email,
@@ -68,20 +104,26 @@ export async function fetchEmployees(searchTerm: string, filterValue: string): P
         first_name: user.first_name,
         last_name: user.last_name,
         mid_name: user.mid_name
-    })) || [];
+      })) || []
+    }
+  };
 }
 
-export async function fetchAllUsers(searchTerm: string, filterValue: string): Promise<User[]> {
-    try {
-        if (filterValue === '1') {
-            return await fetchClients(searchTerm);
-        } else {
-            return await fetchEmployees(searchTerm, filterValue);
-        }
-    } catch (error) {
-        console.error('Failed to fetch users', error);
-        throw error;
+export async function fetchAllUsers(
+  searchTerm: string,
+  filterValue: string,
+  page: number = 1,
+  perPage: number = 10
+): Promise<ApiResponse> {
+  try {
+    if (filterValue === '1') {
+      return await fetchClients(searchTerm, page, perPage);
     }
+    return await fetchEmployees(searchTerm, filterValue, page, perPage);
+  } catch (error) {
+    console.error('Failed to fetch users', error);
+    throw error;
+  }
 }
 
 // Add and Update Account

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AccountContainer, AccountWrapper, TopArea, AddAccount } from './styles';
 import { HeadingComponent } from '@/components/Heading';
@@ -8,7 +8,7 @@ import { FilterBy } from '@/components/Filter';
 import { SearchBox } from '@/components/Search';
 import { AccountTable } from './AccountTable';
 import { CustomTablePagination } from '@/components/TablePagination';
-import { User } from '@/types/user';
+import { User, ApiResponse } from '@/types/user';
 import { icons } from '@/icons';
 import { fetchAllUsers } from '@/lib/api/fetchAccount';
 import { accountFilterOptions } from '@/utils/filterOptions';
@@ -16,35 +16,48 @@ import { accountFilterOptions } from '@/utils/filterOptions';
 export function AccountComponent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [apiResponse, setApiResponse] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [page, setPage] = useState(1); // 1-based to match backend
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValue, setFilterValue] = useState('3'); // Default to 'Owner'
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize filter from URL parameter
+  // Initialize from URL parameters
   useEffect(() => {
     const urlFilter = searchParams.get('filter');
-    const params = new URLSearchParams(searchParams.toString());
-    
+    const urlPage = searchParams.get('page');
+    const urlSearch = searchParams.get('search');
+
     if (urlFilter && accountFilterOptions.some(opt => opt.value === urlFilter)) {
       setFilterValue(urlFilter);
-    } else {
-      // Set default filter if not present or invalid
-      params.set('filter', '3');
-      router.replace(`/accounts?${params.toString()}`, { scroll: false });
     }
-  }, [searchParams, router]);
 
+    if (urlPage) {
+      setPage(parseInt(urlPage, 10));
+    }
+
+    if (urlSearch) {
+      setSearchTerm(urlSearch);
+    }
+  }, [searchParams]);
+
+  // Fetch data when params change
   useEffect(() => {
     const loadUsers = async () => {
       try {
         setLoading(true);
         setError(null);
-        const users = await fetchAllUsers(searchTerm, filterValue);
-        setAllUsers(users);
+        const response = await fetchAllUsers(searchTerm, filterValue, page, rowsPerPage);
+        setApiResponse(response);
+        
+        // Update URL to reflect current state
+        const params = new URLSearchParams();
+        params.set('filter', filterValue);
+        params.set('page', page.toString());
+        if (searchTerm) params.set('search', searchTerm);
+        router.replace(`/accounts?${params.toString()}`, { scroll: false });
       } catch (error) {
         console.error('Failed to fetch users', error);
         setError('Failed to load user data. Please try again later.');
@@ -58,35 +71,31 @@ export function AccountComponent(): React.JSX.Element {
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [filterValue, searchTerm]);
+  }, [filterValue, searchTerm, page, rowsPerPage, router]);
 
   const handleFilterChange = (value: string) => {
     setFilterValue(value);
-    setPage(0);
-    
-    // Update URL with filter parameter
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('filter', value);
-    router.push(`/accounts?${params.toString()}`, { scroll: false });
+    setPage(1); // Reset to first page on filter change
   };
-  
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setPage(0);
+    setPage(1); // Reset to first page on search change
   };
 
   const handleChangePage = (
     event: React.MouseEvent<HTMLButtonElement> | null,
     newPage: number
   ) => {
-    setPage(newPage);
+    setPage(newPage + 1); // Convert to 1-based index
   };
 
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    const newRowsPerPage = parseInt(event.target.value, 10);
+    setRowsPerPage(newRowsPerPage);
+    setPage(1); // Reset to first page when changing page size
   };
 
   const handleEditClick = (account: User) => {
@@ -101,18 +110,15 @@ export function AccountComponent(): React.JSX.Element {
     router.push('/accounts/employees/add');
   };
 
-  const filteredRows = useMemo(() => allUsers, [allUsers]);
-
-  const emptyRows = Math.max(0, (1 + page) * rowsPerPage - filteredRows.length);
-
-  const visibleRows = useMemo(
-    () => filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [page, rowsPerPage, filteredRows]
-  );
+  // Extract data from API response
+  const visibleRows = apiResponse?.data.data || [];
+  const totalRows = apiResponse?.data.meta.total || 0;
+  const currentPage = apiResponse?.data.meta.current_page || 1;
+  const rowsPerPageFromApi = apiResponse?.data.meta.per_page || rowsPerPage;
 
   return (
     <AccountContainer className="account-container">
-      <HeadingComponent/>
+      <HeadingComponent />
       
       <AccountWrapper>
         <TopArea>
@@ -123,9 +129,7 @@ export function AccountComponent(): React.JSX.Element {
             label="Filter By:"
           />
 
-          <AddAccount
-            onClick={handleAddAccountClick}
-          >
+          <AddAccount onClick={handleAddAccountClick}>
             Add Account
           </AddAccount>
           
@@ -139,7 +143,7 @@ export function AccountComponent(): React.JSX.Element {
 
         <AccountTable 
           rows={visibleRows}
-          emptyRows={emptyRows}
+          // emptyRows={0}
           editIcon={icons.editIcon}
           hasSearchTerm={searchTerm.length >= 2}
           onEditClick={handleEditClick}
@@ -147,9 +151,9 @@ export function AccountComponent(): React.JSX.Element {
         />
         
         <CustomTablePagination
-          count={filteredRows.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
+          count={totalRows}
+          rowsPerPage={rowsPerPageFromApi}
+          page={currentPage - 1} // Convert to 0-based for MUI
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
