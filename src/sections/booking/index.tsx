@@ -262,7 +262,7 @@ export function BookingComponent(): React.JSX.Element {
         confirmationMessage = "Approving this booking will finalize the schedule.";
       }
     } else {
-      confirmationMessage = `Are you sure you want to ${action} this booking? This action cannot be undone.`;
+      confirmationMessage = `This action cannot be undone.`;
     }
 
     const confirmation = await Swal.fire({
@@ -363,19 +363,40 @@ export function BookingComponent(): React.JSX.Element {
       });
       return;
     }
+    
     // Check if the new date is the same as the original date
-  const originalDate = dayjs(selectedEvent.start);
-  if (rescheduleDate.isSame(originalDate, 'day')) {
-    Swal.fire({
-      title: 'Same Date',
-      text: 'Please select a different date for rescheduling',
-      icon: 'warning',
+    const originalDate = dayjs(selectedEvent.start);
+    if (rescheduleDate.isSame(originalDate, 'day')) {
+      Swal.fire({
+        title: 'Same Date',
+        text: 'Please select a different date for rescheduling',
+        icon: 'warning',
+        customClass: {
+          container: 'swal-z-index'
+        }
+      });
+      return;
+    }
+
+    // Add confirmation dialog
+    const confirmation = await Swal.fire({
+      title: 'Confirm Reschedule',
+      html: `Are you sure you want to reschedule this booking to <strong>${rescheduleDate.format('MMMM D, YYYY')} at ${rescheduleTime.format('h:mm A')}</strong>?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#ffc300',
+      cancelButtonColor: '#979797',
+      confirmButtonText: 'Yes, reschedule',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
       customClass: {
         container: 'swal-z-index'
       }
     });
-    return;
-  }
+
+    if (!confirmation.isConfirmed) {
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -590,7 +611,10 @@ export function BookingComponent(): React.JSX.Element {
           overflowY: 'auto'
         }}>
           <Details>
-            <CloseButton onClick={() => setSelectedEvent(null)}>
+            <CloseButton onClick={() => {
+              setSelectedEvent(null);
+              setShowRescheduleForm(false);
+            }}>
               <FontAwesomeIcon icon={faXmark} />
             </CloseButton>
             
@@ -634,10 +658,15 @@ export function BookingComponent(): React.JSX.Element {
                       color: '#fff',
                       borderColor: '#979797',
                       appearance: 'none',
+                      boxShadow: 'none',
+                      fontWeight: 500,
+                      fontSize: '16px',
+                      textTransform: 'capitalize',
                       '&:hover': {
                         backgroundColor: '#757575',
                         color: '#fff',
                         borderColor: '#757575',
+                        boxShadow: 'none',
                       }
                     }}
                   >
@@ -655,14 +684,19 @@ export function BookingComponent(): React.JSX.Element {
                     }
                     sx={{ 
                       flex: 1,
-                      backgroundColor: '#EFC026',
+                      backgroundColor: '#ffc300',
                       color: '#fff',
                       borderColor: '#EFC026',
                       appearance: 'none',
+                      boxShadow: 'none',
+                      fontWeight: 500,
+                      fontSize: '16px',
+                      textTransform: 'capitalize',
                       '&:hover': {
-                        backgroundColor: '#cda41f',
+                        backgroundColor: '#ddb225',
                         color: '#fff',
                         borderColor: '#cda41f',
+                        boxShadow: 'none',
                       }
                     }}
                   >
