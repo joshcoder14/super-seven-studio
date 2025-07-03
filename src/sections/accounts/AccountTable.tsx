@@ -24,6 +24,16 @@ interface AccountTableProps {
 
 export function AccountTable({ rows, editIcon, hasSearchTerm, onEditClick, loading }: AccountTableProps) {
 
+  const tableHeader = [
+    'ID',
+    'NAME',
+    'EMAIL ADDRESS',
+    'CONTACT NUMBER',
+    'ADDRESS',
+    'STATUS',
+    'ACTION'
+  ];
+
   // Function to handle null/undefined fields
   const getDisplayValue = (value: string | null | undefined, fallback = '-') => {
     return value || fallback;
@@ -43,13 +53,9 @@ export function AccountTable({ rows, editIcon, hasSearchTerm, onEditClick, loadi
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
         <TableHead>
           <TableRow>
-            <TableCell align="left"><b>ID</b></TableCell>
-            <TableCell align="left"><b>NAME</b></TableCell>
-            <TableCell align="left"><b>EMAIL ADDRESS</b></TableCell>
-            <TableCell align="left"><b>CONTACT NUMBER</b></TableCell>
-            <TableCell align="left"><b>ADDRESS</b></TableCell>
-            <TableCell align="left"><b>STATUS</b></TableCell>
-            <TableCell align="left"><b>ACTION</b></TableCell>
+            {tableHeader.map((header, index) => (
+              <TableCell key={index} align="left"><b>{header}</b></TableCell>
+            ))}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -63,8 +69,9 @@ export function AccountTable({ rows, editIcon, hasSearchTerm, onEditClick, loadi
                 <TableCell><Skeleton variant="text" /></TableCell>
                 <TableCell><Skeleton variant="text" /></TableCell>
                 <TableCell><Skeleton variant="text" /></TableCell>
-                <TableCell><Skeleton variant="text" /></TableCell>
-                <TableCell><Skeleton variant="circular" width={24} height={24} /></TableCell>
+                <TableCell sx={{ display: 'flex', gap: '8px' }}>
+                  <Skeleton sx={{ borderRadius: '8px' }} variant="circular" width={30} height={30} />
+                </TableCell>
               </TableRow>
             ))
           ) : rows.length === 0 ? (

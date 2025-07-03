@@ -25,6 +25,7 @@ export const Filter = styled(Box)`
         border-left: none;
         border-radius: 0px 10px 10px 0px;
         width: 100%;
+        min-width: 180px;
         cursor: pointer;
         padding: 20px 30px;
 

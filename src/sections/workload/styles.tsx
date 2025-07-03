@@ -116,7 +116,7 @@ export const StatusWrapper = styled(Box)`
 
     .dropdown-list {
         width: 100%;
-        height: 105px;
+        height: 150px;
         overflow: auto;
         scrollbar-width: thin;
         scrollbar-color: #D5D5D5 #FAFBFD;
@@ -497,18 +497,19 @@ export const CloseWrapper = styled(Box)`
 `;
 
 export const ModalContainer = styled(Box)`
-    position: fixed;
-    top: 70px;
+    position: absolute;
+    top: 0px;
     right: 0;
     max-width: 560px;
     width: 100%;
-    height: 100%;
+    height: auto;
     background-color: #FFFFFF;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    z-index: 9999;
+    padding-bottom: 30px;
+    z-index: 1;
     border: 0.3px solid #E0E0E0;
     border-radius: 4px;
 `;

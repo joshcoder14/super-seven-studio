@@ -1,10 +1,9 @@
 'use client';
-
 import React from 'react';
 import Tooltip from '@mui/material/Tooltip';
 import { IconButton } from '@/sections/accounts/styles';
 import { useRouter } from 'next/navigation';
-import {paths} from '@/paths';
+import { paths } from '@/paths';
 import {
   Table,
   TableBody,
@@ -13,15 +12,19 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Typography
+  Typography,
+  Skeleton
 } from '@mui/material';
-import {icons} from '@/icons'
+import { icons } from '@/icons';
+import { MappedWorkloadItem } from '@/types/workload';
 
-type WorkLoadTableProps = {
-  onEditClick: (eventData: any) => void;
-};
+interface WorkLoadTableProps {
+  data: MappedWorkloadItem[];
+  loading: boolean;
+  onEditClick: (eventData: MappedWorkloadItem) => void;
+}
 
-export function WorkLoadTable({ onEditClick }: WorkLoadTableProps) {
+export function WorkLoadTable({ data, loading, onEditClick }: WorkLoadTableProps) {
   const router = useRouter();
 
   const tableHeader = [
@@ -34,28 +37,6 @@ export function WorkLoadTable({ onEditClick }: WorkLoadTableProps) {
     'Action'
   ];
 
-  const rowData = [
-    {
-      eventName: "Daniel's 8th Birthday",
-      client: "Smile Services",
-      bookingDate: "January 15, 2025",
-      assigned: [],
-      releaseDate: "None",
-      status: "Unassigned"
-    },
-    {
-      eventName: "Jane & John's Wedding",
-      client: "Tylex Events",
-      bookingDate: "January 6, 2025",
-      assigned: [
-        { name: "Mark Parañas", avatar: icons.profileIcon },
-        { name: "Anna Cruz", avatar: icons.profileIcon },
-      ],
-      releaseDate: "February 1, 2025",
-      status: "Scheduled"
-    }
-  ];
-
   return (
     <TableContainer
       component={Paper}
@@ -65,7 +46,7 @@ export function WorkLoadTable({ onEditClick }: WorkLoadTableProps) {
         boxShadow: 'none',
         marginTop: '30px'
       }}
-      className='account-table'
+      className="account-table"
     >
       <Table sx={{ minWidth: 650 }} aria-label="workload table">
         <TableHead>
@@ -76,18 +57,45 @@ export function WorkLoadTable({ onEditClick }: WorkLoadTableProps) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {rowData.map((row, index) => (
-            <TableRow key={index}>
-              <TableCell align="left">{row.eventName}</TableCell>
-              <TableCell align="left">{row.client}</TableCell>
-              <TableCell align="left">{row.bookingDate}</TableCell>
-              <TableCell align="left">
-                {row.assigned.length === 0 ? (
-                  <Typography component="span">None</Typography>
-                ) : (
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    {row.assigned.map((person, idx) => (
-                      <Tooltip key={idx} title={person.name} arrow>
+          {loading ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <TableRow key={`skeleton-${index}`}>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell sx={{ display: 'flex', gap: '8px' }}>
+                  <Skeleton sx={{ borderRadius: '8px' }} variant="circular" width={30} height={30} />
+                  <Skeleton sx={{ borderRadius: '8px' }} variant="circular" width={30} height={30} />
+                </TableCell>
+              </TableRow>
+            ))
+          ) : data.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} align="center" style={{ height: '60px' }}>
+                <Typography 
+                  variant="body1"
+                  sx={{
+                    padding: '30px',
+                    background: '#FFFFFF',
+                  }}
+                >
+                  No workloads found
+                </Typography>
+              </TableCell>
+            </TableRow>
+          ) : (
+            data.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell align="left">{row.eventName}</TableCell>
+                <TableCell align="left">{row.client}</TableCell>
+                <TableCell align="left">{row.bookingDate}</TableCell>
+                <TableCell align="left">
+                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                    {row.assigned.map((person, index) => (
+                      <Tooltip key={`${row.id}-avatar-${index}`} title={person.name} arrow>
                         <img
                           src={person.avatar}
                           alt={person.name}
@@ -96,31 +104,31 @@ export function WorkLoadTable({ onEditClick }: WorkLoadTableProps) {
                             height: '20px',
                             borderRadius: '50%',
                             objectFit: 'cover',
-                            cursor: 'pointer'
+                            cursor: person.id ? 'pointer' : 'default'
                           }}
                         />
                       </Tooltip>
                     ))}
                   </div>
-                )}
-              </TableCell>
-              <TableCell align="left">{row.releaseDate}</TableCell>
-              <TableCell align="left" className={row.status.toLowerCase()}>
-                <Typography component="span">{row.status}</Typography>
-              </TableCell>
-              <TableCell align="left" style={{ display: 'flex', gap: '10px' }}>
-                <IconButton onClick={() => onEditClick(row)}>
-                  <img src={icons.editIcon} className="edit-icon" alt="edit icon" />
-                </IconButton>
-                <IconButton 
-                  sx={{ paddingLeft: '5px' }}
-                  onClick={() => router.push(paths.workloadView)}
-                >
-                  <img src={icons.displayIcon} className="view-icon" alt="view icon" />
-                </IconButton>
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+                <TableCell align="left">{row.releaseDate || 'None'}</TableCell>
+                <TableCell align="left" className={`${row.booking_workload_status.toLowerCase()}`}> 
+                  <Typography component="span">{row.booking_workload_status}</Typography>
+                </TableCell>
+                <TableCell align="left" style={{ display: 'flex', gap: '10px' }}>
+                  <IconButton onClick={() => onEditClick(row)}>
+                    <img src={icons.editIcon} className="edit-icon" alt="edit icon" />
+                  </IconButton>
+                  <IconButton 
+                    sx={{ paddingLeft: '5px' }}
+                    onClick={() => router.push(`${paths.workloadView}/${row.id}`)}
+                  >
+                    <img src={icons.displayIcon} className="view-icon" alt="view icon" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </TableContainer>

@@ -10,7 +10,7 @@ export interface BookingEvent {
   packageType: string;
   ceremony_time: string;
   status: 'pending' | 'unavailable' | 'approved';
-  resource?: any;
+  resource?: string;
 }
 
 export interface StatusFilters {

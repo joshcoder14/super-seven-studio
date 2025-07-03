@@ -7,15 +7,15 @@ export const accountFilterOptions = [
 ] as const;
 
 export const workloadFilterOptions = [
-  { value: '0', label: 'All' },
-  { value: '1', label: 'Unassigned' },
-  { value: '2', label: 'Scheduled' },
-  { value: '3', label: 'Uploaded' },
-  { value: '4', label: 'For Edit' },
-  { value: '5', label: 'Editing' },
-  { value: '6', label: 'For Release' },
-  { value: '7', label: 'Completed' },
-] as const;
+  { value: 'all', label: 'All Statuses' },
+  { value: '0', label: 'Unassigned' },
+  { value: '1', label: 'Scheduled' },
+  { value: '2', label: 'Uploaded' },
+  { value: '3', label: 'For Edit' },
+  { value: '4', label: 'Editing' },
+  { value: '5', label: 'For Release' },
+  { value: '6', label: 'Completed' },
+];
 
 export const feedBackFilterOptions = [
   { value: '0', label: 'All' },

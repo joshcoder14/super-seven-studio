@@ -106,7 +106,8 @@ table tbody tr td.unpaid span  {
   color: #EF3826;
 }
 
-table tbody tr td.for-release span {
+table tbody tr td.for-release span,
+table tbody tr td.for.release span {
   padding: 5px 6px;
   border-radius: 4.5px;
   background-color: rgba(255, 123, 0, 0.2);
@@ -126,7 +127,18 @@ table tbody tr td.pending span {
   line-height: 100%;
 }
 
+table tbody tr td.uploaded span {
+  padding: 5px 6px;
+  border-radius: 4.5px;
+  background-color: #4c007b40;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 100%;
+  color: #283475;
+}
+
 table tbody tr td.editing span,
+table tbody tr td.for.edit span,
 table tbody tr td.partial span {
   padding: 5px 6px;
   border-radius: 4.5px;
