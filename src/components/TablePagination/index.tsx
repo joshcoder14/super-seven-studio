@@ -26,7 +26,7 @@ export function CustomTablePagination({
   return (
     <TablePagination
       className='table-pagination'
-      rowsPerPageOptions={[5, 10, 25]}
+      rowsPerPageOptions={[10]}
       component="div"
       count={count}
       rowsPerPage={rowsPerPage}

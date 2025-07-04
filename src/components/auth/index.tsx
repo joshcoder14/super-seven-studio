@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { paths } from '@/paths';
 import { AuthResponse } from '@/types/user';
+import { authenticateUser } from '@/lib/api/fetchAuth';
 import {
   PasswordRequirements,
   sanitizeInput,
@@ -305,29 +306,15 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
             customer_type: 1
           };
 
-      const response = await fetch(isLogin ? `/api/login` : `/api/register`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-XSRF-TOKEN': csrfToken,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json() as AuthResponse;
-      if (!response.ok) throw new Error(data.message || 'Authentication failed');
-
+      const data: AuthResponse = await authenticateUser(payload, isLogin);
       localStorage.setItem('access_token', data.access_token);
 
-      if (isLogin) {
+     if (isLogin) {
         const expires = new Date();
         expires.setDate(expires.getDate() + (rememberMe ? 7 : 1));
         document.cookie = `authToken=${data.access_token}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
-        login(data);
-        // router.push(paths.home);
-        window.location.href = paths.home
+        login(data); // Pass full AuthResponse object
+        window.location.href = paths.home;
       } else {
         router.push(paths.login);
       }

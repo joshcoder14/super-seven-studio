@@ -16,11 +16,9 @@ import { WorkloadEmployee } from '@/types/workload';
 
 interface WorkLoadViewTableProps {
   assignedEmployees: WorkloadEmployee[];
-  loading: boolean;
 }
 
-export function WorkLoadViewTable({assignedEmployees, loading }: WorkLoadViewTableProps) {
-
+export function WorkLoadViewTable({ assignedEmployees }: WorkLoadViewTableProps) {
   const tableHeader = [
     'Employee Name',
     'Date Assigned',
@@ -48,19 +46,7 @@ export function WorkLoadViewTable({assignedEmployees, loading }: WorkLoadViewTab
           </TableRow>
         </TableHead>
         <TableBody>
-          {loading ? (
-            Array.from({ length: 3 }).map((_, index) => (
-              <TableRow key={`skeleton-${index}`}>
-                  <TableCell><Skeleton variant="text" /></TableCell>
-                  <TableCell><Skeleton variant="text" /></TableCell>
-                  <TableCell><Skeleton variant="text" /></TableCell>
-                  <TableCell sx={{ display: 'flex', gap: '8px' }}>
-                      <Skeleton sx={{ borderRadius: '8px' }} variant="circular" width={30} height={30} />
-                      <Skeleton sx={{ borderRadius: '8px' }} variant="circular" width={30} height={30} />
-                  </TableCell>
-              </TableRow>
-            ))
-          ) : assignedEmployees.length === 0 ? (
+          {assignedEmployees.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} align="center">
                 No employees assigned

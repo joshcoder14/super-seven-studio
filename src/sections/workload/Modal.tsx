@@ -16,7 +16,7 @@ import {
 import { Box, Typography, CircularProgress, Button } from '@mui/material';
 import { icons } from '@/icons';
 import Image from 'next/image';
-import { DeliverableStatus, MappedWorkloadItem, WorkloadApiItem, statusMap, Employee, statusOptions, statusStringToNumberMap } from '@/types/workload';
+import { DeliverableStatus, MappedWorkloadItem, WorkloadApiItem, statusMap, Employee, statusOptions, statusStringToNumberMap, mapStatusToBackend } from '@/types/workload';
 import { fetchAvailableEmployees, fetchWorkloadDetailsById } from '@/lib/api/fetchWorkloads';
 import Swal from 'sweetalert2';
 
@@ -110,30 +110,32 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
     const handleUpdate = async () => {
         if (!eventData || !bookingDetails) return;
 
-        const hasSelectedEmployee = employees.some(emp => emp.selected);
+        const selectedEmployeeIds = employees
+            .filter(e => e.selected)
+            .map(e => e.id);
 
-        if (selectedStatus !== 0 && !hasSelectedEmployee) {
+        // Validation
+        if (selectedStatus === 0 && selectedEmployeeIds.length > 0) {
             await Swal.fire({
-                title: 'Validation Error',
-                text: 'Please assign at least one employee for this status',
-                icon: 'error',
-                confirmButtonColor: '#2BB673',
+            title: 'Validation Error',
+            text: 'Cannot assign employees when status is Unassigned',
+            icon: 'error',
+            confirmButtonColor: '#2BB673',
             });
             return;
         }
 
-        // Validation 2: Status is Unassigned but employees are selected
-        if (selectedStatus === 0 && hasSelectedEmployee) {
+        if (selectedStatus !== 0 && selectedEmployeeIds.length === 0) {
             await Swal.fire({
-                title: 'Validation Error',
-                text: 'Cannot assign employees when status is Unassigned',
-                icon: 'error',
-                confirmButtonColor: '#2BB673',
+            title: 'Validation Error',
+            text: 'Please assign at least one employee for this status',
+            icon: 'error',
+            confirmButtonColor: '#2BB673',
             });
             return;
         }
 
-        // Add SweetAlert confirmation dialog
+        // Confirmation dialog
         const result = await Swal.fire({
             title: 'Are you sure?',
             text: "You are about to update this workload item. Do you want to proceed?",
@@ -145,7 +147,6 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
             cancelButtonText: 'Cancel'
         });
 
-        // Only proceed if user confirms
         if (!result.isConfirmed) return;
 
         try {
@@ -160,14 +161,17 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
             form.append('deliverable_status', String(selectedStatus));
             form.append('link', link || '');
 
-            // Get selected employee IDs
-            const selectedEmployeeIds = employees
-                .filter(e => e.selected)
-                .map(e => e.id);
-            
+            // Append employee IDs in array format
             selectedEmployeeIds.forEach((id, index) => {
-                form.append(`assigned_employees[${index}]`, id.toString());
+                form.append(`user_id[${index}]`, id.toString());
             });
+
+            // Debug logs
+            console.log('Selected Employees:', selectedEmployeeIds);
+            console.log('Form Data:');
+            for (let [key, value] of form.entries()) {
+                console.log(key, value);
+            }
 
             const response = await fetch(`/api/workload/${eventData.id}/assign`, {
                 method: 'POST',
@@ -178,10 +182,18 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
             });
 
             const responseData = await response.json();
-            console.log('API Response:', responseData);
+            console.log('Update response:', response);
+            console.log('Response data:', responseData);
 
             if (!response.ok) {
-                throw new Error(responseData.message || 'Failed to update workload');
+                let errorMessage = responseData.message || 'Failed to update workload';
+                if (response.status === 400) errorMessage = 'Invalid request: ' + errorMessage;
+                if (response.status === 401) errorMessage = 'Unauthorized: Please login again';
+                throw new Error(errorMessage);
+            }
+
+            if (responseData.status !== true) {
+            throw new Error(responseData.message || 'Update failed');
             }
 
             onUpdateSuccess?.();
@@ -381,7 +393,7 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                         <Button 
                             variant="contained" 
                             onClick={handleUpdate}
-                            disabled={loading || selectedStatus === 0}
+                            disabled={loading}
                             sx={{
                                 backgroundColor: '#2BB673',
                                 '&:hover': {

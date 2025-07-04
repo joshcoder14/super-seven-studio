@@ -1,4 +1,3 @@
-// src/sections/workload/WorkloadDetails.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -11,7 +10,7 @@ import { icons } from '@/icons';
 import Image from 'next/image';
 import Link from 'next/link';
 import { fetchWorkloadDetailsById } from '@/lib/api/fetchWorkloads';
-import { WorkloadApiItem } from '@/types/workload';
+import { WorkloadApiItem, WorkloadEmployee } from '@/types/workload'; // Added WorkloadEmployee import
 import dayjs from 'dayjs';
 
 interface WorkloadDetailsComponentProps {
@@ -82,7 +81,6 @@ export function WorkloadDetailsComponent({ workloadId }: WorkloadDetailsComponen
 
     // Format dates
     const bookingDate = dayjs(workloadDetails.booking_date).format('dddd, MMMM D');
-    const ceremonyTime = `${dayjs(workloadDetails.ceremony_time).format('h:mmA')}`;
     const releaseDate = workloadDetails.expected_completion_date 
         ? dayjs(workloadDetails.expected_completion_date).format('MMMM D, YYYY')
         : 'Not set';
@@ -113,7 +111,7 @@ export function WorkloadDetailsComponent({ workloadId }: WorkloadDetailsComponen
                             </Box>
                             <Box className="client-info">
                                 <Image width={25} height={25} src={icons.clockIcon} alt="clock icon" />
-                                <Typography component="span">{ceremonyTime}</Typography>
+                                <Typography component="span">{workloadDetails.ceremony_time}</Typography>
                             </Box>
                             <Box className="client-info">
                                 <Image width={25} height={25} src={icons.locationIcon} alt="location icon" />
@@ -153,9 +151,9 @@ export function WorkloadDetailsComponent({ workloadId }: WorkloadDetailsComponen
                     </Box>
                 </Details>
 
-                <WorkLoadViewTable
-                    assignedEmployees={workloadDetails.assigned_employees}
-                    loading={loading} 
+                {/* Pass assigned employees to the table */}
+                <WorkLoadViewTable 
+                    assignedEmployees={workloadDetails.assigned_employees || []} 
                 />
             </WorkloadWrapper>
         </WorkloadContainer>

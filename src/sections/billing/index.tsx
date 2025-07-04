@@ -11,7 +11,6 @@ export default function BillingComponent() {
         <HomeContainer>
             <HeadingComponent />
             <Box sx={{ padding: '0 30px' }}>
-                
                 <BillingTable />
             </Box>
         </HomeContainer>

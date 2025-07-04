@@ -24,11 +24,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
+  const getCookie = (name: string): string | null => {
+    if (typeof document === 'undefined') return null;
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+    return null;
+  };
+
   // Initialize auth state
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const accessToken = localStorage.getItem('access_token')
+        const accessToken = localStorage.getItem('access_token') || getCookie('authToken');
         const userData = localStorage.getItem('user')
 
         if (accessToken && userData) {
@@ -71,9 +79,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Clear all auth data
       localStorage.removeItem('access_token')
       localStorage.removeItem('user')
-      document.cookie.split(';').forEach(c => {
-        document.cookie = c.trim().split('=')[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/'
-      })
+
+      // document.cookie.split(';').forEach(c => {
+      //   document.cookie = c.trim().split('=')[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/'
+      // })
+
+      // Clear cookies properly
+      document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;';
+      document.cookie = 'XSRF-TOKEN=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;';
 
       setIsAuthenticated(false)
       setUser(null)

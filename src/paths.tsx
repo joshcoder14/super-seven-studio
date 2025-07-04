@@ -3,7 +3,7 @@ export const paths = {
     accounts: "/accounts",
     booking: "/booking",
     workload: "/workload",
-    workloadView: "/workload/view", 
+    workloadView: "/workload/", 
     package: "/package",
     billing: "/billing",
     feedback: "/feedback",

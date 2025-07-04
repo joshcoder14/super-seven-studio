@@ -159,7 +159,11 @@ export const BookingWrapper = styled(Box)`
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            // gap: 10px;
+
+            .form-label {
+                margin-bottom: 10px;
+            }
 
             .date-picker,
             .time-picker {

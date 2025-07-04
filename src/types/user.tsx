@@ -50,3 +50,14 @@ export interface ApiResponse {
     };
   };
 }
+
+export interface AuthPayload {
+  email: string;
+  password: string;
+  remember?: boolean;
+  first_name?: string;
+  last_name?: string;
+  confirm_password?: string;
+  contact_no?: string;
+  customer_type?: number;
+}

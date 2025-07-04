@@ -37,13 +37,14 @@ export default function CustomDatePicker({
       className="form-group"
       sx={{
         display: 'flex',
-        flexDirection: 'column',
-        gap: 1
+        flexDirection: 'column'
       }}
     >
-      <Box className="form-label">
-        {label}
-      </Box>
+      {!label ? null : (
+        <Box className="form-label">
+          {label}
+        </Box>
+      )}
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <DatePicker
           className='date-picker'

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { Box } from '@mui/material'
 import { SideBarContainer } from './styles'
 import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
@@ -27,15 +27,8 @@ interface MenuItem {
 
 export function NavBar(): React.JSX.Element {
     const router = useRouter();
-    const pathname = usePathname(); // safe for SSR
-    const [activeItem, setActiveItem] = useState<string>(pathname);
-    const { logout, user } = useAuth()
-
-    useEffect(() => {
-        setActiveItem(pathname); // update when pathname changes
-    }, [pathname]);
-
-    // const location = window.location.pathname;
+    const pathname = usePathname();
+    const { logout, user } = useAuth();
 
     const handleLogout = async (e: React.MouseEvent) => {
         e.preventDefault()
@@ -73,9 +66,18 @@ export function NavBar(): React.JSX.Element {
     }
 
     const handleClick = (link: string) => {
-        setActiveItem(link);
         router.push(link);
     }
+
+    // Determine if menu item should be active
+    const isActiveItem = (itemLink: string): boolean => {
+        // Home requires exact match
+        if (itemLink === paths.home) {
+            return pathname === paths.home;
+        }
+        // Other items match by path prefix
+        return pathname.startsWith(itemLink);
+    };
 
     const allMenuItems: MenuItem[] = [
         {
@@ -129,7 +131,7 @@ export function NavBar(): React.JSX.Element {
         {
             type: 'separator',
             label: '',
-            link: '#', // Dummy link for separator
+            link: '#',
             icon: null
         },
         {
@@ -148,20 +150,19 @@ export function NavBar(): React.JSX.Element {
 
     // Filter menu items based on user role
     const filteredMenuItems = allMenuItems.filter((item) => {
-        if (item.type === 'separator') return true; // Always show separators
-        if (item.label === 'Settings') return true; // Always show settings
-        if (item.label === 'Logout') return true; // Always show logout
-        // Show Feedback item only for Owner role
-        // if (user?.user_role === 'Owner') return item.label === 'Feedback';
+        if (item.type === 'separator') return true;
+        if (item.label === 'Settings') return true;
+        if (item.label === 'Logout') return true;
 
-        if (user?.user_role === 'Client') return ['Home', 'Booking', 'Package', 'Billing'].includes(item.label);
-        // For Photographer and Editor, show only Home, Workload
-        if (user?.user_role === 'Photographer' || user?.user_role === 'Editor') return ['Home', 'Workload'].includes(item.label);
-        if (user?.user_role === 'Owner') return true;
-        // if user is Client, hide the Feedback and show the rest
-        if (user?.user_role === 'Client') return !['Feedback'].includes(item.label);
-
-        // For other roles (admin, secretary, etc.), show all items
+        if (user?.user_role === 'Client') {
+            return ['Home', 'Booking', 'Package', 'Billing'].includes(item.label);
+        }
+        if (user?.user_role === 'Photographer' || user?.user_role === 'Editor') {
+            return ['Home', 'Workload'].includes(item.label);
+        }
+        if (user?.user_role === 'Owner') {
+            return true;
+        }
         return true;
     });
 
@@ -180,7 +181,8 @@ export function NavBar(): React.JSX.Element {
                         return <hr key={`separator-${index}`} className='side-bar-horizontal-rule'/>;
                     }
                     
-                   const className = `menu-item ${activeItem === item.link ? 'active' : ''}`;
+                    const active = isActiveItem(item.link);
+                    const className = `menu-item ${active ? 'active' : ''}`;
 
                     if (item.label === 'Logout') {
                         return (

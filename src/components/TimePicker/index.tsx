@@ -26,10 +26,12 @@ export default function CustomTimePicker({
 }: TimePickerProps) {
   return (
     <Box className="form-group">
-      <label className="form-label">
-        {label}
-        {required && <span style={{ color: 'red' }}>*</span>}
-      </label>
+      {!label ? null : (
+        <label className="form-label">
+          {label}
+          {required && <span style={{ color: 'red' }}>*</span>}
+        </label>
+      )}
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <TimePicker 
           className='time-picker'

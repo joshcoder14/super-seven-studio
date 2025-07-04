@@ -107,3 +107,16 @@ export const statusStringToNumberMap: Record<string, DeliverableStatus> = {
   'For Release': 5,
   'Completed': 6
 };
+
+export const mapStatusToBackend = (status: DeliverableStatus): string => {
+  const statusMap: Record<DeliverableStatus, string> = {
+    0: 'Unassigned',
+    1: 'Scheduled',
+    2: 'Uploaded',
+    3: 'For Edit',
+    4: 'Editing',
+    5: 'For Release',
+    6: 'Completed'
+  };
+  return statusMap[status];
+};

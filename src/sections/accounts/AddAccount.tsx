@@ -279,7 +279,6 @@ export function RegisterAccount({
                     `,
                     icon: 'success',
                     showCancelButton: true,
-                    confirmButtonText: 'Add another account',
                     cancelButtonText: 'Go to accounts page',
                     confirmButtonColor: '#3085d6',
                     cancelButtonColor: '#d33',
