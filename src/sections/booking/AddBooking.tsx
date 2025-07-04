@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { AddBookingContainer, BookingWrapper } from './styles';
-import { FormHeading } from '../../components/Heading/FormHeading';
+import { FormHeading } from '@/components/Heading/FormHeading';
 import { FormSection, FormField } from '@/types/field';
 import { Box, TextField, Typography, Button, CircularProgress, Alert } from '@mui/material';
 import { icons } from '@/icons';

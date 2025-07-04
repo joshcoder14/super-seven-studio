@@ -7,7 +7,7 @@ export const Heading = styled(Box)`
     position: relative;
     background-color: #f7faf5;
     width: 100%;
-    padding: 0 30px;
+    padding: 30px;
     padding-top: 40px;
 
     .title{

@@ -76,7 +76,7 @@ export const LinkAttached = styled(Box)`
 export const StatusWrapper = styled(Box)`
     width: 100%;
     height: auto;
-    padding: 0 40px;
+    padding: 40px;
     padding-bottom: 30px;
     display: flex;
     flex-direction: column;
@@ -168,6 +168,19 @@ export const ReleaseDateWrapper = styled(Box)`
         color: #ADADAD;
     }
 
+    
+
+        .form-group {
+            .date-picker {
+
+                .Mui-disabled {
+                    background-color: #f5f5f5;
+                    
+                height: 48px;
+                }
+            }
+        }
+
     .release {
         width: 100%;
         height: auto;
@@ -216,7 +229,7 @@ export const ReleaseDateWrapper = styled(Box)`
 export const AssignedWrapper = styled(Box)`
     width: 100%;
     height: auto;
-    padding: 40px;
+    padding: 0 40px 40px;
     display: flex;
     flex-direction: column;
 
@@ -349,13 +362,12 @@ export const Details = styled(Box)`
         border: 0.3px solid #E0E0E0;
 
         > div .client-info {
-            align-items: flex-start !important;
-            gap: 10px !important;
+            align-items: center;
 
             div {
                 font-family: Nunito Sans;
                 font-weight: 500;
-                font-size: 20px;
+                font-size: 18px;
                 line-height: 100%;
                 letter-spacing: 0px;
                 color: #828282;
@@ -380,31 +392,52 @@ export const Details = styled(Box)`
                 width: 100%;
                 max-width: 600px;
                 min-width: 600px;
+                margin-top: -40px;
 
                 .client-info {
                     display: flex;
                     flex-direction: column;
+                    gap: 10px;
+                    align-items: flex-start;
 
                     span {
                         &.status {
                             padding: 7px 9px;
                             border-radius: 6px;
                             font-weight: 600 !important;
-                            font-size: 16px !important;
-
-                            &.scheduled {
-                                background: rgba(239, 56, 38, 0.2);
-                                color: #EF3826;
-                            }
+                            font-size: 14px !important;
 
                             &.unassigned {
                                 background: rgba(0, 0, 0, 0.222);
                                 color: #404040;
                             }
 
+                            &.scheduled {
+                                background: rgba(239, 56, 38, 0.2);
+                                color: #EF3826;
+                            }
+
+                            &.uploaded {
+                                background: #4c007b40;
+                                color: #283475;
+                            }
+
+                            &.for-edit,
+                            &.for.edit,
                             &.editing {
-                                background: rgba(55, 73, 166, 0.2);
+                                background-color: rgba(55, 73, 166, 0.2);
                                 color: #3749A6;
+                            }
+
+                            &.for-release,
+                            &.for.release  {
+                                background-color: rgba(255, 123, 0, 0.2);
+                                color: #FF7B00;
+                            }
+
+                            &.completed {
+                                background-color: rgba(0, 182, 155, 0.2);
+                                color: #00B69B;
                             }
                         }
                     }
@@ -487,6 +520,8 @@ export const CloseWrapper = styled(Box)`
     display: flex;
     justify-content: flex-end;
     padding: 30px;
+    
+    border-bottom: 0.3px solid #E0E0E0;
 
     img {
         width: 18px;

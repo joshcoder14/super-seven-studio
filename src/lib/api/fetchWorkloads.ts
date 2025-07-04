@@ -84,9 +84,12 @@ export async function fetchWorkloads(
         bookingDate: item.booking_date,
         assigned: avatars,
         releaseDate: item.expected_completion_date,
+        ceremony_time: item.ceremony_time,
+        package_name: item.package_name,
         status: statusMap[item.deliverable_status || 0],
         deliverableStatus: item.deliverable_status || 0,
         booking_workload_status: item.booking_workload_status,
+        booking_address: item.booking_address,
         link: item.link || ''
       };
     });
@@ -113,7 +116,7 @@ export const fetchAvailableEmployees = async (workloadId: string): Promise<Emplo
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('No access token found');
 
-    const response = await fetch(`/api/workload/${workloadId}/available-employees`, {
+    const response = await fetch(`/api/workload/${workloadId}/employees`, {
         headers: {
             'Accept': 'application/json',
             'Authorization': `Bearer ${accessToken}`
@@ -128,21 +131,21 @@ export const fetchAvailableEmployees = async (workloadId: string): Promise<Emplo
     return data.data;
 };
 
-export const fetchBookingDetailsById = async (bookingId: string): Promise<WorkloadApiItem> => {
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) throw new Error('No access token found');
+export const fetchWorkloadDetailsById = async (workloadId: string): Promise<WorkloadApiItem> => {
+  const accessToken = localStorage.getItem('access_token');
+  if (!accessToken) throw new Error('No access token found');
 
-    const response = await fetch(`/api/workload/${bookingId}`, {
-        headers: {
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
-        }
-    });
+  const response = await fetch(`/api/workload/${workloadId}`, {
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      }
+  });
 
-    if (!response.ok) throw new Error('Failed to fetch booking details');
+  if (!response.ok) throw new Error('Failed to fetch booking details');
 
-    const data: ApiResponse<WorkloadApiItem> = await response.json();
-    if (!data.status) throw new Error(data.message);
+  const data: ApiResponse<WorkloadApiItem> = await response.json();
+  if (!data.status) throw new Error(data.message);
 
-    return data.data;
+  return data.data;
 };

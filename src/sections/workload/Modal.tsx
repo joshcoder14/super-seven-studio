@@ -16,28 +16,10 @@ import {
 import { Box, Typography, CircularProgress, Button } from '@mui/material';
 import { icons } from '@/icons';
 import Image from 'next/image';
-import { DeliverableStatus, MappedWorkloadItem, WorkloadApiItem } from '@/types/workload';
-import { fetchBookingDetails } from '@/lib/api/fetchBooking';
-import { statusMap } from '@/types/workload';
+import { DeliverableStatus, MappedWorkloadItem, WorkloadApiItem, statusMap, Employee, statusOptions, statusStringToNumberMap } from '@/types/workload';
+import { fetchAvailableEmployees, fetchWorkloadDetailsById } from '@/lib/api/fetchWorkloads';
+import Swal from 'sweetalert2';
 
-export interface Employee {
-    id: number;
-    full_name: string;
-    user_role: string;
-    selected?: boolean;
-}
-
-export interface StatusOption {
-    id: number;
-    name: string;
-    value: DeliverableStatus;
-}
-
-export interface ApiResponse<T> {
-    status: boolean;
-    message: string;
-    data: T;
-}
 
 export interface EditModalProps {
     open: boolean;
@@ -45,54 +27,6 @@ export interface EditModalProps {
     eventData: MappedWorkloadItem | null;
     onUpdateSuccess?: () => void;
 }
-
-const statusOptions: StatusOption[] = [
-    { id: 1, name: 'Unassigned', value: 0 },
-    { id: 2, name: 'Scheduled', value: 1 },
-    { id: 3, name: 'Uploaded', value: 2 },
-    { id: 4, name: 'For Edit', value: 3 },
-    { id: 5, name: 'Editing', value: 4 },
-    { id: 6, name: 'For Release', value: 5 },
-    { id: 7, name: 'Completed', value: 6 }
-];
-
-const fetchBookingDetailsById = async (bookingId: string): Promise<WorkloadApiItem> => {
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) throw new Error('No access token found');
-
-    const response = await fetch(`/api/workload/${bookingId}`, {
-        headers: {
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
-        }
-    });
-
-    if (!response.ok) throw new Error('Failed to fetch booking details');
-
-    const data: ApiResponse<WorkloadApiItem> = await response.json();
-    if (!data.status) throw new Error(data.message);
-
-    return data.data;
-};
-
-const fetchAvailableEmployees = async (workloadId: string): Promise<Employee[]> => {
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) throw new Error('No access token found');
-
-    const response = await fetch(`/api/workload/${workloadId}/employees`, {
-        headers: {
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
-        }
-    });
-
-    if (!response.ok) throw new Error('Failed to fetch available employees');
-
-    const data: ApiResponse<Employee[]> = await response.json();
-    if (!data.status) throw new Error(data.message);
-
-    return data.data;
-};
 
 export default function EditModal({ open, onClose, eventData, onUpdateSuccess }: EditModalProps) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -115,17 +49,28 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                 setError(null);
 
                 // Fetch booking details
-                const details = await fetchBookingDetailsById(eventData.id);
+                const details = await fetchWorkloadDetailsById(eventData.id);
                 setBookingDetails(details);
+                console.log("Workload details:", details);
                 
                 // Fetch available employees
                 const availableEmployees = await fetchAvailableEmployees(eventData.id);
                 
-                setSelectedStatus(eventData.deliverableStatus);
-                setLink(eventData.link || '');
+                // Set initial state from API response
+                setLink(details.link || '');
                 setCompletionDate(
-                    eventData.releaseDate ? dayjs(eventData.releaseDate) : null
+                    details.expected_completion_date ? dayjs(details.expected_completion_date) : null
                 );
+
+                // DIRECTLY USE booking_workload_status FROM API RESPONSE
+                const apiStatus = details.booking_workload_status;
+                console.log("API Status:", apiStatus);
+                
+                // Convert string status to numeric value
+                const numericStatus = statusStringToNumberMap[apiStatus] || 0;
+                console.log("Numeric Status:", numericStatus);
+                
+                setSelectedStatus(numericStatus);
 
                 // Mark already assigned employees as selected
                 const assignedIds = details.assigned_employees.map(e => e.id);
@@ -164,6 +109,44 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
 
     const handleUpdate = async () => {
         if (!eventData || !bookingDetails) return;
+
+        const hasSelectedEmployee = employees.some(emp => emp.selected);
+
+        if (selectedStatus !== 0 && !hasSelectedEmployee) {
+            await Swal.fire({
+                title: 'Validation Error',
+                text: 'Please assign at least one employee for this status',
+                icon: 'error',
+                confirmButtonColor: '#2BB673',
+            });
+            return;
+        }
+
+        // Validation 2: Status is Unassigned but employees are selected
+        if (selectedStatus === 0 && hasSelectedEmployee) {
+            await Swal.fire({
+                title: 'Validation Error',
+                text: 'Cannot assign employees when status is Unassigned',
+                icon: 'error',
+                confirmButtonColor: '#2BB673',
+            });
+            return;
+        }
+
+        // Add SweetAlert confirmation dialog
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "You are about to update this workload item. Do you want to proceed?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#2BB673',
+            cancelButtonColor: '#AAAAAA',
+            confirmButtonText: 'Yes, update it!',
+            cancelButtonText: 'Cancel'
+        });
+
+        // Only proceed if user confirms
+        if (!result.isConfirmed) return;
 
         try {
             setLoading(true);
@@ -239,7 +222,7 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                     width: '100%',
                     height: '50vh'
                 }}>
-                    <CircularProgress />
+                    <CircularProgress color="inherit" />
                 </Box>
             ) : (
                 <>
@@ -257,7 +240,50 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                             <Image width={25} height={25} src={icons.eventProfile} alt="profile icon" />
                             <Typography component="span">{eventData.client}</Typography>
                         </Box>
+                        <Box className="client-info">
+                            <Image width={25} height={25} src={icons.packageIcon} alt="profile icon" />
+                            <Typography component="span">{eventData.package_name}</Typography>
+                        </Box>
+                        <Box className="client-info">
+                            <Image width={25} height={25} src={icons.clockIcon} alt="profile icon" />
+                            <Typography component="span">{eventData.ceremony_time}</Typography>
+                        </Box>
+                        <Box className="client-info">
+                            <Image width={25} height={25} src={icons.locationIcon} alt="profile icon" />
+                            <Typography component="span">{eventData.booking_address}</Typography>
+                        </Box>
+                        
                     </Details>
+
+                    <StatusWrapper>
+                        <Box className="label">Status:</Box>
+                        <Box className="status-to" onClick={handleStatusClick}>
+                            <Typography component="span">
+                                {statusMap[selectedStatus]}
+                            </Typography>
+                            <Image
+                                width={12}
+                                height={7}
+                                src={icons.angleDown}
+                                alt="angle down"
+                                className={isStatusDropdownOpen ? 'rotated' : ''}
+                            />
+                        </Box>
+                        
+                        {isStatusDropdownOpen && (
+                            <Box className="dropdown-list">
+                                {statusOptions.map((status) => (
+                                    <Box
+                                        className="row status-option"
+                                        key={status.id}
+                                        onClick={() => handleStatusSelect(status.value)}
+                                    >
+                                        <Typography component="span">{status.name}</Typography>
+                                    </Box>
+                                ))}
+                            </Box>
+                        )}
+                    </StatusWrapper>
 
                     <AssignedWrapper>
                         <Box className="label">Assigned To:</Box>
@@ -316,40 +342,11 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                             value={completionDate}
                             onChange={setCompletionDate}
                             minDate={dayjs().add(1, 'day')}
-                            label="Release Date"
+                            label=""
                             required
+                            disabled={true} 
                         />
                     </ReleaseDateWrapper>
-
-                    <StatusWrapper>
-                        <Box className="label">Status:</Box>
-                        <Box className="status-to" onClick={handleStatusClick}>
-                            <Typography component="span">
-                                {statusMap[selectedStatus]}
-                            </Typography>
-                            <Image
-                                width={12}
-                                height={7}
-                                src={icons.angleDown}
-                                alt="angle down"
-                                className={isStatusDropdownOpen ? 'rotated' : ''}
-                            />
-                        </Box>
-                        
-                        {isStatusDropdownOpen && (
-                            <Box className="dropdown-list">
-                                {statusOptions.map((status) => (
-                                    <Box
-                                        className="row status-option"
-                                        key={status.id}
-                                        onClick={() => handleStatusSelect(status.value)}
-                                    >
-                                        <Typography component="span">{status.name}</Typography>
-                                    </Box>
-                                ))}
-                            </Box>
-                        )}
-                    </StatusWrapper>
 
                     <LinkAttached>
                         <Box className="label">Link Attached:</Box>
@@ -384,7 +381,7 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                         <Button 
                             variant="contained" 
                             onClick={handleUpdate}
-                            disabled={loading}
+                            disabled={loading || selectedStatus === 0}
                             sx={{
                                 backgroundColor: '#2BB673',
                                 '&:hover': {

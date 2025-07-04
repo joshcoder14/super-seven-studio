@@ -9,61 +9,23 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Typography
+  Typography,
+  Skeleton
 } from '@mui/material';
+import { WorkloadEmployee } from '@/types/workload';
 
-export function WorkLoadViewTable() {
+interface WorkLoadViewTableProps {
+  assignedEmployees: WorkloadEmployee[];
+  loading: boolean;
+}
+
+export function WorkLoadViewTable({assignedEmployees, loading }: WorkLoadViewTableProps) {
 
   const tableHeader = [
     'Employee Name',
     'Date Assigned',
     'Status',
     'Date Submitted'
-  ];
-
-  const rowData = [
-    {
-      employeeName: "Mark Parañas",
-      dateAssigned: "November 10, 2024",
-      status: "Pending",
-      dateSubmitted: "N/A",
-    },
-    {
-      employeeName: "Sheena Daogdog",
-      dateAssigned: "November 10, 2024",
-      status: "Editing",
-      dateSubmitted: "N/A",
-    },
-    {
-      employeeName: "Jackie Borja",
-      dateAssigned: "November 10, 2024",
-      status: "Completed",
-      dateSubmitted: "December 7, 2024",
-    },
-    {
-      employeeName: "Jerrik Estardo",
-      dateAssigned: "November 10, 2024",
-      status: "Completed",
-      dateSubmitted: "December 3, 2024",
-    },
-    {
-      employeeName: "Sheena Daogdog",
-      dateAssigned: "November 10, 2024",
-      status: "Editing",
-      dateSubmitted: "N/A",
-    },
-    {
-      employeeName: "Jackie Borja",
-      dateAssigned: "November 10, 2024",
-      status: "Completed",
-      dateSubmitted: "December 7, 2024",
-    },
-    {
-      employeeName: "Jerrik Estardo",
-      dateAssigned: "November 10, 2024",
-      status: "Completed",
-      dateSubmitted: "December 3, 2024",
-    }
   ];
 
   return (
@@ -86,21 +48,41 @@ export function WorkLoadViewTable() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {rowData.map((row, index) => (
-            <TableRow key={index}>
-                <TableCell align="center">{row.employeeName}</TableCell>
-                <TableCell align="center">{row.dateAssigned}</TableCell>
-                <TableCell 
-                    align="center"
-                    className={
-                        row.status.toLowerCase()
-                    }
-                >
-                    <Typography component="span">{row.status}</Typography>
-                </TableCell>
-                <TableCell align="center">{row.dateSubmitted}</TableCell>
+          {loading ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <TableRow key={`skeleton-${index}`}>
+                  <TableCell><Skeleton variant="text" /></TableCell>
+                  <TableCell><Skeleton variant="text" /></TableCell>
+                  <TableCell><Skeleton variant="text" /></TableCell>
+                  <TableCell sx={{ display: 'flex', gap: '8px' }}>
+                      <Skeleton sx={{ borderRadius: '8px' }} variant="circular" width={30} height={30} />
+                      <Skeleton sx={{ borderRadius: '8px' }} variant="circular" width={30} height={30} />
+                  </TableCell>
+              </TableRow>
+            ))
+          ) : assignedEmployees.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} align="center">
+                No employees assigned
+              </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            assignedEmployees.map((employee) => (
+              <TableRow key={employee.id}>
+                <TableCell align="center">{employee.full_name}</TableCell>
+                <TableCell align="center">{employee.date_assigned}</TableCell>
+                <TableCell 
+                  align="center"
+                  className={employee.workload_status.toLowerCase()}
+                >
+                  <Typography component="span">{employee.workload_status}</Typography>
+                </TableCell>
+                <TableCell align="center">
+                  {employee.date_uploaded || 'N/A'}
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </TableContainer>

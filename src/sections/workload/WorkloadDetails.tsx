@@ -1,19 +1,92 @@
+// src/sections/workload/WorkloadDetails.tsx
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { WorkloadContainer, WorkloadWrapper } from './styles';
 import { HeadingComponent } from '@/components/Heading';
 import { WorkLoadViewTable } from './WorkloadViewTable';
-import { 
-    Details 
-} from './styles';
-import { Box, Typography } from '@mui/material';
+import { Details } from './styles';
+import { Box, Typography, CircularProgress, Alert } from '@mui/material';
 import { icons } from '@/icons';
 import Image from 'next/image';
 import Link from 'next/link';
+import { fetchWorkloadDetailsById } from '@/lib/api/fetchWorkloads';
+import { WorkloadApiItem } from '@/types/workload';
+import dayjs from 'dayjs';
 
-export function WorkloadDetailsComponent(): React.JSX.Element {
-    const status = 'scheduled';
+interface WorkloadDetailsComponentProps {
+    workloadId: string;
+}
+
+export function WorkloadDetailsComponent({ workloadId }: WorkloadDetailsComponentProps): React.JSX.Element {
+    const [workloadDetails, setWorkloadDetails] = useState<WorkloadApiItem | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                
+                const details = await fetchWorkloadDetailsById(workloadId);
+                setWorkloadDetails(details);
+            } catch (err) {
+                console.error('Failed to fetch workload details:', err);
+                setError(err instanceof Error ? err.message : 'Failed to load workload details');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [workloadId]);
+
+    if (loading) {
+        return (
+            <WorkloadContainer sx={{ paddingBottom: '30px' }}>
+                <HeadingComponent />
+                <Box sx={{ 
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '50vh'
+                }}>
+                    <CircularProgress color="inherit" />
+                </Box>
+            </WorkloadContainer>
+        );
+    }
+
+    if (error) {
+        return (
+            <WorkloadContainer sx={{ paddingBottom: '30px' }}>
+                <HeadingComponent />
+                <Alert severity="error" sx={{ my: 3 }}>
+                    {error}
+                </Alert>
+            </WorkloadContainer>
+        );
+    }
+
+    if (!workloadDetails) {
+        return (
+            <WorkloadContainer sx={{ paddingBottom: '30px' }}>
+                <HeadingComponent />
+                <Alert severity="warning" sx={{ my: 3 }}>
+                    Workload details not found
+                </Alert>
+            </WorkloadContainer>
+        );
+    }
+
+    // Format dates
+    const bookingDate = dayjs(workloadDetails.booking_date).format('dddd, MMMM D');
+    const ceremonyTime = `${dayjs(workloadDetails.ceremony_time).format('h:mmA')}`;
+    const releaseDate = workloadDetails.expected_completion_date 
+        ? dayjs(workloadDetails.expected_completion_date).format('MMMM D, YYYY')
+        : 'Not set';
+
     return (
         <WorkloadContainer sx={{ paddingBottom: '30px' }}>
             <HeadingComponent /> 
@@ -22,27 +95,29 @@ export function WorkloadDetailsComponent(): React.JSX.Element {
                     <Box className="event-head">
                         <Box className="event-icon"/>
                         <Box className="event-name">
-                            <h2 className="title">Charlie Birthday</h2>
-                            <Typography component="span" className="event-date">Monday, December 29</Typography>
+                            <h2 className="title">{workloadDetails.event_name}</h2>
+                            <Typography component="span" className="event-date">
+                                {bookingDate}
+                            </Typography>
                         </Box>
                     </Box>
                     <Box className="event-info">
                         <Box className="left-info">
                             <Box className="client-info">
                                 <Image width={25} height={25} src={icons.eventProfile} alt="profile icon" />
-                                <Typography component="span">Smile Services</Typography>
+                                <Typography component="span">{workloadDetails.customer_name}</Typography>
                             </Box>
                             <Box className="client-info">
                                 <Image width={25} height={25} src={icons.packageIcon} alt="package icon" />
-                                <Typography component="span">Package B</Typography>
+                                <Typography component="span">{workloadDetails.package_name}</Typography>
                             </Box>
                             <Box className="client-info">
                                 <Image width={25} height={25} src={icons.clockIcon} alt="clock icon" />
-                                <Typography component="span">7:00AM - 7:00PM</Typography>
+                                <Typography component="span">{ceremonyTime}</Typography>
                             </Box>
                             <Box className="client-info">
                                 <Image width={25} height={25} src={icons.locationIcon} alt="location icon" />
-                                <Typography component="span">Henan Resort, Panglao</Typography>
+                                <Typography component="span">{workloadDetails.booking_address}</Typography>
                             </Box>
                         </Box>
                         <Box className="right-info">
@@ -52,27 +127,36 @@ export function WorkloadDetailsComponent(): React.JSX.Element {
                                     component="span"
                                     className='release-date'
                                 >
-                                    February 1, 2025
+                                    {releaseDate}
                                 </Typography>
                             </Box>
                             <Box className="client-info">
                                 <Box>Status:</Box>
                                 <Typography
-                                    className={`status ${status}`}
+                                    className={`status ${workloadDetails.booking_workload_status.toLowerCase()}`}
                                     component="span"
                                 >
-                                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                                    {workloadDetails.booking_workload_status}
                                 </Typography>
                             </Box>
                             <Box className="client-info" sx={{ display: 'flex', flexDirection: 'column !important', alignContent: 'flex-start' }}>
                                 <Box>Link Attached:</Box>
-                                <Link href="#">https://drive.google.com/drive/u/1/folders/1ZjgOidfgdfgrgt56</Link>
+                                {workloadDetails.link ? (
+                                    <Link href={workloadDetails.link} target="_blank">
+                                        {workloadDetails.link}
+                                    </Link>
+                                ) : (
+                                    <Typography component="span" sx={{ fontStyle: 'italic' }}>No link attached</Typography>
+                                )}
                             </Box>
                         </Box>
                     </Box>
                 </Details>
 
-                <WorkLoadViewTable />
+                <WorkLoadViewTable
+                    assignedEmployees={workloadDetails.assigned_employees}
+                    loading={loading} 
+                />
             </WorkloadWrapper>
         </WorkloadContainer>
     );

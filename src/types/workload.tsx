@@ -15,6 +15,8 @@ export interface WorkloadApiItem {
   event_name: string;
   customer_name: string;
   booking_address: string;
+  package_name: string;
+  ceremony_time: string;
   expected_completion_date: string;
   completion_date: string;
   booking_workload_status: string;
@@ -42,9 +44,12 @@ export interface WorkloadAvatar {
 
 export interface MappedWorkloadItem {
   id: string;
+  bookingDate: string;
   eventName: string;
   client: string;
-  bookingDate: string;
+  booking_address: string;
+  package_name: string;
+  ceremony_time: string;
   assigned: WorkloadAvatar[];
   releaseDate: string;
   status: string;
@@ -91,3 +96,14 @@ export const statusOptions: StatusOption[] = [
   { id: 6, name: 'For Release', value: 5 },
   { id: 7, name: 'Completed', value: 6 }
 ];
+
+// Create a reverse map from status string to DeliverableStatus
+export const statusStringToNumberMap: Record<string, DeliverableStatus> = {
+  'Unassigned': 0,
+  'Scheduled': 1,
+  'Uploaded': 2,
+  'For Edit': 3,
+  'Editing': 4,
+  'For Release': 5,
+  'Completed': 6
+};

@@ -42,6 +42,8 @@ export interface ModalSection {
 export interface PackageProps {
     id: number;
     packageName: string;
+    package_details: string;
+    package_price: string;
 }
 
 export interface AddOnsProps {

@@ -35,6 +35,30 @@ export function HeadingComponent(): React.JSX.Element {
     );
   }
 
+  // Check if path starts with /booking
+  if (pathname.startsWith(paths.booking)) {
+    return (
+      <Heading className="heading">
+        <Box className="title">
+          {pathTitles[paths.booking]}
+        </Box>
+        <Typography component="hr" className='horizontal-rule'/>
+      </Heading>
+    );
+  }
+
+  //Check if path starts with /workload
+  if (pathname.startsWith(paths.workload)) {
+    return (
+      <Heading className="heading">
+        <Box className="title">
+          {pathTitles[paths.workload]}
+        </Box>
+        <Typography component="hr" className='horizontal-rule'/>
+      </Heading>
+    );
+  }
+
   // Find the matching path or use the current pathname as fallback
   const currentPath = Object.values(paths).find(path => path === pathname) || paths.home;
   const title = pathTitles[currentPath] || "Home";

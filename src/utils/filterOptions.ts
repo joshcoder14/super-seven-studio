@@ -7,7 +7,7 @@ export const accountFilterOptions = [
 ] as const;
 
 export const workloadFilterOptions = [
-  { value: 'all', label: 'All Statuses' },
+  { value: 'all', label: 'All' },
   { value: '0', label: 'Unassigned' },
   { value: '1', label: 'Scheduled' },
   { value: '2', label: 'Uploaded' },
