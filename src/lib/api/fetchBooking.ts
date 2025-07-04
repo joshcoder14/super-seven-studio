@@ -254,15 +254,11 @@ export const fetchApprovedBookings = async (): Promise<Date[]> => {
     if (!response.ok) throw new Error('Failed to fetch approved bookings');
     const data = await response.json();
 
-    console.log("Approved Bookings:", data);
-
     const approvedBookingDates = data.data.map((booking: any) => {
       const utcDate = new Date(booking.booking_date.iso);
       const phDate = new Date(utcDate.getTime() + (8 * 60 * 60 * 1000));
       return phDate;
     });
-
-    console.log("Extracted approved dates:", approvedBookingDates);
     return approvedBookingDates;
   } catch (err) {
     console.error('Error fetching approved bookings:', err);
@@ -287,7 +283,6 @@ export const fetchUnavailableDatesForMonth = async (month: number, year: number)
     const newUnavailableDates = data.data.map((item: any) => new Date(item.date))
       .filter((date: Date) => !isNaN(date.getTime()));
 
-    console.log("New unavailable dates:", newUnavailableDates);
     return newUnavailableDates;
   } catch (err) {
     console.error(`Error fetching unavailable dates for month ${month}, year ${year}:`, err);
@@ -391,9 +386,9 @@ export const submitBooking = async (
             result['bookingDate'] = result[key];
           }
         });
-        throw { message: data.message || 'Booking failed', errors: result };
+        throw { message: data.message || 'Booking faileds', errors: result };
       }
-      throw new Error(data.message || 'Booking failed');
+      throw new Error(data.message || 'Booking faileds');
     }
 
     return data;

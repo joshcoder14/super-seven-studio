@@ -1,5 +1,7 @@
 
 export const icons = {
+    favIcon : "/assets/icons/favicon.svg",
+    logo : "/assets/icons/logo.svg",
     closeIcon : "/assets/icons/close.svg",
     eventProfile : "/assets/icons/profile-icon.svg",
     packageIcon : "/assets/icons/package.svg",

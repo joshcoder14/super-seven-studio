@@ -1,7 +1,7 @@
 "use client";
-import React from 'react'
-import { Box } from '@mui/material'
-import { SideBarContainer } from './styles'
+import React, { useState, useEffect } from 'react';
+import { Box } from '@mui/material';
+import { SideBarContainer } from './styles';
 import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import HouseIcon from '@mui/icons-material/House';
@@ -12,13 +12,16 @@ import RateReviewIcon from '@mui/icons-material/RateReview';
 import StackedBarChartIcon from '@mui/icons-material/StackedBarChart';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
-import {paths} from '@/paths'
+import { paths } from '@/paths';
 import Link from 'next/link';
-import { useRouter, usePathname  } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Swal from 'sweetalert2';
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
+import { icons } from '@/icons';
 
 interface MenuItem {
+    id: string;
     label: string;
     link: string;
     icon: React.ReactNode;
@@ -26,12 +29,16 @@ interface MenuItem {
 }
 
 export function NavBar(): React.JSX.Element {
-    const router = useRouter();
     const pathname = usePathname();
     const { logout, user } = useAuth();
+    const [isClient, setIsClient] = useState(false);
+    
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const handleLogout = async (e: React.MouseEvent) => {
-        e.preventDefault()
+        e.preventDefault();
 
         const result = await Swal.fire({
             title: 'Are you sure?',
@@ -44,15 +51,15 @@ export function NavBar(): React.JSX.Element {
             showLoaderOnConfirm: true,
             preConfirm: async () => {
                 try {
-                    await logout()
-                    return true
+                    await logout();
+                    return true;
                 } catch (error) {
-                    console.error('Logout failed:', error)
-                    Swal.showValidationMessage('Logout failed. Please try again.')
-                    return false
+                    console.error('Logout failed:', error);
+                    Swal.showValidationMessage('Logout failed. Please try again.');
+                    return false;
                 }
             }
-        })
+        });
 
         if (result.isConfirmed) {
             await Swal.fire({
@@ -61,86 +68,90 @@ export function NavBar(): React.JSX.Element {
                 icon: 'success',
                 timer: 1500,
                 showConfirmButton: false
-            })
+            });
         }
-    }
+    };
 
-    const handleClick = (link: string) => {
-        router.push(link);
-    }
-
-    // Determine if menu item should be active
     const isActiveItem = (itemLink: string): boolean => {
-        // Home requires exact match
         if (itemLink === paths.home) {
             return pathname === paths.home;
         }
-        // Other items match by path prefix
         return pathname.startsWith(itemLink);
     };
 
     const allMenuItems: MenuItem[] = [
         {
+            id: '1',
             label: 'Home',
             link: paths.home,
             icon: <HouseIcon />,
             type: 'menu'
         },
         {
+            id: '2',
             label: 'Accounts',
             link: paths.accounts,
             icon: <GroupOutlinedIcon />,
             type: 'menu'
         },
         {
+            id: '3',
             label: 'Booking',
             link: paths.booking,
             icon: <CalendarMonthIcon />,
             type: 'menu'
         },
         {
+            id: '4',
             label: 'Workload',
             link: paths.workload,
             icon: <ListAltIcon />,
             type: 'menu'
         },
         {
+            id: '5',
             label: 'Package',
             link: paths.package,
             icon: <CardGiftcardIcon />,
             type: 'menu'
         },
         {
+            id: '6',
             label: 'Billing',
             link: paths.billing,
             icon: <PaymentsIcon />,
             type: 'menu'
         },
         {
+            id: '7',
             label: 'Feedback',
             link: paths.feedback,
             icon: <RateReviewIcon />,
             type: 'menu'
         },
         {
+            id: '8',
             label: 'Reports',
             link: paths.reports,
             icon: <StackedBarChartIcon />,
             type: 'menu'
         },
         {
+            id: '9',
             type: 'separator',
             label: '',
             link: '#',
             icon: null
         },
         {
+            id: '10',
             label: 'Settings',
             link: paths.settings,
             icon: <SettingsIcon />,
             type: 'bottom'
         },
         {
+            id: '11',
             label: 'Logout',
             link: '#',
             icon: <PowerSettingsNewIcon />,
@@ -148,32 +159,34 @@ export function NavBar(): React.JSX.Element {
         },
     ];
 
-    // Filter menu items based on user role
-    const filteredMenuItems = allMenuItems.filter((item) => {
-        if (item.type === 'separator') return true;
-        if (item.label === 'Settings') return true;
-        if (item.label === 'Logout') return true;
+    const getFilteredMenuItems = () => {
+        if (!user) return [];
 
-        if (user?.user_role === 'Client') {
-            return ['Home', 'Booking', 'Package', 'Billing'].includes(item.label);
-        }
-        if (user?.user_role === 'Photographer' || user?.user_role === 'Editor') {
-            return ['Home', 'Workload'].includes(item.label);
-        }
-        if (user?.user_role === 'Owner') {
-            return true;
-        }
-        return true;
-    });
+        return allMenuItems.filter((item) => {
+            if (item.type === 'separator') return true;
+            if (item.label === 'Settings' || item.label === 'Logout') return true;
 
-    const favIcon = '/assets/icons/favicon.svg';
-    const logo = '/assets/icons/logo.svg';
+            switch (user.user_role) {
+                case 'Client':
+                    return ['Home', 'Booking', 'Package', 'Billing'].includes(item.label);
+                case 'Photographer':
+                case 'Editor':
+                    return ['Home', 'Workload'].includes(item.label);
+                case 'Owner':
+                    return true;
+                default:
+                    return false;
+            }
+        });
+    };
+
+    const filteredMenuItems = isClient ? getFilteredMenuItems() : [];
 
     return (
         <SideBarContainer className="navbar">
             <Box className="logo-container">
-                <img src={favIcon} alt="logo" />
-                <img src={logo} alt="logo" />
+                <Image width={60} height={60} src={icons.favIcon} alt="fav icon" />
+                <Image width={100} height={100} priority src={icons.logo} alt="logo" />
             </Box>
             <Box className="menu-items-container">
                 {filteredMenuItems.map((item, index) => {
@@ -186,15 +199,15 @@ export function NavBar(): React.JSX.Element {
 
                     if (item.label === 'Logout') {
                         return (
-                            <a 
+                            <Link 
                                 href="#"
                                 className={className}  
-                                key={item.label}
+                                key={item.id}
                                 onClick={handleLogout}
                             >
                                 {item.icon}
                                 <p>{item.label}</p>
-                            </a>
+                            </Link>
                         );
                     }
                     
@@ -202,11 +215,7 @@ export function NavBar(): React.JSX.Element {
                         <Link 
                             href={item.link} 
                             className={className}  
-                            key={item.label}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                handleClick(item.link);
-                            }}
+                            key={item.id}
                         >
                             {item.icon}
                             <p>{item.label}</p>
@@ -215,5 +224,5 @@ export function NavBar(): React.JSX.Element {
                 })}
             </Box>
         </SideBarContainer>
-    )
+    );
 }

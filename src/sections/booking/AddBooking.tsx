@@ -492,12 +492,11 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
       
       window.location.href = paths.booking;
     } catch (err: any) {
-      console.error('Booking error:', err);
       setState(prev => ({
         ...prev,
         error: {
           ...prev.error,
-          form: err instanceof Error ? err.message : 'Booking failed'
+          form: err instanceof Error ? err.message : 'Booking faileds'
         },
         errors: err.errors || {},
         loading: {

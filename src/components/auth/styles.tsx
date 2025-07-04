@@ -125,6 +125,31 @@ export const LoginWrapper = styled(Box)`
         display: flex;
         flex-direction: column;
         gap: 30px;
+        
+        button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 418px;
+            width: 100% !important;
+            height: 56px;
+            border-radius: 8px;
+            background: #2BB673;
+            font-family: Nunito Sans;
+            font-weight: 700;
+            font-size: 20px;
+            line-height: 100%;
+            letter-spacing: -0.07px;
+            text-align: center;
+            color: #FFFFFF;
+            margin-top: 0px;
+            margin-bottom: 18px;
+            margin-left: auto;
+            margin-right: auto;
+            appearance: none;
+            border: none;
+            cursor: pointer;
+        }
 
         .remember {
             display: flex;
@@ -166,31 +191,6 @@ export const LoginWrapper = styled(Box)`
                 color: #202224;
                 opacity: 0.6;
             }
-        }
-
-        button {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            max-width: 418px;
-            width: 100%;
-            height: 56px;
-            border-radius: 8px;
-            background: #2BB673;
-            font-family: Nunito Sans;
-            font-weight: 700;
-            font-size: 20px;
-            line-height: 100%;
-            letter-spacing: -0.07px;
-            text-align: center;
-            color: #FFFFFF;
-            margin-top: 0px;
-            margin-bottom: 18px;
-            margin-left: auto;
-            margin-right: auto;
-            appearance: none;
-            border: none;
-            cursor: pointer;
         }
     }
 

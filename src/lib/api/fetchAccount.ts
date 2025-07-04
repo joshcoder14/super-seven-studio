@@ -330,7 +330,6 @@ export async function fetchEmployeeById(id: string): Promise<User> {
     if (!response.ok) throw new Error('Failed to fetch employee data');
 
     const responseData = await response.json();
-    console.log('API Response:', responseData); // Debug log
     
     // Handle different possible response structures
     const user = responseData.data?.data || responseData.data || responseData;

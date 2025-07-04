@@ -41,7 +41,6 @@ export async function fetchWorkloads(
     });
 
     const responseData = await response.json();
-    console.log('Workload API Response:', responseData);
 
     if (!response.ok) {
       throw new Error(responseData.message || 'Failed to fetch workloads');

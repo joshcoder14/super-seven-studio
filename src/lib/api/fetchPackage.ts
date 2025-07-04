@@ -52,8 +52,6 @@ export const createPackage = async (data: { name: string; price: string; details
         }),
     });
 
-    console.log("Create Package Response:", response);
-
     if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to create package');
@@ -78,8 +76,6 @@ export const createAddon = async (data: { name: string; price: string; details: 
             add_on_details: data.details
         }),
     });
-
-    console.log("Create Addon Response:", response);
 
     if (!response.ok) {
         const errorData = await response.json();

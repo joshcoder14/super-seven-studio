@@ -51,7 +51,6 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                 // Fetch booking details
                 const details = await fetchWorkloadDetailsById(eventData.id);
                 setBookingDetails(details);
-                console.log("Workload details:", details);
                 
                 // Fetch available employees
                 const availableEmployees = await fetchAvailableEmployees(eventData.id);
@@ -64,11 +63,9 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
 
                 // DIRECTLY USE booking_workload_status FROM API RESPONSE
                 const apiStatus = details.booking_workload_status;
-                console.log("API Status:", apiStatus);
                 
                 // Convert string status to numeric value
                 const numericStatus = statusStringToNumberMap[apiStatus] || 0;
-                console.log("Numeric Status:", numericStatus);
                 
                 setSelectedStatus(numericStatus);
 
@@ -166,13 +163,6 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                 form.append(`user_id[${index}]`, id.toString());
             });
 
-            // Debug logs
-            console.log('Selected Employees:', selectedEmployeeIds);
-            console.log('Form Data:');
-            for (let [key, value] of form.entries()) {
-                console.log(key, value);
-            }
-
             const response = await fetch(`/api/workload/${eventData.id}/assign`, {
                 method: 'POST',
                 headers: {
@@ -182,8 +172,6 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
             });
 
             const responseData = await response.json();
-            console.log('Update response:', response);
-            console.log('Response data:', responseData);
 
             if (!response.ok) {
                 let errorMessage = responseData.message || 'Failed to update workload';

@@ -27,10 +27,9 @@ export function HeadingComponent(): React.JSX.Element {
   if (pathname.startsWith(paths.accounts)) {
     return (
       <Heading className="heading">
-        <Box className="title">
+        <Typography component="h2" className="title">
           {pathTitles[paths.accounts]}
-        </Box>
-        <Typography component="hr" className='horizontal-rule'/>
+        </Typography>
       </Heading>
     );
   }
@@ -39,10 +38,9 @@ export function HeadingComponent(): React.JSX.Element {
   if (pathname.startsWith(paths.booking)) {
     return (
       <Heading className="heading">
-        <Box className="title">
+        <Typography component="h2" className="title">
           {pathTitles[paths.booking]}
-        </Box>
-        <Typography component="hr" className='horizontal-rule'/>
+        </Typography>
       </Heading>
     );
   }
@@ -51,10 +49,9 @@ export function HeadingComponent(): React.JSX.Element {
   if (pathname.startsWith(paths.workload)) {
     return (
       <Heading className="heading">
-        <Box className="title">
+        <Typography component="h2" className="title">
           {pathTitles[paths.workload]}
-        </Box>
-        <Typography component="hr" className='horizontal-rule'/>
+        </Typography>
       </Heading>
     );
   }
@@ -65,10 +62,9 @@ export function HeadingComponent(): React.JSX.Element {
 
   return (
     <Heading className="heading">
-      <Box className="title">
+      <Typography component="h2" className="title">
         {title}
-      </Box>
-      <Typography component="hr" className='horizontal-rule'/>
+      </Typography>
     </Heading>
   );
 }

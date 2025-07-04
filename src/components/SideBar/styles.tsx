@@ -178,6 +178,6 @@ export const SideBarContainer = styled(Box)`
     .logo-container{
         display: flex;
         justify-content: center;
-        margin: 20px 0 0;
+        align-items: center;
     }
 `
