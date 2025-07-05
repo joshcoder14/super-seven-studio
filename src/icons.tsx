@@ -13,4 +13,5 @@ export const icons = {
     displayIcon : "/assets/icons/eye-icon.svg",
     addIcon : "/assets/icons/add-icon.svg",
     profileIcon : "/assets/icons/profile-black.svg",
+    caledarIcon: "/assets/icons/calendar.svg",
 } as const;

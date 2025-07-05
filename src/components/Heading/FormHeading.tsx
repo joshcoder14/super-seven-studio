@@ -4,7 +4,7 @@ import { Typography } from "@mui/material";
 
 export function FormHeading({title}: {title: string}): React.JSX.Element {
     return (
-        <Heading>
+        <Heading className="heading-component">
             <Typography component="h2">{title}</Typography>
         </Heading>
     )

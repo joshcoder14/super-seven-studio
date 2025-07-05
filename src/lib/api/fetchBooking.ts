@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { BookingEvent, UnavailableDate, BookingFormData } from '@/types/global';
+import { BookingEvent, UnavailableDate, BookingFormData } from '@/types/booking';
 import { PackageProps, AddOnsProps } from '@/types/field';
 
 // Configure dayjs plugins

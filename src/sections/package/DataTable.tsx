@@ -13,6 +13,7 @@ import {
   Skeleton
 } from '@mui/material';
 import { icons } from '@/icons';
+import { formatCurrency } from '@/utils/billing';
 
 interface DataTableProps {
   data: any[];
@@ -37,13 +38,13 @@ export default function DataTable({
     if (type === 'package') {
       return {
         name: row.package_name,
-        price: `₱${row.package_price}`,
+        price: formatCurrency(row.package_price),
         details: row.package_details
       };
     } else {
       return {
         name: row.add_on_name,
-        price: `₱${row.add_on_price}`,
+        price: formatCurrency(row.add_on_price),
         details: row.add_on_details
       };
     }

@@ -20,7 +20,7 @@ import { faPlus, faChevronDown, faXmark } from '@fortawesome/free-solid-svg-icon
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { icons } from '@/icons';
-import type { BookingEvent, StatusFilters, UnavailableDate } from '@/types/global';
+import type { BookingEvent, StatusFilters, UnavailableDate } from '@/types/booking';
 import CustomDatePicker from '@/components/datepicker';
 import CustomTimePicker from '@/components/TimePicker';
 import dayjs, { Dayjs } from 'dayjs';
