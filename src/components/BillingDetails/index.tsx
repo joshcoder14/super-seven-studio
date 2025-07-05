@@ -4,7 +4,7 @@ import React from 'react';
 import { Box, Typography}  from '@mui/material';
 import { BillingCard, DetailsContent, Details, Assessment, AssessmentDetails } from './styles';
 import { FormHeading } from '@/components/Heading/FormHeading';
-import { Billing, BillingDetailsProps } from '@/types/billing';
+import { Billing } from '@/types/billing';
 import { formatAmount, getAddonNames } from '@/utils/billing';
 
 export function BillingDetailsComponent({ billing }: { billing: Billing }): React.JSX.Element {
