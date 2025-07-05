@@ -59,3 +59,32 @@ export const fetchBillingDetails = async (id: string): Promise<Billing> => {
         throw error;
     }
 };
+
+export async function addPayment(
+    billingId: string,
+    amount: string,
+    paymentMethod: string,
+    remarks: string
+): Promise<void> {
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) throw new Error('No access token found');
+
+    const formData = new FormData();
+    formData.append('amount', amount);
+    formData.append('payment_method', paymentMethod);
+    formData.append('remarks', remarks);
+
+    const response = await fetch(`/api/billings/${billingId}/add-payment`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+        body: formData
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Payment failed');
+    }
+
+    return response.json();
+}
+

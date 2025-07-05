@@ -10,6 +10,7 @@ import { Billing } from '@/types/billing';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import {paths} from '@/paths';
+import { addPayment } from '@/lib/api/fetchBilling';
 
 export function PaymentCardComponent({ 
   billing, 
@@ -81,24 +82,12 @@ export function PaymentCardComponent({
         setIsSubmitting(true);
         
         try {
-            const accessToken = localStorage.getItem('access_token');
-            if (!accessToken) throw new Error('No access token found');
-
-            const formData = new FormData();
-            formData.append('amount', amount);
-            formData.append('payment_method', selectedPaymentMethod === 'Cash Payment' ? '0' : '1');
-            formData.append('remarks', remarks);
-
-            const response = await fetch(`/api/billings/${billingId}/add-payment`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${accessToken}` },
-                body: formData
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Payment failed');
-            }
+            await addPayment(
+                billingId,
+                amount,
+                selectedPaymentMethod === 'Cash Payment' ? '0' : '1',
+                remarks
+            );
 
             // Show success message
             await Swal.fire({
@@ -218,12 +207,12 @@ export function PaymentCardComponent({
                     Cancel
                 </Button>
                 <Button 
-                    className='btn pay' 
+                    className={`btn pay ${isSubmitting || balance === 0 ? 'disabled' : ''}`}
                     variant="contained" 
                     type="submit"
                     // Fixed: Compare numbers properly
                     disabled={isSubmitting || balance === 0}
-                    >
+                >
                     {isSubmitting ? <CircularProgress size={24} /> : 'Pay'}
                 </Button>
             </Box>

@@ -161,6 +161,15 @@ export const PaymentCard = styled(Box)`
                 &.pay {
                     background: #2BB673;
                 }
+
+                &.disabled {
+                    background: #AAAAAA;
+                    opacity: 0.5;
+
+                    &:hover {
+                        cursor: not-allowed;
+                    }
+                }
             }
         }
     }

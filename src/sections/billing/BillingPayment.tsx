@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, CircularProgress, Alert } from '@mui/material';
 import { BillingDetailsComponent } from '@/components/BillingDetails';
 import { HeadingComponent } from '@/components/Heading';
-import { BillingPaymentContainer, BillingDetails } from './styles';
+import { BillingPaymentContainer, BillingDetails, TransactionWrapper } from './styles';
 import { Billing, BillingDetailsProps } from '@/types/billing';
 import { PaymentCardComponent } from '@/components/paymentCard';
+import { TransactionTable } from '@/components/TransactionTable';
 import { fetchBillingDetails } from '@/lib/api/fetchBilling';
 
 export default function BillingPayment({ billingId }: BillingDetailsProps): React.JSX.Element {
@@ -14,7 +15,6 @@ export default function BillingPayment({ billingId }: BillingDetailsProps): Reac
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     
-    // Moved loadBillingDetails outside useEffect with useCallback
     const loadBillingDetails = useCallback(async () => {
         try {
             setLoading(true);
@@ -26,11 +26,11 @@ export default function BillingPayment({ billingId }: BillingDetailsProps): Reac
         } finally {
             setLoading(false);
         }
-    }, [billingId]); // Added dependency array
+    }, [billingId]);
     
     useEffect(() => {
         loadBillingDetails();
-    }, [loadBillingDetails]); // Added dependency
+    }, [loadBillingDetails]);
     
     if (loading) {
         return (
@@ -52,20 +52,20 @@ export default function BillingPayment({ billingId }: BillingDetailsProps): Reac
         return <Typography sx={{ p: 2 }}>Billing not found</Typography>;
     }
     
-    // Check if status is "partial" (case-insensitive)
-    const isPartial = billing.status.toLowerCase() === 'partial';
-    
     return (
         <BillingPaymentContainer>
             <HeadingComponent />
             <BillingDetails>
-                {billing && <BillingDetailsComponent billing={billing} />}
+                <BillingDetailsComponent billing={billing} />
                 <PaymentCardComponent 
                     billing={billing} 
                     billingId={billingId} 
                     onPaymentSuccess={loadBillingDetails} 
                 />
             </BillingDetails>
+            <TransactionWrapper>
+                <TransactionTable transactions={billing?.transactions} />
+            </TransactionWrapper>
         </BillingPaymentContainer>
     )
 }
