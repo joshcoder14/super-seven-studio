@@ -23,8 +23,8 @@ export default function Preloader({ children }: { children: React.ReactNode }) {
           left: 0,
           width: '100vw',
           height: '100vh',
-          backgroundColor: 'rgba(255, 255, 255, 0.2)',
-          backdropFilter: 'blur(2px)',
+          backgroundColor: 'rgba(255, 255, 255, 0.5)',
+          // backdropFilter: 'blur(2px)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -36,7 +36,7 @@ export default function Preloader({ children }: { children: React.ReactNode }) {
           size={60} 
           thickness={4}
           sx={{ 
-            color: 'primary.main',
+            color: '#00B69B',
             animationDuration: '800ms',
           }} 
         />
