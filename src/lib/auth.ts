@@ -1,5 +1,4 @@
 import type { NextRequest } from 'next/server'
-import { NextResponse } from 'next/server'
 
 export const requireAuth = (req: NextRequest) => {
     const authToken = req.cookies.get('authToken')?.value
