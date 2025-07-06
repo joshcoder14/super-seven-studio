@@ -12,7 +12,6 @@ const pathTitles: Record<string, string> = {
   [paths.accounts]: "Accounts",
   [paths.booking]: "Booking",
   [paths.workload]: "Workload",
-  [paths.workloadView]: "Workload",
   [paths.package]: "Package",
   [paths.billing]: "Billing",
   [paths.feedback]: "Feedback",

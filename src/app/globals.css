@@ -128,11 +128,11 @@ table tbody tr td.pending span {
 table tbody tr td.uploaded span {
   padding: 5px 6px;
   border-radius: 4.5px;
-  background-color: #4c007b40;
+  background-color: rgba(215, 230, 6, 0.2);
   font-weight: 500;
   font-size: 12px;
   line-height: 100%;
-  color: #283475;
+  color: #D7E606;
 }
 
 table tbody tr td.editing span,
