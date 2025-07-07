@@ -6,6 +6,7 @@ import { ModalContainer, CloseWrapper } from "@/sections/workload/styles";
 import { FormHeading } from '@/components/Heading/FormHeading';
 import { icons } from '@/icons';
 import { createPackage, createAddon, updatePackage, updateAddon } from '@/lib/api/fetchPackage';
+import Swal from "sweetalert2";
 
 interface ModalProps {
     open: boolean;
@@ -65,6 +66,8 @@ export function ModalComponent({
             document.removeEventListener('keydown', handleEscapeKey);
         };
     }, [open, onClose]);
+
+
 
     // Prefill form when editing
     useEffect(() => {
@@ -218,6 +221,17 @@ export function ModalComponent({
         }
     };
 
+    useEffect(() => {
+        if (submitError) {
+            Swal.fire({
+            icon: 'error',
+            text: submitError,
+            background: '#ffebee',
+            color: 'error.main'
+            });
+        }
+    }, [submitError]);
+
     const currentContent = content[modalType];
 
     return (
@@ -274,13 +288,6 @@ export function ModalComponent({
                                     helperText={errors.details}
                                 />
                             </Box>
-                            
-                            {/* Error Message */}
-                            {submitError && (
-                                <Box sx={{ color: 'error.main', textAlign: 'center' }}>
-                                    {submitError}
-                                </Box>
-                            )}
                             
                             <Box className="action-btn" sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', gap: 1 }}>
                                 <Button

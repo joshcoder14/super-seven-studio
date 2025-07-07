@@ -145,6 +145,17 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
         }
     };
 
+    useEffect(() => {
+        if (error) {
+            Swal.fire({
+                icon: 'error',
+                text: error,
+                background: '#ffebee',
+                color: 'error.main'
+            });
+        }
+    }, [error]);
+
     if (!open || !eventData || !bookingDetails) return null;
 
     return (
@@ -152,18 +163,6 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
             <CloseWrapper onClick={onClose}>
                 <Image width={18} height={18} src={icons.closeIcon} alt="close icon" />
             </CloseWrapper>
-            
-            {error && (
-                <Box sx={{ 
-                    color: 'error.main',
-                    backgroundColor: '#ffebee',
-                    p: 2,
-                    mb: 2,
-                    borderRadius: 1
-                }}>
-                    {error}
-                </Box>
-            )}
 
             {fetching ? (
                 <Box sx={{ 
