@@ -16,8 +16,8 @@ import {
 import { Box, Typography, CircularProgress, Button } from '@mui/material';
 import { icons } from '@/icons';
 import Image from 'next/image';
-import { DeliverableStatus, MappedWorkloadItem, WorkloadApiItem, statusMap, Employee, statusOptions, statusStringToNumberMap, mapStatusToBackend } from '@/types/workload';
-import { fetchAvailableEmployees, fetchWorkloadDetailsById, showConfirmationDialog, showValidationError, updateWorkloadAssignment, validateAssignment } from '@/lib/api/fetchWorkloads';
+import { DeliverableStatus, MappedWorkloadItem, WorkloadApiItem, statusMap, Employee, statusOptions, statusStringToNumberMap } from '@/types/workload';
+import { fetchAvailableEmployees, fetchWorkloadDetailsById, showConfirmationDialog, showValidationError, updateWorkloadAssignment, validateAssignment, updateEmployeeWorkloadStatus } from '@/lib/api/fetchWorkloads';
 import Swal from 'sweetalert2';
 import { useAuth } from '@/context/AuthContext';
 
@@ -42,7 +42,7 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
     const [bookingDetails, setBookingDetails] = useState<WorkloadApiItem | null>(null);
     const { user, loading: authLoading } = useAuth();
     const isEmployee = user?.user_role === 'Editor' || user?.user_role === 'Photographer';
-    console.log('isEmployee', isEmployee);
+
     useEffect(() => {
         if (!open || !eventData) return;
 
@@ -101,42 +101,49 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
     };
 
     const handleUpdate = async () => {
-    if (!eventData || !bookingDetails) return;
+        if (!eventData || !bookingDetails) return;
 
-    const selectedEmployeeIds = employees
-      .filter(e => e.selected)
-      .map(e => e.id);
+        const selectedEmployeeIds = employees
+            .filter(e => e.selected)
+            .map(e => e.id);
 
-    // Validate assignment
-    const validationError = validateAssignment(selectedStatus, selectedEmployeeIds);
-    if (validationError) {
-      await showValidationError(validationError);
-      return;
-    }
+        // Validate assignment
+        const validationError = validateAssignment(selectedStatus, selectedEmployeeIds);
+        if (validationError) {
+            await showValidationError(validationError);
+            return;
+        }
 
-    try {
-      // Confirmation dialog
-      const confirmed = await showConfirmationDialog();
-      if (!confirmed) return;
+        try {
+            // Confirmation dialog
+            const confirmed = await showConfirmationDialog();
+            if (!confirmed) return;
 
-      setLoading(true);
-      setError(null);
+            setLoading(true);
+            setError(null);
 
-      await updateWorkloadAssignment(eventData.id, {
-        expected_completion_date: completionDate?.format('YYYY-MM-DD') || null,
-        deliverable_status: selectedStatus,
-        link: link || '',
-        user_id: selectedEmployeeIds
-      });
+            // For employees: update their own status
+            if (isEmployee) {
+                await updateEmployeeWorkloadStatus(eventData.id, {
+                    workload_status: selectedStatus
+                });
+            } else {
+                await updateWorkloadAssignment(eventData.id, {
+                    expected_completion_date: completionDate?.format('YYYY-MM-DD') || null,
+                    deliverable_status: selectedStatus,
+                    link: link || '',
+                    user_id: selectedEmployeeIds
+                });
+            }
 
-      onUpdateSuccess?.();
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Update failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+            onUpdateSuccess?.();
+            onClose();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Update failed');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (!open || !eventData || !bookingDetails) return null;
 

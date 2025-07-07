@@ -278,6 +278,33 @@ export const updateWorkloadAssignment = async (
   }
 };
 
+export const updateEmployeeWorkloadStatus = async (
+  workloadId: string,
+  payload: {
+    workload_status: DeliverableStatus;
+  }
+): Promise<void> => {
+  const accessToken = localStorage.getItem('access_token');
+  if (!accessToken) throw new Error('No access token found');
+  
+  const form = new FormData();
+  form.append('workload_status', payload.workload_status.toString());
+
+  const response = await fetch(`/api/employee/workloads/${workloadId}/update`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    },
+    body: form
+  });
+
+  const responseData = await response.json();
+
+  if (!response.ok || responseData.status !== true) {
+    throw new Error(responseData.message || 'Failed to update employee workload status');
+  }
+};
+
 export const validateAssignment = (
   status: DeliverableStatus,
   employees: number[]
