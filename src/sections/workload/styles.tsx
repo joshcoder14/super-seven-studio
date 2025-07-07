@@ -158,6 +158,7 @@ export const ReleaseDateWrapper = styled(Box)`
     padding-bottom: 30px;
     display: flex;
     flex-direction: column;
+    gap: 10px;
 
     .label {
         font-family: Nunito Sans;
@@ -418,8 +419,8 @@ export const Details = styled(Box)`
                             }
 
                             &.uploaded {
-                                background: #4c007b40;
-                                color: #283475;
+                                background-color: rgba(215, 230, 6, 0.2);
+                                color: #D7E606;
                             }
 
                             &.for-edit,

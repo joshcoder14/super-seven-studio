@@ -17,8 +17,9 @@ import { Box, Typography, CircularProgress, Button } from '@mui/material';
 import { icons } from '@/icons';
 import Image from 'next/image';
 import { DeliverableStatus, MappedWorkloadItem, WorkloadApiItem, statusMap, Employee, statusOptions, statusStringToNumberMap, mapStatusToBackend } from '@/types/workload';
-import { fetchAvailableEmployees, fetchWorkloadDetailsById } from '@/lib/api/fetchWorkloads';
+import { fetchAvailableEmployees, fetchWorkloadDetailsById, showConfirmationDialog, showValidationError, updateWorkloadAssignment, validateAssignment } from '@/lib/api/fetchWorkloads';
 import Swal from 'sweetalert2';
+import { useAuth } from '@/context/AuthContext';
 
 
 export interface EditModalProps {
@@ -39,7 +40,9 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
     const [fetching, setFetching] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [bookingDetails, setBookingDetails] = useState<WorkloadApiItem | null>(null);
-
+    const { user, loading: authLoading } = useAuth();
+    const isEmployee = user?.user_role === 'Editor' || user?.user_role === 'Photographer';
+    console.log('isEmployee', isEmployee);
     useEffect(() => {
         if (!open || !eventData) return;
 
@@ -48,28 +51,21 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                 setFetching(true);
                 setError(null);
 
-                // Fetch booking details
-                const details = await fetchWorkloadDetailsById(eventData.id);
-                setBookingDetails(details);
-                
-                // Fetch available employees
-                const availableEmployees = await fetchAvailableEmployees(eventData.id);
+                const [details, availableEmployees] = await Promise.all([
+                    fetchWorkloadDetailsById(eventData.id),
+                    fetchAvailableEmployees(eventData.id)
+                ]);
                 
                 // Set initial state from API response
+                setBookingDetails(details);
                 setLink(details.link || '');
                 setCompletionDate(
                     details.expected_completion_date ? dayjs(details.expected_completion_date) : null
                 );
 
-                // DIRECTLY USE booking_workload_status FROM API RESPONSE
-                const apiStatus = details.booking_workload_status;
-                
-                // Convert string status to numeric value
-                const numericStatus = statusStringToNumberMap[apiStatus] || 0;
-                
+                const numericStatus = statusStringToNumberMap[details.booking_workload_status] || 0;
                 setSelectedStatus(numericStatus);
 
-                // Mark already assigned employees as selected
                 const assignedIds = details.assigned_employees.map(e => e.id);
                 setEmployees(
                     availableEmployees.map(emp => ({
@@ -86,7 +82,7 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
         };
 
         loadData();
-    }, [open, eventData]);
+    }, [open, eventData, authLoading]);
 
     const handleAssignedClick = () => setIsDropdownOpen(prev => !prev);
     const handleStatusClick = () => setIsStatusDropdownOpen(prev => !prev);
@@ -105,94 +101,42 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
     };
 
     const handleUpdate = async () => {
-        if (!eventData || !bookingDetails) return;
+    if (!eventData || !bookingDetails) return;
 
-        const selectedEmployeeIds = employees
-            .filter(e => e.selected)
-            .map(e => e.id);
+    const selectedEmployeeIds = employees
+      .filter(e => e.selected)
+      .map(e => e.id);
 
-        // Validation
-        if (selectedStatus === 0 && selectedEmployeeIds.length > 0) {
-            await Swal.fire({
-            title: 'Validation Error',
-            text: 'Cannot assign employees when status is Unassigned',
-            icon: 'error',
-            confirmButtonColor: '#2BB673',
-            });
-            return;
-        }
+    // Validate assignment
+    const validationError = validateAssignment(selectedStatus, selectedEmployeeIds);
+    if (validationError) {
+      await showValidationError(validationError);
+      return;
+    }
 
-        if (selectedStatus !== 0 && selectedEmployeeIds.length === 0) {
-            await Swal.fire({
-            title: 'Validation Error',
-            text: 'Please assign at least one employee for this status',
-            icon: 'error',
-            confirmButtonColor: '#2BB673',
-            });
-            return;
-        }
+    try {
+      // Confirmation dialog
+      const confirmed = await showConfirmationDialog();
+      if (!confirmed) return;
 
-        // Confirmation dialog
-        const result = await Swal.fire({
-            title: 'Are you sure?',
-            text: "You are about to update this workload item. Do you want to proceed?",
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#2BB673',
-            cancelButtonColor: '#AAAAAA',
-            confirmButtonText: 'Yes, update it!',
-            cancelButtonText: 'Cancel'
-        });
+      setLoading(true);
+      setError(null);
 
-        if (!result.isConfirmed) return;
+      await updateWorkloadAssignment(eventData.id, {
+        expected_completion_date: completionDate?.format('YYYY-MM-DD') || null,
+        deliverable_status: selectedStatus,
+        link: link || '',
+        user_id: selectedEmployeeIds
+      });
 
-        try {
-            setLoading(true);
-            setError(null);
-
-            const accessToken = localStorage.getItem('access_token');
-            if (!accessToken) throw new Error('No access token found');
-
-            const form = new FormData();
-            form.append('expected_completion_date', completionDate?.format('YYYY-MM-DD') || '');
-            form.append('deliverable_status', String(selectedStatus));
-            form.append('link', link || '');
-
-            // Append employee IDs in array format
-            selectedEmployeeIds.forEach((id, index) => {
-                form.append(`user_id[${index}]`, id.toString());
-            });
-
-            const response = await fetch(`/api/workload/${eventData.id}/assign`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                body: form
-            });
-
-            const responseData = await response.json();
-
-            if (!response.ok) {
-                let errorMessage = responseData.message || 'Failed to update workload';
-                if (response.status === 400) errorMessage = 'Invalid request: ' + errorMessage;
-                if (response.status === 401) errorMessage = 'Unauthorized: Please login again';
-                throw new Error(errorMessage);
-            }
-
-            if (responseData.status !== true) {
-            throw new Error(responseData.message || 'Update failed');
-            }
-
-            onUpdateSuccess?.();
-            onClose();
-        } catch (err) {
-            console.error('Update error:', err);
-            setError(err instanceof Error ? err.message : 'Update failed');
-        } finally {
-            setLoading(false);
-        }
-    };
+      onUpdateSuccess?.();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Update failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
     if (!open || !eventData || !bookingDetails) return null;
 
@@ -286,33 +230,61 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                     </StatusWrapper>
 
                     <AssignedWrapper>
-                        <Box className="label">Assigned To:</Box>
-                        <Box 
-                            className="assigned-to" 
-                            onClick={handleAssignedClick}
-                            sx={{
-                                cursor: 'pointer',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: '8px 12px',
-                                border: '1px solid #ccc',
-                                borderRadius: '4px'
-                            }}
-                        >
-                            <Typography component="span">
-                                {employees.filter(e => e.selected).length > 0 
-                                    ? `${employees.filter(e => e.selected).length} selected` 
-                                    : 'Select employees'}
-                            </Typography>
-                            <Image
-                                width={12}
-                                height={7}
-                                src={icons.angleDown}
-                                alt="angle down"
-                                className={isDropdownOpen ? 'rotated' : ''}
-                            />
-                        </Box>
+
+                        {!isEmployee ? (
+                            <>
+                                <Box className="label">Assigned To:</Box>
+                                <Box 
+                                    className="assigned-to" 
+                                    onClick={handleAssignedClick}
+                                    sx={{
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        padding: '8px 12px',
+                                        border: '1px solid #ccc',
+                                        borderRadius: '4px'
+                                    }}
+                                >
+                                    <Typography component="span">
+                                        {employees.filter(e => e.selected).length > 0 
+                                            ? `${employees.filter(e => e.selected).length} selected` 
+                                            : 'Select employees'}
+                                    </Typography>
+                                    <Image
+                                        width={12}
+                                        height={7}
+                                        src={icons.angleDown}
+                                        alt="angle down"
+                                        className={isDropdownOpen ? 'rotated' : ''}
+                                    />
+                                </Box>
+                            </>
+                        ) : (
+                            <>
+                                <Box className="label">Assigned To:</Box>
+                                <Box sx={{ marginTop: '10px' }}>
+                                    {employees.map((employee) => (
+                                        employee.selected && (
+                                            <Box key={employee.id}>
+                                            <Typography 
+                                                component="span" 
+                                                sx={{
+                                                    fontFamily: 'Nunito Sans',
+                                                    fontWeight: '500', 
+                                                    fontSize: '16px',
+                                                    color: '#000000'
+                                                }}
+                                            >
+                                                {employee.full_name}</Typography>
+                                            </Box>
+                                        )
+                                    ))}
+                                </Box>
+                            </>
+                        )}
+
                         
                         {isDropdownOpen && (
                             <Box className="dropdown-list">
@@ -344,7 +316,7 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                             minDate={dayjs().add(1, 'day')}
                             label=""
                             required
-                            disabled={true} 
+                            disabled
                         />
                     </ReleaseDateWrapper>
 

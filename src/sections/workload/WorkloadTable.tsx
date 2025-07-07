@@ -121,7 +121,9 @@ export function WorkLoadTable({ data, loading, onEditClick }: WorkLoadTableProps
                   </IconButton>
                   <IconButton 
                     sx={{ paddingLeft: '5px' }}
-                    onClick={() => router.push(`${paths.workload}/${row.id}`)}
+                    onClick={() => 
+                      router.push(`${paths.workload}/${row.id}`)
+                    }
                   >
                     <img src={icons.displayIcon} className="view-icon" alt="view icon" />
                   </IconButton>
