@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { AddBookingContainer, BookingWrapper } from './styles';
 import { FormHeading } from '@/components/Heading/FormHeading';
 import { FormSection, FormField } from '@/types/field';
@@ -33,6 +34,9 @@ interface AddBookingComponentProps {
 }
 
 export default function AddBookingComponent({ onCancel }: AddBookingComponentProps) {
+  const { user } = useAuth();
+  const userRole = user?.user_role;
+  
   const [state, setState] = useState({
     isPackageDropdownOpen: false,
     selectedPackage: "",
@@ -44,7 +48,8 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
       packages: true,
       addOns: true,
       submitting: false,
-      disabledDates: true
+      disabledDates: true,
+      user: true
     },
     error: {
       packages: null as string | null,
@@ -67,7 +72,27 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
     errors: {} as Record<string, string>
   });
 
-   // Show SweetAlert for form errors
+  // Pre-fill client data when available
+  useEffect(() => {
+    if (userRole === 'Client' && user) {
+      setState(prev => ({
+        ...prev,
+        loading: { ...prev.loading, user: false },
+        formData: {
+          ...prev.formData,
+          firstName: user.first_name || '',
+          lastName: user.last_name || '',
+          email: user.email || '',
+          contactNumber: user.contact_no || '',
+          address: user.address || '',
+        }
+      }));
+    } else if (userRole) {
+      setState(prev => ({ ...prev, loading: { ...prev.loading, user: false } }));
+    }
+  }, [user, userRole]);
+
+  // Show SweetAlert for form errors
   useEffect(() => {
     if (state.error.form) {
       Swal.fire({
@@ -244,7 +269,8 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
       });
   };
 
-  const bookingForm: FormSection[] = [
+  // Define common sections
+  const commonSections: FormSection[] = [
     {
       id: "booking-date",
       columnCount: 1,
@@ -270,7 +296,11 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
           required: true
         }
       ]
-    },
+    }
+  ];
+
+  // Define personal info sections only for non-client users
+  const personalSections: FormSection[] = userRole === 'Client' ? [] : [
     {
       id: "first-name",
       columnCount: 1,
@@ -339,6 +369,12 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
     }
   ];
 
+  // Combine sections based on user role
+  const bookingForm: FormSection[] = [
+    ...commonSections,
+    ...personalSections
+  ];
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     const { formData } = state;
@@ -363,25 +399,30 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
       newErrors.bookingDate = 'Date is unavailable or must be at least 30 days from today';
     }
 
-    // Validate first name
-    const firstNameError = validateName('First name', formData.firstName);
-    if (firstNameError) newErrors.first_name = firstNameError;
+    // Only validate personal fields for non-client users
+    if (userRole !== 'Client') {
+      // Validate first name
+      const firstNameError = validateName('First name', formData.firstName);
+      if (firstNameError) newErrors.first_name = firstNameError;
 
-    // Validate last name
-    const lastNameError = validateName('Last name', formData.lastName);
-    if (lastNameError) newErrors.last_name = lastNameError;
+      // Validate last name
+      const lastNameError = validateName('Last name', formData.lastName);
+      if (lastNameError) newErrors.last_name = lastNameError;
 
-    // Validate email
-    const emailError = validateEmail(formData.email);
-    if (emailError) newErrors.email = emailError;
+      // Validate email
+      const emailError = validateEmail(formData.email);
+      if (emailError) newErrors.email = emailError;
 
-    // Validate contact number
-    const phoneError = validatePhone(formData.contactNumber);
-    if (phoneError) newErrors.contact_no = phoneError;
+      // Validate contact number
+      const phoneError = validatePhone(formData.contactNumber);
+      if (phoneError) newErrors.contact_no = phoneError;
+
+      // Validate address
+      if (!sanitizedData.address.trim()) newErrors.address = 'Address is required';
+    }
 
     // Validate other required fields
     if (!sanitizedData.eventName.trim()) newErrors.event_name = 'Event name is required';
-    if (!sanitizedData.address.trim()) newErrors.address = 'Address is required';
     if (!sanitizedData.bookingAddress.trim()) newErrors.booking_address = 'Booking address is required';
     if (!state.selectedPackage) newErrors.package_id = 'Please select a package';
 
@@ -476,7 +517,7 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
     setState(prev => ({ ...prev, loading: { ...prev.loading, submitting: true } }));
 
     try {
-      const data = await submitBooking(
+      await submitBooking(
         state.formData,
         state.selectedPackage,
         state.selectedAddOns,
@@ -496,7 +537,7 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
         ...prev,
         error: {
           ...prev.error,
-          form: err instanceof Error ? err.message : 'Booking faileds'
+          form: err instanceof Error ? err.message : 'Booking failed'
         },
         errors: err.errors || {},
         loading: {
@@ -576,214 +617,243 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <Box sx={{ display: 'flex', gap: '20px', flexDirection: 'column', width: '50%' }}>
-            {bookingForm.map(section => (
-              <Box 
-                className={`row col-${section.columnCount}`} 
-                key={section.id}
-                sx={{ display: 'flex', gap: '20px', width: '100%' }}
-              >
-                {section.fields.map(field => renderFormField(field))}
-              </Box>
-            ))}
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: '20px', flexDirection: 'column', width: '50%' }}>
-            <Box className="form-group">
-              <label className="form-label">Package:</label>
-              {state.loading.packages ? (
-                <CircularProgress size={20} />
-              ) : state.error.packages ? (
-                <Alert severity="error">{state.error.packages}</Alert>
+        <form 
+          onSubmit={handleSubmit}
+        >
+          <Box 
+            style={{
+              display: 'flex',
+              gap: '20px',
+              flexDirection: userRole === 'Client' ? 'column' : 'row'
+            }}
+          >
+            <Box 
+              sx={{ 
+                display: 'flex',
+                gap: '20px', 
+                flexDirection: userRole === 'Client' ? 'row' : 'column', 
+                width: userRole === 'Client' ? '100%' : '50%' 
+              }}
+            >
+              {state.loading.user ? (
+                <CircularProgress size={24} sx={{ mt: 2 }} />
               ) : (
-                <>
+                bookingForm.map(section => (
                   <Box 
-                    className="package-dropdown"
-                    onClick={() => setState(prev => ({ ...prev, isPackageDropdownOpen: !prev.isPackageDropdownOpen }))}
-                    sx={{
-                      cursor: 'pointer',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '8px 12px',
-                      border: state.errors.package_id ? '1px solid #d32f2f' : '1px solid #ccc',
-                      borderRadius: '4px'
-                    }}
+                    className={`row col-${section.columnCount}`} 
+                    key={section.id}
+                    sx={{ display: 'flex', gap: '20px', width: '100%' }}
                   >
-                    <Typography component="span">
-                      {state.selectedPackage || "Select a package"}
-                    </Typography>
-                    <Image
-                      width={12}
-                      height={7}
-                      src={icons.angleDown}
-                      alt="dropdown"
-                      style={{
-                        transform: state.isPackageDropdownOpen ? 'rotate(180deg)' : 'none',
-                        transition: 'transform 0.2s ease'
-                      }}
-                    />
+                    {section.fields.map(field => renderFormField(field))}
                   </Box>
+                ))
+              )}
+            </Box>
 
-                  {state.errors.package_id && (
-                    <Typography color="error" variant="caption" sx={{ mt: 1, display: 'block' }}>
-                      {state.errors.package_id}
-                    </Typography>
-                  )}
+            <Box 
+              sx={{ 
+                display: userRole === 'Client' ? 'grid' : 'flex', 
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '20px', 
+                flexDirection: 'column', 
+                width: userRole === 'Client' ? '100%' : '50%' 
+              }}
+            >
+              <Box className="form-group">
+                <label className="form-label">Booking Address:</label>
+                <TextField
+                  name="bookingAddress"
+                  value={state.formData.bookingAddress}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  required
+                  error={!!state.errors.bookingAddress || !!state.errors.booking_address}
+                  helperText={state.errors.bookingAddress || state.errors.booking_address}
+                />
+              </Box>
 
-                  {state.isPackageDropdownOpen && (
+              <CustomTimePicker 
+                value={state.formData.ceremonyTime}
+                onChange={handleTimeChange}
+                label="Ceremony Time"
+              />
+
+              <Box className="form-group">
+                <label className="form-label">Package:</label>
+                {state.loading.packages ? (
+                  <CircularProgress size={20} />
+                ) : state.error.packages ? (
+                  <Alert severity="error">{state.error.packages}</Alert>
+                ) : (
+                  <>
                     <Box 
-                      className="dropdown-options"
+                      className="package-dropdown"
+                      onClick={() => setState(prev => ({ ...prev, isPackageDropdownOpen: !prev.isPackageDropdownOpen }))}
                       sx={{
-                        backgroundColor: '#F7FAF5',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px',
-                        marginTop: '-10px',
-                        width: '100%',
-                        maxHeight: '200px',
-                        overflowY: 'auto',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '8px 12px',
+                        border: state.errors.package_id ? '1px solid #d32f2f' : '1px solid #ccc',
+                        borderRadius: '4px'
                       }}
                     >
-                      {state.packages.map((pkg) => (
-                        <Box
-                          key={pkg.id}
-                          onClick={() => handlePackageSelect(pkg.packageName)}
-                          sx={{
-                            padding: '8px 12px',
-                            cursor: 'pointer',
-                            '&:hover': {
-                              backgroundColor: '#f5f5f5'
+                      <Typography component="span">
+                        {state.selectedPackage || "Select a package"}
+                      </Typography>
+                      <Image
+                        width={12}
+                        height={7}
+                        src={icons.angleDown}
+                        alt="dropdown"
+                        style={{
+                          transform: state.isPackageDropdownOpen ? 'rotate(180deg)' : 'none',
+                          transition: 'transform 0.2s ease'
+                        }}
+                      />
+                    </Box>
+
+                    {state.errors.package_id && (
+                      <Typography color="error" variant="caption" sx={{ mt: 1, display: 'block' }}>
+                        {state.errors.package_id}
+                      </Typography>
+                    )}
+
+                    {state.isPackageDropdownOpen && (
+                      <Box 
+                        className="dropdown-options"
+                        sx={{
+                          backgroundColor: '#F7FAF5',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          marginTop: '-10px',
+                          width: '100%',
+                          maxHeight: '200px',
+                          overflowY: 'auto',
+                        }}
+                      >
+                        {state.packages.map((pkg) => (
+                          <Box
+                            key={pkg.id}
+                            onClick={() => handlePackageSelect(pkg.packageName)}
+                            sx={{
+                              padding: '8px 12px',
+                              cursor: 'pointer',
+                              '&:hover': {
+                                backgroundColor: '#f5f5f5'
+                              }
+                            }}
+                          >
+                            <Typography>{pkg.packageName}</Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                  </>
+                )}
+              </Box>
+
+              <Box className="form-group">
+                <label className="form-label">Add-Ons:</label>
+                {state.loading.addOns ? (
+                  <CircularProgress size={20} />
+                ) : state.error.addOns ? (
+                  <Alert severity="error">{state.error.addOns}</Alert>
+                ) : (
+                  <Box 
+                    className="addon-list dropdown-list"
+                    sx={{ 
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      padding: '8px',
+                      maxHeight: '200px',
+                      overflowY: 'auto'
+                    }}
+                  >
+                    {state.addOns.length > 0 ? (
+                      state.addOns.map((addOn) => (
+                        <Box 
+                          key={addOn.id}
+                          className="addon-item row" 
+                          sx={{ 
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            padding: '8px 0',
+                            borderBottom: '1px solid #eee',
+                            '&:last-child': {
+                              borderBottom: 'none'
                             }
                           }}
                         >
-                          <Typography>{pkg.packageName}</Typography>
+                          <input
+                            type="checkbox"
+                            id={`addon-${addOn.id}`}
+                            checked={state.selectedAddOns.includes(addOn.id)}
+                            onChange={() => handleAddOnToggle(addOn.id)}
+                            style={{ 
+                              marginRight: '12px',
+                              width: '18px',
+                              height: '18px'
+                            }}
+                          />
+                          <label htmlFor={`addon-${addOn.id}`} style={{ flex: 1 }}>
+                            <Typography fontWeight="600" textTransform="capitalize">
+                              {addOn.addOnName}
+                            </Typography>
+                          </label>
                         </Box>
-                      ))}
-                    </Box>
-                  )}
-                </>
-              )}
+                      ))
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        No add-ons available
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+              </Box>
             </Box>
+          </Box>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
+            <Button 
+              variant="outlined" 
+              onClick={handleCancel}
+              sx={{
+                color: '#FFFFFF',
+                borderColor: '#AAAAAA',
+                backgroundColor: '#AAAAAA',
+                '&:hover': {
+                  backgroundColor: '#898989',
+                  color: 'white'
+                },
+                padding: '10px 15px',
+                fontSize: '14px',
+                fontWeight: '500 !important'
+              }}
+            >
+              Cancel
+            </Button>
 
-            <CustomTimePicker 
-              value={state.formData.ceremonyTime}
-              onChange={handleTimeChange}
-              label="Ceremony Time"
-            />
-
-            <Box className="form-group">
-              <label className="form-label">Booking Address:</label>
-              <TextField
-                name="bookingAddress"
-                value={state.formData.bookingAddress}
-                onChange={handleInputChange}
-                variant="outlined"
-                size="small"
-                fullWidth
-                required
-                error={!!state.errors.bookingAddress || !!state.errors.booking_address}
-                helperText={state.errors.bookingAddress || state.errors.booking_address}
-              />
-            </Box>
-
-            <Box className="form-group">
-              <label className="form-label">Add-Ons:</label>
-              {state.loading.addOns ? (
-                <CircularProgress size={20} />
-              ) : state.error.addOns ? (
-                <Alert severity="error">{state.error.addOns}</Alert>
-              ) : (
-                <Box 
-                  className="addon-list dropdown-list"
-                  sx={{ 
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    padding: '8px',
-                    maxHeight: '200px',
-                    overflowY: 'auto'
-                  }}
-                >
-                  {state.addOns.length > 0 ? (
-                    state.addOns.map((addOn) => (
-                      <Box 
-                        key={addOn.id}
-                        className="addon-item row" 
-                        sx={{ 
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          padding: '8px 0',
-                          borderBottom: '1px solid #eee',
-                          '&:last-child': {
-                            borderBottom: 'none'
-                          }
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          id={`addon-${addOn.id}`}
-                          checked={state.selectedAddOns.includes(addOn.id)}
-                          onChange={() => handleAddOnToggle(addOn.id)}
-                          style={{ 
-                            marginRight: '12px',
-                            width: '18px',
-                            height: '18px'
-                          }}
-                        />
-                        <label htmlFor={`addon-${addOn.id}`} style={{ flex: 1 }}>
-                          <Typography fontWeight="600" textTransform="capitalize">
-                            {addOn.addOnName}
-                          </Typography>
-                        </label>
-                      </Box>
-                    ))
-                  ) : (
-                    <Typography variant="body2" color="text.secondary">
-                      No add-ons available
-                    </Typography>
-                  )}
-                </Box>
-              )}
-            </Box>
-
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
-              <Button 
-                variant="outlined" 
-                onClick={handleCancel}
-                sx={{
-                  color: '#FFFFFF',
-                  borderColor: '#AAAAAA',
-                  backgroundColor: '#AAAAAA',
-                  '&:hover': {
-                    backgroundColor: '#898989',
-                    color: 'white'
-                  },
-                  padding: '10px 15px',
-                  fontSize: '14px',
-                  fontWeight: '500 !important'
-                }}
-              >
-                Cancel
-              </Button>
-
-              <Button 
-                variant="contained" 
-                type="submit"
-                disabled={state.loading.submitting}
-                startIcon={state.loading.submitting ? <CircularProgress size={20} /> : null}
-                sx={{
-                  backgroundColor: '#2BB673',
-                  '&:hover': {
-                    backgroundColor: '#155D3A'
-                  },
-                  padding: '10px 15px',
-                  fontSize: '14px',
-                  fontWeight: '500 !important'
-                }}
-              >
-                {state.loading.submitting ? 'Submitting...' : 'Submit Booking'}
-              </Button>
-            </Box>
+            <Button 
+              variant="contained" 
+              type="submit"
+              disabled={state.loading.submitting || state.loading.user}
+              startIcon={state.loading.submitting ? <CircularProgress size={20} /> : null}
+              sx={{
+                backgroundColor: '#2BB673',
+                '&:hover': {
+                  backgroundColor: '#155D3A'
+                },
+                padding: '10px 15px',
+                fontSize: '14px',
+                fontWeight: '500 !important'
+              }}
+            >
+              {state.loading.submitting ? 'Submitting...' : 'Submit Booking'}
+            </Button>
           </Box>
         </form>
       </BookingWrapper>

@@ -35,6 +35,7 @@ import {
   rescheduleBooking,
   normalizeToPHDate
 } from '@/lib/api/fetchBooking';
+import { useAuth } from '@/context/AuthContext';
 
 const locales = { 'en-US': enUS };
 
@@ -63,6 +64,9 @@ export function BookingComponent(): React.JSX.Element {
   const [rescheduleTime, setRescheduleTime] = useState<Dayjs | null>(null);
   const [showRescheduleForm, setShowRescheduleForm] = useState(false);
   const [timeError, setTimeError] = useState<string | undefined>(undefined);
+  const { user } = useAuth();
+  const isClient = user?.user_role === 'Client';
+  const canDisableDates = user?.user_role === 'Owner' || user?.user_role === 'Secretary';
 
   const showAddBooking = searchParams.get('add') === 'true';
   const [statusFilters, setStatusFilters] = useState<StatusFilters>({
@@ -115,12 +119,11 @@ export function BookingComponent(): React.JSX.Element {
   // Calendar day styling
   const dayPropGetter = useCallback((date: Date) => {
     const normalizedDate = normalizeToPHDate(date);
-
     const hasApprovedEvent = events.some(event => 
       event.status === 'approved' &&
       normalizeToPHDate(new Date(event.start)).getTime() === normalizedDate.getTime()
     );
-
+    
     const isManuallyDisabled = unavailableDates.some(d => 
       normalizeToPHDate(new Date(d.date)).getTime() === normalizedDate.getTime()
     );
@@ -132,10 +135,10 @@ export function BookingComponent(): React.JSX.Element {
       style: {
         backgroundColor: isDisabled ? '#f5f5f5' : '',
         color: isDisabled ? '#ccc' : '',
-        cursor: isDisabled ? 'not-allowed' : 'pointer'
+        cursor: isDisabled || isClient ? 'default' : 'pointer'
       }
     };
-  }, [unavailableDates, events]);
+  }, [unavailableDates, events, isClient]);
 
   // Handle click outside dropdown
   useEffect(() => {
@@ -169,6 +172,9 @@ export function BookingComponent(): React.JSX.Element {
 
   // Handle date selection (mark/unmark unavailable)
   const handleDateSelect = async (start: Date) => {
+
+    if (isClient) return; // Prevent clients from disabling dates
+
     const normalizedStart = normalizeToPHDate(start);
     const unavailableDate = unavailableDates.find(d => 
       normalizeToPHDate(new Date(d.date)).getTime() === normalizedStart.getTime()
@@ -270,8 +276,8 @@ export function BookingComponent(): React.JSX.Element {
       text: confirmationMessage,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
+      confirmButtonColor: '#3085d6',
       confirmButtonText: `Proceed`,
       cancelButtonText: 'Cancel',
       customClass: {
@@ -584,9 +590,9 @@ export function BookingComponent(): React.JSX.Element {
                 date={currentDate}
                 onView={view => setCurrentView(view as typeof currentView)}
                 onNavigate={date => setCurrentDate(date)}
-                selectable
+                selectable={canDisableDates}
                 dayPropGetter={dayPropGetter}
-                onSelectSlot={({ start }) => handleDateSelect(start)}
+                onSelectSlot={canDisableDates ? ({ start }) => handleDateSelect(start) : undefined}
                 onSelectEvent={handleEventClick}
                 components={{
                   event: CustomEvent
@@ -740,13 +746,15 @@ export function BookingComponent(): React.JSX.Element {
                   </Box>
                 </Box>
                 <Box className={`action-btn ${selectedEvent.status === 'approved' ? 'approved' : ''}`}>
-                  <Button 
-                    className="btn reschedule" 
-                    onClick={() => handleAction('reschedule')}
-                    disabled={isLoading}
-                  >
-                    Reschedule
-                  </Button>
+                  {!isClient ? (
+                    <Button 
+                      className="btn reschedule" 
+                      onClick={() => handleAction('reschedule')}
+                      disabled={isLoading}
+                    >
+                      Reschedule
+                    </Button>
+                  ) : null}
                   {selectedEvent.status === 'approved' ? (
                     <>
                       <Button 

@@ -151,10 +151,6 @@ export const BookingWrapper = styled(Box)`
     border-radius: 14px;
 
     form {
-        display: flex;
-        flex-direction: row;
-        gap: 20px;
-
         .form-group {
             width: 100%;
             display: flex;

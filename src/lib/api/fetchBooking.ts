@@ -24,15 +24,22 @@ export const fetchBookings = async (month: number, year: number): Promise<Bookin
     throw new Error('No access token found');
   }
 
-  const response = await fetch(
-    `/api/bookings?month=${month}&year=${year}&filters[booked]=true&filters[pending]=true&filters[approved]=true`,
-    {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
+  // Get user from localStorage to determine role
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : null;
+  const isClient = user?.user_role === 'Client';
+
+  // Choose endpoint based on user role
+  const endpoint = isClient 
+    ? `/api/customer/bookings?month=${month}&year=${year}`
+    : `/api/bookings?month=${month}&year=${year}&filters[booked]=true&filters[pending]=true&filters[approved]=true`;
+
+  const response = await fetch(endpoint, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
     }
-  );
+  });
 
   if (!response.ok) {
     throw new Error('Failed to fetch bookings');
@@ -40,27 +47,39 @@ export const fetchBookings = async (month: number, year: number): Promise<Bookin
 
   const data = await response.json();
   
-  if (data.status && data.data?.data) {
-    return data.data.data.map((booking: any) => {
-      const startDate = new Date(booking.booking_date.iso);
-      const endDate = new Date(startDate);
-      endDate.setHours(23, 59, 59);
-      
-      return {
-        id: booking.id,
-        eventTitle: booking.event_name,
-        customerName: booking.customer_name,
-        start: startDate,
-        end: endDate,
-        venue: booking.booking_address,
-        packageType: booking.package,
-        ceremony_time: booking.ceremony_time,
-        status: booking.booking_status.toLowerCase() as 'pending' | 'unavailable' | 'approved'
-      };
-    });
+  // Handle different response structures
+  let bookingsData: any[] = [];
+  if (isClient) {
+    // Client endpoint returns data directly in data.data
+    if (data.status && Array.isArray(data.data)) {
+      bookingsData = data.data;
+    }
+  } else {
+    // Admin endpoint uses paginated structure: data.data.data
+    if (data.status && data.data?.data) {
+      bookingsData = data.data.data;
+    }
   }
 
-  return [];
+  return bookingsData.map((booking: any) => {
+    // Normalize date handling for both endpoints
+    const dateString = booking.booking_date?.iso || booking.booking_date;
+    const startDate = new Date(dateString);
+    const endDate = new Date(startDate);
+    endDate.setHours(23, 59, 59);
+    
+    return {
+      id: booking.id,
+      eventTitle: booking.event_name,
+      customerName: booking.customer_name || `${user?.first_name} ${user?.last_name}`,
+      start: startDate,
+      end: endDate,
+      venue: booking.booking_address,
+      packageType: booking.package,
+      ceremony_time: booking.ceremony_time,
+      status: booking.booking_status.toLowerCase() as 'pending' | 'unavailable' | 'approved'
+    };
+  });
 };
 
 // Fetch unavailable dates
@@ -165,12 +184,14 @@ export const approveBooking = async (id: number): Promise<void> => {
 };
 
 export const rejectBooking = async (id: number): Promise<void> => {
+  
   const accessToken = localStorage.getItem('access_token');
   if (!accessToken) {
     throw new Error('No access token found');
   }
-
-  const response = await fetch(`/api/bookings/${id}/reject`, {
+    
+  const endpoint = `/api/bookings/${id}/reject`;
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
@@ -189,7 +210,16 @@ export const cancelBooking = async (id: number): Promise<void> => {
     throw new Error('No access token found');
   }
 
-  const response = await fetch(`/api/bookings/${id}/cancel`, {
+  // Get user from localStorage to determine role
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : null;
+  const isClient = user?.user_role === 'Client';
+
+  const endpoint = isClient 
+      ? `/api/customer/bookings/${id}/delete`
+      : `/api/bookings/${id}/cancel`;
+
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
@@ -346,28 +376,40 @@ export const submitBooking = async (
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
 
+    // Get user from localStorage to determine role
+    const userString = localStorage.getItem('user');
+    const user = userString ? JSON.parse(userString) : null;
+    const isClient = user?.user_role === 'Client';
+
     const selectedPkg = packages.find(pkg => pkg.packageName === selectedPackage);
     if (!selectedPkg) throw new Error('Please select a valid package');
 
     const form = new FormData();
 
-    form.append('first_name', formData.firstName);
-    form.append('last_name', formData.lastName);
-    form.append('email', formData.email);
-    form.append('contact_no', formData.contactNumber);
-    form.append('address', formData.address);
-    form.append('booking_address', formData.bookingAddress);
-    form.append('event_name', formData.eventName);
+    if(!isClient) {
+      form.append('first_name', formData.firstName);
+      form.append('last_name', formData.lastName);
+      form.append('email', formData.email);
+      form.append('contact_no', formData.contactNumber);
+      form.append('address', formData.address);
+    }
+
     form.append('booking_date', formData.bookingDate?.format('YYYY-MM-DD') || '');
     form.append('formatted_booking_date', formData.formattedBookingDate || '');
     form.append('ceremony_time', formData.ceremonyTime.format('HH:mm'));
+    form.append('event_name', formData.eventName);
+    form.append('booking_address', formData.bookingAddress);
     form.append('package_id', String(selectedPkg.id));
 
     selectedAddOns.forEach((addonId, index) => {
       form.append(`addon_id[${index}]`, String(addonId));
     });
 
-    const response = await fetch('/api/bookings/add', {
+    const endpoint = isClient 
+      ? '/api/customer/bookings/create'
+      : '/api/bookings/add';
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`
@@ -486,7 +528,26 @@ export const fetchBookingDetails = async (bookingId: string) => {
   const accessToken = localStorage.getItem('access_token');
   if (!accessToken) throw new Error('Authentication required');
 
-  const response = await fetch(`/api/bookings/${bookingId}`, {
+  // Get user from localStorage to determine role
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : null;
+  const isClient = user?.user_role === 'Client';
+
+  // Client-side permission check
+  if (isClient) {
+    const storedBookings = localStorage.getItem('userBookings');
+    const userBookings = storedBookings ? JSON.parse(storedBookings) : [];
+    
+    if (!userBookings.includes(bookingId)) {
+      throw new Error('Forbidden: You do not have permission to access this booking');
+    }
+  }
+
+  const endpoint = isClient 
+      ? `/api/customer/bookings/${bookingId}`
+      : `/api/bookings/${bookingId}`;
+
+  const response = await fetch(endpoint, {
     headers: { 'Authorization': `Bearer ${accessToken}` }
   });
 
@@ -509,6 +570,11 @@ export const updateBooking = async (
   const accessToken = localStorage.getItem('access_token');
   if (!accessToken) throw new Error('Authentication required');
 
+  // Get user from localStorage to determine role
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : null;
+  const isClient = user?.user_role === 'Client';
+
   const formData = new FormData();
   formData.append("booking_date", bookingData.booking_date);
   formData.append("package_id", bookingData.package_id.toString());
@@ -520,7 +586,15 @@ export const updateBooking = async (
     formData.append(`addon_id[${index}]`, id.toString());
   });
 
-  const response = await fetch(`/api/bookings/${bookingId}/update`, {
+  const endpoint = isClient 
+    ? `/api/customer/bookings/${bookingId}/update`
+    : `/api/bookings/${bookingId}/update`;
+
+      
+
+    console.log("Endpoint:", endpoint);
+
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
