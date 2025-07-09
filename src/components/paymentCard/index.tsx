@@ -41,6 +41,12 @@ export function PaymentCardComponent({
         setIsPaymentMethodOpen(false);
     };
 
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/,/g, ''); // remove commas
+        const formattedValue = Number(value).toLocaleString(); // format with thousand separator
+        setAmount(formattedValue);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -84,7 +90,7 @@ export function PaymentCardComponent({
         try {
             await addPayment(
                 billingId,
-                amount,
+                amount.replace(/,/g, ''),
                 selectedPaymentMethod === 'Cash Payment' ? '0' : '1',
                 remarks
             );
@@ -133,7 +139,7 @@ export function PaymentCardComponent({
                         name="amount_paid"
                         type="text"
                         value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        onChange={handleAmountChange}
                         size="small"
                         fullWidth
                     />
