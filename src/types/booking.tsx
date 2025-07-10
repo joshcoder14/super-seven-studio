@@ -8,6 +8,7 @@ export interface BookingEvent {
   end: Date;
   venue: string;
   packageType: string;
+  addons: string;
   ceremony_time: string;
   status: 'pending' | 'unavailable' | 'approved';
   resource?: string;

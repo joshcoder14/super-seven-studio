@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { Billing } from '@/types/billing';
 import { formatAmount, getAddonNames } from '@/utils/billing';
+import { useAuth } from '@/context/AuthContext';
 
 interface BillingTableProps {
     billingData: Billing[];
@@ -21,10 +22,13 @@ interface BillingTableProps {
 }
 
 export default function BillingTable({ billingData, loading, onView }: BillingTableProps) {
+    const { user } = useAuth();
+    const isClient = user?.user_role === 'Client';
+
     const tableHeader = [
         'ID',
         'EVENT NAME',
-        'CLIENT',
+        ...(isClient ? [] : ['CLIENT']),
         'PACKAGE',
         'ADD-ON',
         'BALANCE',
@@ -64,7 +68,7 @@ export default function BillingTable({ billingData, loading, onView }: BillingTa
                             <TableCell><Skeleton variant="text" /></TableCell>
                             <TableCell><Skeleton variant="text" /></TableCell>
                             <TableCell><Skeleton variant="text" /></TableCell>
-                            <TableCell><Skeleton variant="text" /></TableCell>
+                            {!isClient && <TableCell><Skeleton variant="text" /></TableCell>}
                         </TableRow>
                         ))
                     ) : billingData.length === 0 ? (
@@ -82,7 +86,7 @@ export default function BillingTable({ billingData, loading, onView }: BillingTa
                             <TableRow key={billing.id} hover>
                                 <TableCell>{billing.booking_id}</TableCell>
                                 <TableCell>{billing.event_name}</TableCell>
-                                <TableCell>{billing.customer_name}</TableCell>
+                                {!isClient && <TableCell>{billing.customer_name}</TableCell>}
                                 <TableCell>{billing.package}</TableCell>
                                 <TableCell>{getAddonNames(billing.add_ons) || 'None'}</TableCell>
                                 <TableCell>{formatAmount(billing.balance)}</TableCell>

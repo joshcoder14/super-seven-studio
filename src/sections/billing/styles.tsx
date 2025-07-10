@@ -14,6 +14,15 @@ export const BillingDetails = styled(Box)`
     padding-left: 30px;
     display: flex;
     gap: 30px;
+
+    .assessments.client {
+        max-width: 500px;
+        width: 100%;
+        height: auto;
+        background: #FFFFFF;
+        border: 0.3px solid #B9B9B9;
+        border-radius: 8px;
+    }
 `;
 
 export const BillingPaymentContainer = styled(Box)`

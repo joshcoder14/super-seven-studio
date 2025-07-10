@@ -111,7 +111,7 @@ export const PackageCard = styled(Box)`
     align-items: center;
     max-width: 362px;
     width: 100%;
-    height: 100%;
+    height: auto;
     min-height: 250px;
     background: #FFFFFF;
     border: 0.3px solid #D5D5D5;

@@ -8,7 +8,15 @@ export const fetchBillings = async ({
         const accessToken = localStorage.getItem('access_token');
         if (!accessToken) throw new Error('No access token found');
 
-        const fetchBillingsUrl = `/api/billings/?search[value]=&start_year=${start_year}&end_year=${end_year}`;
+        // Get user from localStorage to determine role
+        const userString = localStorage.getItem('user');
+        const user = userString ? JSON.parse(userString) : null;
+        const isClient = user?.user_role === 'Client';
+
+        const fetchBillingsUrl = isClient 
+            ? `/api/customer/billings?search[value]=&start_year=${start_year}&end_year=${end_year}`
+            : `/api/billings/?search[value]=&start_year=${start_year}&end_year=${end_year}`;
+            
         const response = await fetch(fetchBillingsUrl, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`

@@ -276,8 +276,8 @@ export function BookingComponent(): React.JSX.Element {
       text: confirmationMessage,
       icon: 'warning',
       showCancelButton: true,
-      cancelButtonColor: '#d33',
-      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#979797',
+      confirmButtonColor: '#d33',
       confirmButtonText: `Proceed`,
       cancelButtonText: 'Cancel',
       customClass: {
@@ -733,6 +733,13 @@ export function BookingComponent(): React.JSX.Element {
                       <Image width={20} height={20} src={icons.packageIcon} alt="package icon" />
                       <Typography component="span">{selectedEvent.packageType}</Typography>
                     </Box>
+                    {/* if addons is empty then don't show */}
+                    {selectedEvent.addons.length > 0 && (
+                      <Box className="client-info">
+                        <Image width={20} height={20} src={icons.packageIcon} alt="package icon" />
+                        <Typography component="span">{selectedEvent.addons}</Typography>
+                      </Box>
+                    )}
                     <Box className="client-info">
                       <Image width={20} height={20} src={icons.clockIcon} alt="clock icon" />
                       <Typography component="span">
@@ -746,50 +753,83 @@ export function BookingComponent(): React.JSX.Element {
                   </Box>
                 </Box>
                 <Box className={`action-btn ${selectedEvent.status === 'approved' ? 'approved' : ''}`}>
-                  {!isClient ? (
-                    <Button 
-                      className="btn reschedule" 
-                      onClick={() => handleAction('reschedule')}
-                      disabled={isLoading}
-                    >
-                      Reschedule
-                    </Button>
-                  ) : null}
-                  {selectedEvent.status === 'approved' ? (
-                    <>
-                      <Button 
-                        className="btn cancel" 
-                        onClick={() => handleAction('cancel')}
-                        disabled={isLoading}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        className="btn update" 
-                        onClick={() => handleAction('update')}
-                        disabled={isLoading}
-                      >
-                        Update
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button 
-                        className="btn reject" 
-                        onClick={() => handleAction('reject')}
-                        disabled={isLoading}
-                      >
-                        Reject
-                      </Button>
-                      <Button 
-                        className="btn approve" 
-                        onClick={() => handleAction('approve')}
-                        disabled={isLoading}
-                      >
-                        Approve
-                      </Button>
-                    </>
-                  )}
+                  {(() => {
+                    // For non-client users (Owner/Secretary)
+                    if (!isClient) {
+                      return (
+                        <>
+                          {/* Reschedule button - always visible for non-clients */}
+                          <Button 
+                            className="btn reschedule" 
+                            onClick={() => handleAction('reschedule')}
+                            disabled={isLoading}
+                          >
+                            Reschedule
+                          </Button>
+                          
+                          {/* Action buttons based on booking status */}
+                          {selectedEvent.status === 'approved' ? (
+                            <>
+                              <Button 
+                                className="btn cancel" 
+                                onClick={() => handleAction('cancel')}
+                                disabled={isLoading}
+                              >
+                                Cancel
+                              </Button>
+                              <Button 
+                                className="btn update" 
+                                onClick={() => handleAction('update')}
+                                disabled={isLoading}
+                              >
+                                Update
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button 
+                                className="btn reject" 
+                                onClick={() => handleAction('reject')}
+                                disabled={isLoading}
+                              >
+                                Reject
+                              </Button>
+                              <Button 
+                                className="btn approve" 
+                                onClick={() => handleAction('approve')}
+                                disabled={isLoading}
+                              >
+                                Approve
+                              </Button>
+                            </>
+                          )}
+                        </>
+                      );
+                    }
+                    // For client users
+                    else {
+                      return (
+                        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                          {/* Clients only see these buttons regardless of status */}
+                          <Button 
+                            className="btn cancel" 
+                            onClick={() => handleAction('cancel')}
+                            disabled={isLoading}
+                            sx={{ backgroundColor: '#EF3826 !important', color: '#fff' }}
+                          >
+                            Cancel Booking
+                          </Button>
+                          <Button 
+                            className="btn update" 
+                            onClick={() => handleAction('update')}
+                            disabled={isLoading}
+                          >
+                            Update
+                          </Button>
+                        </Box>
+                      );
+                    }
+                  })()}
                 </Box>
               </>
             )}

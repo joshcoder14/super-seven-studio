@@ -78,6 +78,9 @@ export const fetchBookings = async (month: number, year: number): Promise<Bookin
       end: endDate,
       venue: booking.booking_address,
       packageType: booking.package,
+      addons: (booking.add_ons || [])
+        .map((addon: any) => addon.add_on_name)
+        .join(', '),
       ceremony_time: booking.ceremony_time,
       status: booking.booking_status.toLowerCase() as 'pending' | 'unavailable' | 'approved'
     };
