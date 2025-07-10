@@ -3,6 +3,8 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { BookingEvent, UnavailableDate, BookingFormData } from '@/types/booking';
 import { PackageProps, AddOnsProps } from '@/types/field';
+import Swal from 'sweetalert2';
+import { paths } from '@/paths';
 
 // Configure dayjs plugins
 dayjs.extend(utc);
@@ -533,13 +535,38 @@ export const fetchBookingDetails = async (bookingId: string) => {
   const user = userString ? JSON.parse(userString) : null;
   const isClient = user?.user_role === 'Client';
 
-  // Client-side permission check
+  // For client users, verify they own the booking
   if (isClient) {
-    const storedBookings = localStorage.getItem('userBookings');
-    const userBookings = storedBookings ? JSON.parse(storedBookings) : [];
-    
-    if (!userBookings.includes(bookingId)) {
-      throw new Error('Forbidden: You do not have permission to access this booking');
+    try {
+      // Fetch booking details to get the customer ID
+      const bookingResponse = await fetch(`/api/bookings/${bookingId}`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      
+      if (!bookingResponse.ok) {
+        throw new Error('Failed to fetch booking data');
+      }
+      
+      const bookingData = await bookingResponse.json();
+      const bookingCustomerId = bookingData.data.customer_id;
+      
+      // Compare booking's customer ID with current user's ID
+      if (bookingCustomerId !== user.id) {
+        // throw new Error('Forbidden: You do not have permission to access this booking');
+        Swal.fire({
+          icon: 'error',
+          title: 'Forbidden',
+          text: 'You do not have permission to access this booking',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location.href = paths.booking;
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Permission check error:', error);
+      throw new Error('Failed to verify booking permissions');
     }
   }
 

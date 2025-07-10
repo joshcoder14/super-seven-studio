@@ -1,8 +1,17 @@
 export const fetchPackages = async (searchTerm: string = ''): Promise<any> => {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
+    
+    // Get user from localStorage to determine role
+    const userString = localStorage.getItem('user');
+    const user = userString ? JSON.parse(userString) : null;
+    const isClient = user?.user_role === 'Client';
 
-    const url = `/api/packages?search[value]=${encodeURIComponent(searchTerm)}`;
+    const url = isClient 
+        ? '/api/customer/packages'
+        : `/api/packages?search[value]=${encodeURIComponent(searchTerm)}`;
+
+
     const response = await fetch(url, {
         headers: {
             'Authorization': `Bearer ${accessToken}`
@@ -19,8 +28,17 @@ export const fetchPackages = async (searchTerm: string = ''): Promise<any> => {
 export const fetchAddons = async (searchTerm: string = ''): Promise<any> => {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
+    
+    // Get user from localStorage to determine role
+    const userString = localStorage.getItem('user');
+    const user = userString ? JSON.parse(userString) : null;
+    const isClient = user?.user_role === 'Client';
 
-    const url = `/api/addons?search[value]=${encodeURIComponent(searchTerm)}`;
+    const url = isClient 
+        ? '/api/customer/addons'
+        : `/api/addons?search[value]=${encodeURIComponent(searchTerm)}`;
+
+    // const url = `/api/addons?search[value]=${encodeURIComponent(searchTerm)}`;
     const response = await fetch(url, {
         headers: {
             'Authorization': `Bearer ${accessToken}`

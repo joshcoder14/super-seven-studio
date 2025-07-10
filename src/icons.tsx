@@ -5,6 +5,7 @@ export const icons = {
     closeIcon : "/assets/icons/close.svg",
     eventProfile : "/assets/icons/profile-icon.svg",
     packageIcon : "/assets/icons/package.svg",
+    packageIconBlack : "/assets/icons/package-black.svg",
     clockIcon : "/assets/icons/clock.svg",
     locationIcon : "/assets/icons/location.svg",
     angleDown : "/assets/icons/angle-down.svg",

@@ -179,12 +179,12 @@ export const FormContainer = styled(Box)`
     }
 `;
 
-export const ButtonChangePassword = styled(Box)`
+export const RightButton = styled(Box)`
     width: 100%;
     border-radius: 0px 10px 10px 0px;
 `;
 
-export const ButtonEdit = styled(Box)`
+export const LeftButton = styled(Box)`
     width: 100%;
     border-radius: 10px 0px 0px 10px;
     border-right: none !important;

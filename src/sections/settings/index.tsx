@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { SettingsContainer, ActionButton, ButtonEdit, ButtonChangePassword } from './styles';
+import { SettingsContainer, ActionButton, LeftButton, RightButton } from './styles';
 import { HeadingComponent } from '@/components/Heading';
 import { EditProfile } from './editProfile';
 import { ChangePasswordComponent } from './changePassword';
@@ -16,19 +16,19 @@ export function Settings(): React.JSX.Element {
 
             <ActionButton>
 
-                <ButtonEdit 
+                <LeftButton 
                     className={`btn ${activeTab === 'edit' ? 'active' : ''}`}
                     onClick={() => setActiveTab('edit')}
                 >
                     Edit Profile
-                </ButtonEdit>
+                </LeftButton>
 
-                <ButtonChangePassword 
+                <RightButton 
                     className={`btn ${activeTab === 'password' ? 'active' : ''}`}
                     onClick={() => setActiveTab('password')}
                 >
                     Change Password
-                </ButtonChangePassword>
+                </RightButton>
 
             </ActionButton>
 
