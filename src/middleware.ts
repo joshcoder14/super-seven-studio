@@ -66,7 +66,7 @@ export async function middleware(request: NextRequest) {
 
   // Client: Specific allowed routes
   if (role === 'Client') {
-    const allowedPaths = ['/', '/booking', '/package', '/billing', '/settings']
+    const allowedPaths = ['/', '/booking', '/package', '/billing', '/settings', '/feedback']
     const isAllowed = allowedPaths.some(
       path => pathname === path || pathname.startsWith(`${path}/`)
     )

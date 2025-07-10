@@ -168,7 +168,7 @@ export function NavBar(): React.JSX.Element {
 
             switch (user.user_role) {
                 case 'Client':
-                    return ['Home', 'Booking', 'Package', 'Billing'].includes(item.label);
+                    return ['Home', 'Booking', 'Package', 'Billing', 'Feedback'].includes(item.label);
                 case 'Photographer':
                 case 'Editor':
                     return ['Home', 'Workload'].includes(item.label);
