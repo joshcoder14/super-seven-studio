@@ -37,19 +37,43 @@ export async function updateUserProfile(formData: FormData): Promise<User>  {
     }
 }
 
-// In fetchCurrentUser.ts
 export async function updatePassword(password: string, confirmPassword: string): Promise<void> {
-    const formData = new FormData();
-    formData.append("password", password);
-    formData.append("confirm_password", confirmPassword);
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+        throw new Error('No access token found');
+    }
 
     const response = await fetch('/api/users/update-password', {
         method: 'POST',
-        body: formData,
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+            password,
+            confirm_password: confirmPassword
+        }),
     });
 
     if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update password');
+        let errorMessage = 'Failed to update password';
+        
+        try {
+            // Try to parse JSON error first
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+        } catch {
+            // Fallback to text if not JSON
+            const text = await response.text();
+            errorMessage = text || errorMessage;
+        }
+
+        throw new Error(errorMessage);
+    }
+    
+    // Update token after password change
+    const data = await response.json();
+    if (data.token) {
+        localStorage.setItem('access_token', data.token);
     }
 }

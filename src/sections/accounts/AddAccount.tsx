@@ -283,8 +283,7 @@ export function RegisterAccount({
                     title: 'Account Created Successfully!',
                     html: `
                         <div>
-                            <p>Account was created successfully!</p>
-                            <p><strong>Temporary Password:</strong>${defaultPassword}</p>
+                            <p><strong>Temporary Password: </strong>${defaultPassword}</p>
                             <p>Please instruct the user to change this password after first login.</p>
                         </div>
                     `,

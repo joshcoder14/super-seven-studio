@@ -96,20 +96,21 @@ export function ChangePasswordComponent(): React.JSX.Element {
             
             router.push(paths.home);
         } catch (error: any) {
-            // Handle specific backend errors
-            if (error.message.includes('current password')) {
+            // Handle backend validation errors
+            if (error.message.includes('password') || error.message.includes('confirm_password')) {
                 setErrors(prev => ({
                     ...prev,
-                    newPassword: error.message
+                    newPassword: error.message.includes('password') ? error.message : '',
+                    confirmPassword: error.message.includes('confirm_password') ? error.message : ''
                 }));
+            } else {
+                await Swal.fire({
+                    title: 'Error!',
+                    text: error.message || 'Failed to update password',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
             }
-
-            await Swal.fire({
-                title: 'Error!',
-                text: error.message || 'Failed to update password',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
         } finally {
             setIsSubmitting(false);
         }
