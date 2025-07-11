@@ -43,7 +43,7 @@ export function RegisterAccount({
     const ownerExists = existingOwners.some(owner => owner.user_type === '3');
     const isClient = account?.user_type === '1';
 
-    let accountUserType = '1';
+    let accountUserType = '4';
     if (account?.user_role === 'Owner') {
         accountUserType = '3';
     } else if (account?.user_role === 'Secretary') {
@@ -261,19 +261,30 @@ export function RegisterAccount({
                     title: 'Success!',
                     text: 'Account updated successfully!',
                     icon: 'success',
-                    confirmButtonText: 'OK',
+                    confirmButtonText: 'OK',    
                     confirmButtonColor: '#3085d6',
                 });
                 router.push(paths.accounts);
             } else {
-                const defaultPassword = `${formData.firstName.trim()}${formData.lastName.trim().toLowerCase()}12345`;
+                const cleanFirstName = formData.firstName.replace(/\s/g, '');
+                const cleanLastName = formData.lastName.replace(/\s/g, '');
+                
+                // Capitalize first letter of first name, leave rest unchanged
+                const formattedFirstName = 
+                    cleanFirstName.charAt(0).toUpperCase() + 
+                    cleanFirstName.slice(1).toLowerCase();
+                
+                // Convert last name to lowercase
+                const formattedLastName = cleanLastName.toLowerCase();
+                
+                const defaultPassword = `${formattedFirstName}${formattedLastName}12345`;
                 
                 const { isConfirmed } = await Swal.fire({
                     title: 'Account Created Successfully!',
                     html: `
                         <div>
                             <p>Account was created successfully!</p>
-                            <p><strong>Temporary Password:</strong> ${defaultPassword}</p>
+                            <p><strong>Temporary Password:</strong>${defaultPassword}</p>
                             <p>Please instruct the user to change this password after first login.</p>
                         </div>
                     `,
