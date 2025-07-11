@@ -1,4 +1,4 @@
-import { User, ApiResponse } from '@/types/user';
+import { User, ApiResponse, FormDataProps } from '@/types/user';
 import { accountFilterOptions } from '@/utils/filterOptions';
 
 const mapApiStatusToFrontend = (apiStatus: string | boolean | null): string => {
@@ -162,7 +162,7 @@ export async function ensureCsrfToken(): Promise<string> {
 }
 
 export async function addEmployee(
-    formData: any
+    formData: FormDataProps
 ): Promise<{ success: boolean; message?: string }> {
     try {
         const csrfToken = await ensureCsrfToken();

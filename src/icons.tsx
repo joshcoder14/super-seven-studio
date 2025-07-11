@@ -15,4 +15,5 @@ export const icons = {
     addIcon : "/assets/icons/add-icon.svg",
     profileIcon : "/assets/icons/profile-black.svg",
     caledarIcon: "/assets/icons/calendar.svg",
+    deliberableIcon: "/assets/icons/shape.svg",
 } as const;

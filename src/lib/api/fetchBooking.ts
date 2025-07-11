@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { BookingEvent, UnavailableDate, BookingFormData } from '@/types/booking';
+import { BookingEvent, UnavailableDate, BookingFormData, BaseResponse, AdminBookingResponse, ClientBookingResponse, BookingData } from '@/types/booking';
 import { PackageProps, AddOnsProps } from '@/types/field';
 import Swal from 'sweetalert2';
 import { paths } from '@/paths';
@@ -26,7 +26,7 @@ export const fetchBookings = async (month: number, year: number): Promise<Bookin
     throw new Error('No access token found');
   }
 
-  // Get user from localStorage to determine role
+  // Get user from localStorage
   const userString = localStorage.getItem('user');
   const user = userString ? JSON.parse(userString) : null;
   const isClient = user?.user_role === 'Client';
@@ -47,44 +47,90 @@ export const fetchBookings = async (month: number, year: number): Promise<Bookin
     throw new Error('Failed to fetch bookings');
   }
 
-  const data = await response.json();
+  const data: BaseResponse = await response.json();
   
-  // Handle different response structures
-  let bookingsData: any[] = [];
+  // Handle different response structures with type guards
+  let bookingsData: BookingData[] = [];
+  
   if (isClient) {
-    // Client endpoint returns data directly in data.data
-    if (data.status && Array.isArray(data.data)) {
-      bookingsData = data.data;
+    const clientData = data as ClientBookingResponse;
+    if (clientData.status && Array.isArray(clientData.data)) {
+      bookingsData = clientData.data;
     }
   } else {
-    // Admin endpoint uses paginated structure: data.data.data
-    if (data.status && data.data?.data) {
-      bookingsData = data.data.data;
+    const adminData = data as AdminBookingResponse;
+    if (adminData.status && adminData.data?.data) {
+      bookingsData = adminData.data.data;
     }
   }
 
-  return bookingsData.map((booking: any) => {
-    // Normalize date handling for both endpoints
-    const dateString = booking.booking_date?.iso || booking.booking_date;
-    const startDate = new Date(dateString);
+  return bookingsData.map((booking): BookingEvent => {
+    // Normalize date handling
+    const dateString = typeof booking.booking_date === 'string' 
+      ? booking.booking_date 
+      : booking.booking_date?.iso || '';
+    
+    const startDate = dateString ? new Date(dateString) : new Date();
     const endDate = new Date(startDate);
     endDate.setHours(23, 59, 59);
     
+    // Normalize booking_date object
+    const bookingDate = typeof booking.booking_date === 'string'
+      ? {
+          iso: dateString,
+          formatted: new Date(dateString).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          day: startDate.getDate(),
+          month: startDate.getMonth() + 1,
+          year: startDate.getFullYear(),
+          time: booking.ceremony_time || ''
+        }
+      : {
+          iso: booking.booking_date?.iso || dateString,
+          formatted: booking.booking_date?.formatted || startDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          day: booking.booking_date?.day || startDate.getDate(),
+          month: booking.booking_date?.month || startDate.getMonth() + 1,
+          year: booking.booking_date?.year || startDate.getFullYear(),
+          time: booking.booking_date?.time || booking.ceremony_time || ''
+        };
+
     return {
       id: booking.id,
-      eventTitle: booking.event_name,
-      customerName: booking.customer_name || `${user?.first_name} ${user?.last_name}`,
       start: startDate,
       end: endDate,
-      venue: booking.booking_address,
-      packageType: booking.package,
-      addons: (booking.add_ons || [])
-        .map((addon: any) => addon.add_on_name)
-        .join(', '),
-      ceremony_time: booking.ceremony_time,
-      status: booking.booking_status.toLowerCase() as 'pending' | 'unavailable' | 'approved'
+      booking_date: bookingDate,
+      ceremony_time: booking.ceremony_time || '',
+      event_name: booking.event_name,
+      customer_id: booking.customer_id || (user?.id || 0),
+      customer_name: booking.customer_name || `${user?.first_name} ${user?.last_name}` || '',
+      discount: typeof booking.discount === 'string' 
+        ? parseFloat(booking.discount) || 0 
+        : booking.discount || 0,
+      booking_address: booking.booking_address,
+      booking_status: booking.booking_status.toLowerCase(),
+      deliverable_status: booking.deliverable_status,
+      package: booking.package,
+      add_ons: (booking.add_ons || []).map(addon => ({
+        id: addon.id,
+        add_on_name: addon.add_on_name,
+        add_on_details: addon.add_on_details,
+        add_on_price: addon.add_on_price
+      })),
+      ...(booking.has_feedback !== undefined && { has_feedback: booking.has_feedback }),
+      ...(booking.feedback && { feedback: booking.feedback }),
+      ...(booking.created_at && { created_at: booking.created_at })
     };
   });
+  
 };
 
 // Fetch unavailable dates
@@ -325,10 +371,7 @@ export const fetchUnavailableDatesForMonth = async (month: number, year: number)
   }
 };
 
-export const fetchPackagesAddOnsData = async (): Promise<{
-  packages: PackageProps[];
-  addOns: AddOnsProps[];
-}> => {
+export const fetchPackagesAddOnsData = async (): Promise<{packages: PackageProps[]; addOns: AddOnsProps[]; }> => {
   try {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
@@ -419,31 +462,32 @@ export const submitBooking = async (
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },
+      credentials: 'include',
       body: form,
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      if (data.errors) {
-        const result: Record<string, string> = {};
-        Object.entries(data.errors).forEach(([key, value]) => {
-          result[key] = Array.isArray(value) ? value.join(' ') : String(value);
-          if (key === 'booking_date') {
-            result['bookingDate'] = result[key];
-          }
-        });
-        throw { message: data.message || 'Booking faileds', errors: result };
-      }
-      throw new Error(data.message || 'Booking faileds');
-    }
-
-    return data;
+    return handleApiResponse(response);
   } catch (err) {
     console.error('Error submitting booking:', err);
-    throw err;
+    return { success: false, message: err instanceof Error ? err.message : 'Failed to submit booking' };
   }
 };
+
+async function handleApiResponse(response: Response): Promise<{ success: boolean; message?: string }> {
+  let data = {};
+  const contentType = response.headers.get('content-type');
+  
+  if (response.status !== 204 && contentType?.includes('application/json')) {
+    data = await response.json();
+  }
+
+  if (!response.ok) {
+    const message = (data as any)?.message || 'Operation failed';
+    throw new Error(message);
+  }
+
+  return { success: true };
+}
 
 export const fetchInitialBookingData = async (): Promise<{
   approvedDates: Date[];
@@ -619,10 +663,6 @@ export const updateBooking = async (
   const endpoint = isClient 
     ? `/api/customer/bookings/${bookingId}/update`
     : `/api/bookings/${bookingId}/update`;
-
-      
-
-    console.log("Endpoint:", endpoint);
 
   const response = await fetch(endpoint, {
     method: 'POST',

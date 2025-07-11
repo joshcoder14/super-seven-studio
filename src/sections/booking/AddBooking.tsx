@@ -517,16 +517,30 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
     setState(prev => ({ ...prev, loading: { ...prev.loading, submitting: true } }));
 
     try {
-      await submitBooking(
-        state.formData,
-        state.selectedPackage,
-        state.selectedAddOns,
-        state.packages
-      );
+      const data = await submitBooking(state.formData, state.selectedPackage, state.selectedAddOns, state.packages);
+      console.log(data);
+      const cleanFirstName = state.formData.firstName.replace(/\s/g, '');
+      const cleanLastName = state.formData.lastName.replace(/\s/g, '');
+
+      // Capitalize first letter of first name, leave rest unchanged
+      const formattedFirstName = 
+        cleanFirstName.charAt(0).toUpperCase() + 
+        cleanFirstName.slice(1);
+      
+      // Convert last name to lowercase
+      const formattedLastName = cleanLastName.toLowerCase();
+
+      const defaultPassword = `${formattedFirstName}${formattedLastName}12345`;
 
       await Swal.fire({
         title: 'Success!',
         text: 'Booking created successfully!',
+        html: `
+          <div>
+            <p><strong>Temporary Password: </strong>${defaultPassword}</p>
+            <p>Please instruct the user to change this password after first login.</p>
+          </div>
+        `,
         icon: 'success',
         confirmButtonText: 'OK'
       });

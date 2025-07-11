@@ -10,6 +10,7 @@ import { HeadingComponent } from '@/components/Heading';
 import AddBookingComponent from './AddBooking';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import CheckboxComponent from '@/components/checkbox';
+import { FeedbackModalComponent } from '@/components/Modal/FeedbackModal';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale';
@@ -35,7 +36,10 @@ import {
   rescheduleBooking,
   normalizeToPHDate
 } from '@/lib/api/fetchBooking';
+import { getAddonNames } from '@/utils/billing';
 import { useAuth } from '@/context/AuthContext';
+import { submitFeedback } from '@/lib/api/fetchFeedback';
+import { paths } from '@/paths';
 
 const locales = { 'en-US': enUS };
 
@@ -64,6 +68,10 @@ export function BookingComponent(): React.JSX.Element {
   const [rescheduleTime, setRescheduleTime] = useState<Dayjs | null>(null);
   const [showRescheduleForm, setShowRescheduleForm] = useState(false);
   const [timeError, setTimeError] = useState<string | undefined>(undefined);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [feedbackBooking, setFeedbackBooking] = useState<BookingEvent | null>(null);
+
   const { user } = useAuth();
   const isClient = user?.user_role === 'Client';
   const canDisableDates = user?.user_role === 'Owner' || user?.user_role === 'Secretary';
@@ -87,6 +95,9 @@ export function BookingComponent(): React.JSX.Element {
         fetchBookings(month, year),
         fetchUnavailableDateRecords(month, year)
       ]);
+
+      console.log("Bookings:", bookings);
+      console.log("Unavailable Dates:", unavailable);
       
       setEvents(bookings);
       setUnavailableDates(unavailable);
@@ -120,7 +131,7 @@ export function BookingComponent(): React.JSX.Element {
   const dayPropGetter = useCallback((date: Date) => {
     const normalizedDate = normalizeToPHDate(date);
     const hasApprovedEvent = events.some(event => 
-      event.status === 'approved' &&
+      event.booking_status === 'approved' &&
       normalizeToPHDate(new Date(event.start)).getTime() === normalizedDate.getTime()
     );
     
@@ -238,7 +249,7 @@ export function BookingComponent(): React.JSX.Element {
   };
 
   // Handle booking actions
-  const handleAction = async (action: 'reschedule' | 'reject' | 'approve' | 'update' | 'cancel') => {
+  const handleAction = async (action: 'reschedule' | 'reject' | 'approve' | 'update' | 'cancel' | 'feedback') => {
     if (!selectedEvent) return;
 
     if (action === 'reschedule') {
@@ -253,10 +264,17 @@ export function BookingComponent(): React.JSX.Element {
       return;
     }
 
+    // Skip confirmation for feedback action
+    if (action === 'feedback') {
+      setFeedbackBooking(selectedEvent);
+      setShowFeedbackModal(true);
+      return;
+    }
+
     // Check if there are other pending bookings for the same date
     const otherPendingBookings = events.filter(event => 
       event.id !== selectedEvent.id &&
-      event.status === 'pending' &&
+      event.booking_status === 'pending' &&
       normalizeToPHDate(new Date(event.start)).getTime() === normalizeToPHDate(selectedEvent.start).getTime()
     );
 
@@ -297,7 +315,7 @@ export function BookingComponent(): React.JSX.Element {
 
           const otherPendingBookings = events.filter(event => 
             event.id !== selectedEvent.id &&
-            event.status === 'pending' &&
+            event.booking_status === 'pending' &&
             normalizeToPHDate(new Date(event.start)).getTime() === normalizeToPHDate(selectedEvent.start).getTime()
           );
 
@@ -446,9 +464,9 @@ export function BookingComponent(): React.JSX.Element {
         textOverflow: 'ellipsis'
       };
 
-      switch(event.status) {
+      switch(event.booking_status) {
         case 'approved':
-          return { ...baseStyle, backgroundColor: '#979797' };
+          return { ...baseStyle, backgroundColor: isClient ? '#2BB673' : '#979797' };
         case 'pending':
           return { ...baseStyle, backgroundColor: '#FFA500' };
         case 'unavailable':
@@ -460,7 +478,7 @@ export function BookingComponent(): React.JSX.Element {
 
     return (
       <div style={getEventStyle()}>
-        {event.eventTitle}
+        {event.event_name}
       </div>
     );
   };
@@ -468,21 +486,21 @@ export function BookingComponent(): React.JSX.Element {
   // Filter events based on status filters
   const filteredEvents = events.filter(event => {
     return (
-      (statusFilters.pending && event.status === "pending") ||
-      (statusFilters.unavailable && event.status === "unavailable") ||
-      (statusFilters.booked && event.status === "approved")
+      (statusFilters.pending && event.booking_status === "pending") ||
+      (statusFilters.unavailable && event.booking_status === "unavailable") ||
+      (statusFilters.booked && event.booking_status === "approved")
     );
   });
 
   // Get nearest upcoming event
   const nearestEvent = events
-    .filter(event => event.status === 'approved' && event.start > new Date())
+    .filter(event => event.booking_status === 'approved' && event.start > new Date())
     .sort((a, b) => a.start.getTime() - b.start.getTime())[0];
 
   // Get disabled dates for date picker
   const disabledDates = [
     ...events
-      .filter(event => event.status === 'approved')
+      .filter(event => event.booking_status === 'approved')
       .map(event => dayjs(normalizeToPHDate(new Date(event.start)))),
     ...unavailableDates.map(d => dayjs(normalizeToPHDate(new Date(d.date))))
   ];
@@ -556,10 +574,10 @@ export function BookingComponent(): React.JSX.Element {
                 ) : nearestEvent ? (
                   <ul>
                     <li key={nearestEvent.id}>
-                      <span className="label">{nearestEvent.eventTitle}</span>
+                      <span className="label">{nearestEvent.event_name}</span>
                       <span className="date">{format(nearestEvent.start, 'MMMM d yyyy')} {nearestEvent.ceremony_time}</span>
-                      <span className="package-type">{nearestEvent.packageType}</span>
-                      <span className="venue">{nearestEvent.venue}</span>
+                      <span className="package-type">{nearestEvent.package}</span>
+                      <span className="venue">{nearestEvent.booking_address}</span>
                     </li>
                   </ul>
                 ) : (
@@ -713,11 +731,11 @@ export function BookingComponent(): React.JSX.Element {
             ) : (
               <>
                 <Box 
-                  className={`event-head ${selectedEvent.status === 'approved' ? 'approved' : ''}`}
+                  className={`event-head ${selectedEvent.deliverable_status.replace(/\s/g, '-').toLowerCase()}`}
                 >
                   <Box className="event-icon"/>
                   <Box className="event-name">
-                    <h2 className="title">{selectedEvent.eventTitle}</h2>
+                    <h2 className="title">{selectedEvent.event_name}</h2>
                     <Typography component="span" className="event-date">
                       {format(selectedEvent.start, 'EEEE, MMMM d')}
                     </Typography>
@@ -726,20 +744,17 @@ export function BookingComponent(): React.JSX.Element {
                 <Box className="event-info">
                   <Box className="left-info">
                     <Box className="client-info">
-                      <Image width={20} height={20} src={icons.eventProfile} alt="profile icon" />
-                      <Typography component="span">{selectedEvent.customerName}</Typography>
+                      <Image width={20} height={20} src={icons.deliberableIcon} alt="package icon" />
+                      <Typography component="span">{selectedEvent.deliverable_status}</Typography>
                     </Box>
                     <Box className="client-info">
                       <Image width={20} height={20} src={icons.packageIcon} alt="package icon" />
-                      <Typography component="span">{selectedEvent.packageType}</Typography>
+                      <Typography component="span">{selectedEvent.package}</Typography>
                     </Box>
-                    {/* if addons is empty then don't show */}
-                    {selectedEvent.addons.length > 0 && (
-                      <Box className="client-info">
-                        <Image width={20} height={20} src={icons.packageIcon} alt="package icon" />
-                        <Typography component="span">{selectedEvent.addons}</Typography>
-                      </Box>
-                    )}
+                    <Box className="client-info">
+                      <Image width={20} height={20} src={icons.packageIcon} alt="package icon" />
+                      <Typography component="span">{getAddonNames(selectedEvent.add_ons) || 'None'}</Typography>
+                    </Box>
                     <Box className="client-info">
                       <Image width={20} height={20} src={icons.clockIcon} alt="clock icon" />
                       <Typography component="span">
@@ -748,11 +763,11 @@ export function BookingComponent(): React.JSX.Element {
                     </Box>
                     <Box className="client-info">
                       <Image width={20} height={20} src={icons.locationIcon} alt="location icon" />
-                      <Typography component="span">{selectedEvent.venue}</Typography>
+                      <Typography component="span">{selectedEvent.booking_address}</Typography>
                     </Box>
                   </Box>
                 </Box>
-                <Box className={`action-btn ${selectedEvent.status === 'approved' ? 'approved' : ''}`}>
+                <Box className={`action-btn ${selectedEvent.booking_status === 'approved' ? 'approved' : ''}`}>
                   {(() => {
                     // For non-client users (Owner/Secretary)
                     if (!isClient) {
@@ -768,7 +783,7 @@ export function BookingComponent(): React.JSX.Element {
                           </Button>
                           
                           {/* Action buttons based on booking status */}
-                          {selectedEvent.status === 'approved' ? (
+                          {selectedEvent.booking_status === 'approved' ? (
                             <>
                               <Button 
                                 className="btn cancel" 
@@ -808,24 +823,47 @@ export function BookingComponent(): React.JSX.Element {
                     }
                     // For client users
                     else {
+                      const isDisabled = selectedEvent.deliverable_status !== 'Completed' || selectedEvent.has_feedback;
+
                       return (
                         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                           {/* Clients only see these buttons regardless of status */}
-                          <Button 
-                            className="btn cancel" 
-                            onClick={() => handleAction('cancel')}
-                            disabled={isLoading}
-                            sx={{ backgroundColor: '#EF3826 !important', color: '#fff' }}
-                          >
-                            Cancel Booking
-                          </Button>
-                          <Button 
-                            className="btn update" 
-                            onClick={() => handleAction('update')}
-                            disabled={isLoading}
-                          >
-                            Update
-                          </Button>
+                          {selectedEvent.booking_status === 'approved' ? (
+                            <Button 
+                              className="btn cancel" 
+                              onClick={() => handleAction('feedback')}
+                              disabled={isLoading || isDisabled}
+                              sx={{ 
+                                pointerEvents: isDisabled  ? 'none' : 'auto',
+                                backgroundColor: isDisabled  ? '#cccccc' : '#2BB673 !important', 
+                                color: '#fff',
+                                '&:hover': {
+                                  backgroundColor: isDisabled  ? '#cccccc' : '#155D3A !important',
+                                  color: '#fff',
+                                }
+                              }}
+                            >
+                              {selectedEvent.has_feedback ? 'Feedback Submitted' : 'Give Feedback'}
+                            </Button>
+                          ) : (
+                            <>
+                              <Button 
+                                className="btn cancel" 
+                                onClick={() => handleAction('cancel')}
+                                disabled={isLoading}
+                                sx={{ backgroundColor: '#EF3826 !important', color: '#fff' }}
+                              >
+                                Cancel Booking
+                              </Button>
+                              <Button 
+                                className="btn update" 
+                                onClick={() => handleAction('update')}
+                                disabled={isLoading}
+                              >
+                                Update
+                              </Button>
+                            </>
+                          )}
                         </Box>
                       );
                     }
@@ -835,6 +873,60 @@ export function BookingComponent(): React.JSX.Element {
             )}
           </Details>
         </Box>
+      )}
+
+      {/* Show Booking Feedback Modal */}
+      {showFeedbackModal && feedbackBooking && (
+        <FeedbackModalComponent
+          isOpen={showFeedbackModal}
+          onClose={() => setShowFeedbackModal(false)}
+          bookingEvent={feedbackBooking}
+          onSubmit={async (feedback: string) => {
+            try {
+              setIsSubmittingFeedback(true);
+              await submitFeedback(feedbackBooking.id, feedback);
+
+              // Update events state to mark this booking as feedback submitted
+              setEvents(prevEvents => 
+                prevEvents.map(event => 
+                  event.id === feedbackBooking.id 
+                    ? { ...event, feedback_submitted: true } 
+                    : event
+                )
+              );
+
+              // Also update the selectedEvent if it's currently open
+              setSelectedEvent(prev => 
+                prev && prev.id === feedbackBooking.id 
+                  ? { ...prev, feedback_submitted: true } 
+                  : prev
+              );
+
+              Swal.fire({
+                title: 'Success!',
+                text: 'Feedback submitted successfully',
+                icon: 'success',
+                customClass: {
+                  container: 'swal-z-index'
+                }
+              });
+              window.location.reload();
+              setShowFeedbackModal(false);
+            } catch (err) {
+              Swal.fire({
+                title: 'Error',
+                text: err instanceof Error ? err.message : 'Failed to submit feedback',
+                icon: 'error',
+                customClass: {
+                  container: 'swal-z-index'
+                }
+              });
+            } finally {
+              setIsSubmittingFeedback(false);
+            }
+          }}
+          isLoading={isSubmittingFeedback}
+        />
       )}
 
       {showAddBooking && (

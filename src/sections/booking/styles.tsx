@@ -35,9 +35,40 @@ export const Details = styled(Box)`
         display: flex;
         flex-direction: row;
 
-        &.approved {
+        &.unassigned {
             .event-icon {
                 background: #979797;
+            }
+        }
+
+        &.scheduled {
+            .event-icon {
+                background: #ef3826;
+            }
+        }
+
+        &.uploaded {
+            .event-icon {
+                background: #d7e606;
+            }
+        }
+        
+        &.for-edit,
+        &.editing {
+            .event-icon {
+                background: #3749a6;
+            }
+        }
+        
+        &.editing {
+            .event-icon {
+                background: #ff7b00;
+            }
+        }
+        
+        &.completed {
+            .event-icon {
+                background: #2BB673;
             }
         }
 
