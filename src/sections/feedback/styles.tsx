@@ -1,5 +1,67 @@
 import { Box, styled } from "@mui/material";
 
+export const FeedbackField = styled(Box)`
+    width: 100%;
+    height: auto;
+    padding: 30px 50px;
+
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+
+        .row {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+
+            p {
+                font-family: Nunito Sans;
+                font-weight: 600;
+                font-size: 20px;
+                line-height: 24px;
+                color: #202224;
+            }
+
+            textarea {
+                font-family: Nunito Sans;
+                font-weight: 400;
+                font-size: 16px;
+                line-height: 24px;
+                color: #202224;
+            }
+        }
+
+        .post-btn {
+            width: 100%;
+            display: flex;
+
+            button {
+                width: fit-content;
+                height: 40px;
+                border-radius: 6px;
+                color: #fff;
+                font-weight: 600;
+                font-size: 14px;
+                line-height: 100%;
+                margin-left: auto;
+                appearance: none;
+                border: none;
+                box-shadow: none;
+                padding: 0 10px;
+
+                &.posted {
+                    background-color: #EF3826;
+                }
+
+                &.unposted {
+                    background-color: #2BB673;
+                }
+            }
+        }
+    }
+`;
+
 export const FilterArea = styled(Box)`
     display: flex;
     flex-direction: row;

@@ -1,10 +1,6 @@
 'use client';
 
 import React from 'react';
-import Tooltip from '@mui/material/Tooltip';
-import { IconButton } from '@/sections/accounts/styles';
-import { useRouter } from 'next/navigation';
-import {paths} from '@/paths';
 import {
   Table,
   TableBody,
@@ -14,15 +10,21 @@ import {
   TableRow,
   Paper,
   Typography,
-  Button
+  Button,
+  Skeleton
 } from '@mui/material';
+import { useRouter } from 'next/navigation';
+import { 
+  MappedFeedbackItem
+} from '@/types/feedback';
 
-// type WorkLoadTableProps = {
-// //   onEditClick: (eventData: any) => void;
-// };
+type FeedBackTableProps = {
+  data: MappedFeedbackItem[];
+  loading: boolean;
+  onViewClick: (feedbackData: MappedFeedbackItem) => void
+};
 
-export function FeedBackTable() {
-//   const router = useRouter();
+export function FeedBackTable({ data, loading, onViewClick }: FeedBackTableProps) {
 
   const tableHeader = [
     'Event Name',
@@ -32,39 +34,18 @@ export function FeedBackTable() {
     'Action'
   ];
 
-  const rowData = [
-    {
-      eventName: "Jane & John's Wedding",
-      client: "Tylex Events",
-      bookingDate: "January 6, 2025",
-      status: "Posted"
-    },
-    {
-      eventName: "Christmas Party",
-      client: "Carlo Yu",
-      bookingDate: "December 25, 2024",
-      status: "Unposted"
-    },
-    {
-      eventName: "Charlie's Birthday ",
-      client: "Smile Services",
-      bookingDate: "December 29, 2024",
-      status: "Pending"
-    },
-  ];
-
   return (
     <TableContainer
-        component={Paper}
-        style={{
-            borderRadius: '14px',
-            border: '0.3px solid #D5D5D5',
-            boxShadow: 'none',
-            marginTop: '30px'
-        }}
-        className='account-table'
+      component={Paper}
+      style={{
+        borderRadius: '14px',
+        border: '0.3px solid #D5D5D5',
+        boxShadow: 'none',
+        marginTop: '30px'
+      }}
+      className='account-table'
     >
-      <Table sx={{ minWidth: 650 }} aria-label="workload table">
+      <Table sx={{ minWidth: 650 }} aria-label="feedback table">
         <TableHead>
           <TableRow>
             {tableHeader.map((header, index) => (
@@ -73,40 +54,60 @@ export function FeedBackTable() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {rowData.map((row, index) => (
-            <TableRow key={index}>
-              <TableCell align="left">{row.eventName}</TableCell>
-              <TableCell align="left">{row.client}</TableCell>
-              <TableCell align="left">{row.bookingDate}</TableCell>
-              <TableCell align="left" className={row.status.toLowerCase()}>
-                <Typography component="span">{row.status}</Typography>
-              </TableCell>
-              <TableCell align="left" style={{ display: 'flex', gap: '10px' }}>
-                <Button 
-                    sx={{ 
-                        textTransform: 'capitalize',
-                        padding: '6px 16px',
-                        backgroundColor: '#FAFBFD',
-                        border: '0.6px solid #D5D5D5',
-                        borderRadius: '8px',
-                        fontFamily: 'Nunito Sans',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        color: '#202224',
-                        cursor: 'pointer',
-                        '&:hover': {
-                            backgroundColor: '#D5D5D5',
-                            // under text
-                            textDecoration: 'underline',
-                            textUnderlineOffset: '3px'
-                        }
-                    }}
-                >
-                    View
-                </Button>
+          {loading ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <TableRow key={`skeleton-${index}`}>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell sx={{ display: 'flex', gap: '8px' }}>
+                  <Skeleton sx={{ borderRadius: '8px' }} variant="circular" width={30} height={30} />
+                </TableCell>
+              </TableRow>
+            ))
+          ) : data.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={5} align="center">
+                <Typography>No feedbacks found</Typography>
               </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            data.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell align="left">{row.eventName}</TableCell>
+                <TableCell align="left">{row.client}</TableCell>
+                <TableCell align="left">{row.bookingDate}</TableCell>
+                <TableCell align="left" className={row.status.toLowerCase()}>
+                  <Typography component="span">{row.status}</Typography>
+                </TableCell>
+                <TableCell align="left">
+                  <Button 
+                    onClick={() => onViewClick(row)}
+                    sx={{ 
+                      textTransform: 'capitalize',
+                      padding: '6px 16px',
+                      backgroundColor: '#FAFBFD',
+                      border: '0.6px solid #D5D5D5',
+                      borderRadius: '8px',
+                      fontFamily: 'Nunito Sans',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: '#202224',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        backgroundColor: '#D5D5D5',
+                        textDecoration: 'underline',
+                        textUnderlineOffset: '3px'
+                      }
+                    }}
+                  >
+                    View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </TableContainer>

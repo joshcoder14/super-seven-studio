@@ -1,15 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ModalContainer, EventHead, EventIcon, EventName, EventInfo, EventInput, EventButton } from './styles';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import {
   Details, CloseButton
 } from '@/sections/booking/styles';
-import { Typography, Button, CircularProgress, TextField  } from '@mui/material';
+import { Typography, Button, CircularProgress, TextField, styled, Box  } from '@mui/material';
 import { BookingEvent } from '@/types/booking';
 import { format } from 'date-fns';
+import { fadeInLeft, fadeOutRight } from '@/sections/feedback/ViewModal';
 
 type FeedbackModalProps = {
   isOpen: boolean;
@@ -26,17 +27,17 @@ export function FeedbackModalComponent({
     onSubmit,
     isLoading = false 
 }: FeedbackModalProps): React.JSX.Element | null {
-    const [feedback, setFeedback] = React.useState('');
+  const [feedback, setFeedback] = React.useState('');
 
-    if (!isOpen) {
-        return null;
-    }
+  if (!isOpen) {
+    return null;
+  }
 
-    const handleSubmit = () => {
-        onSubmit(feedback);
-    };
+  const handleSubmit = () => {
+    onSubmit(feedback);
+  };
     
-    return (
+  return (
     <ModalContainer>
       <Details className="details">
         <CloseButton onClick={onClose}>

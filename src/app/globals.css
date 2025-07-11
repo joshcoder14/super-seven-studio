@@ -301,3 +301,55 @@ form button {
   color: #000000 !important;
   text-decoration: underline !important;
 }
+
+/* Table Pagination */
+.table-pagination .MuiTablePagination-toolbar {
+  padding-top: 20px;
+  padding-bottom: 40px;
+}
+
+.table-pagination .MuiTablePagination-toolbar .MuiTablePagination-spacer {
+  display: none;
+}
+
+.table-pagination .MuiTablePagination-toolbar p {
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  color: #202224;
+}
+
+.table-pagination .MuiTablePagination-toolbar .MuiTablePagination-select .MuiSelect-standard {
+  background: #fff;
+  padding: 10px 25px 10px 5px;
+  border: 0.3px solid rgb(213, 213, 213);
+  border-radius: 5px;
+}
+
+.table-pagination .MuiTablePagination-toolbar .MuiTablePagination-actions {
+  margin-left: auto;
+}
+
+.table-pagination .MuiTablePagination-toolbar .MuiTablePagination-actions button {
+  appearance: none;
+  outline: none;
+  border: 0.6px solid #D5D5D5;
+  background: #FAFBFD;
+  padding: 3px 10px;
+}
+
+.table-pagination .MuiTablePagination-toolbar .MuiTablePagination-actions button.Mui-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.table-pagination .MuiTablePagination-toolbar .MuiTablePagination-actions #pagination-prev-button {
+  border-radius: 8px 0px 0px 8px;
+  border-right: none;
+}
+
+.table-pagination .MuiTablePagination-toolbar .MuiTablePagination-actions #pagination-next-button {
+  border-radius: 0px 8px 8px 0px;
+}
