@@ -42,20 +42,22 @@ export function PaymentCardComponent({
     };
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/,/g, ''); // remove commas
-        const formattedValue = Number(value).toLocaleString(); // format with thousand separator
+        const value = e.target.value.replace(/,/g, '');
+        const formattedValue = Number(value).toLocaleString();
         setAmount(formattedValue);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const cleanAmount = amount.replace(/,/g, '');
+        const amountNum = parseFloat(cleanAmount);
         
         if (!billing) {
             setError('Billing details not loaded');
             return;
         }
         
-        const amountNum = parseFloat(amount);
         if (isNaN(amountNum)) {
             setError('Please enter a valid amount');
             return;
