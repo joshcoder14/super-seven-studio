@@ -15,7 +15,6 @@ export const Heading = styled(Box)`
 
 export const FormContainer = styled(Box)`
     width: 100%;
-    padding: 0 29px;
     padding-top: 40px;
 
     .wrapper {
@@ -210,7 +209,6 @@ export const ActionButton = styled(Box)`
     justify-content: flex-start;
     align-items: center;
     gap: 0px;
-    padding: 0 30px;
 
     .btn {
         padding: 20px 25px;
@@ -239,5 +237,7 @@ export const SettingsContainer = styled(Box)`
     position: relative;
     background-color: #f7faf5;
     height: 100%;
-    // padding-top: 70px;
+    overflow-y: scroll;
+    scrollbar-width: none;
+    padding: 0 30px;
 `;

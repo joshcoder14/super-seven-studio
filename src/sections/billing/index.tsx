@@ -189,7 +189,7 @@ export default function BillingComponent() {
                 </Box>
             )}
             
-            <Box sx={{ padding: '0 30px', marginBottom: '150px' }}>
+            <Box sx={{ marginBottom: '150px' }}>
                 <BillingTable 
                     billingData={filteredData} 
                     loading={loading}

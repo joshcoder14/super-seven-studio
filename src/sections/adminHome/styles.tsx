@@ -9,6 +9,7 @@ export const HomeContainer = styled(Box)`
     position: relative;
     background-color: #f7faf5;
     height: 100%;
+    padding: 0 30px;
     overflow-y: scroll;
     scrollbar-width: none;
 `;

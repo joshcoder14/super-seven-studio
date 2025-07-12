@@ -7,7 +7,6 @@ export const PackageWrapper = styled(Box)`
     flex-direction: row;
     flex-wrap: wrap;
     gap: 24px;
-    padding: 0 30px;
     margin-bottom: 150px;
 `;
 
@@ -16,7 +15,7 @@ export const PackageContent = styled(Box)`
     height: auto;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     flex-direction: row;
     gap: 30px;
-    padding-right: 30px;
 `;

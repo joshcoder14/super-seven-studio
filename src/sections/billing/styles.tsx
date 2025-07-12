@@ -35,5 +35,4 @@ export const YearSelector = styled(Box)`
     flex-direction: row;
     gap: 10px;
     align-items: center;
-    padding: 0px 30px;
 `;

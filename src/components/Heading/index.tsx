@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Heading } from "./styles";
-import { Box, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { paths } from '@/paths';
 import { usePathname } from 'next/navigation';
 
@@ -64,6 +64,10 @@ export function HeadingComponent(): React.JSX.Element {
       <Typography component="h2" className="title">
         {title}
       </Typography>
+      
+      {pathname.startsWith(paths.reports) && (
+        <Button>Download as PDF</Button>
+      )}
     </Heading>
   );
 }

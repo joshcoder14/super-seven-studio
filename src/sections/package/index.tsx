@@ -272,7 +272,7 @@ export function PackageHome(): React.JSX.Element {
             </PackageContent>
             
             {!isClient ? (
-                <Box sx={{ padding: '0 30px', marginBottom: '150px' }}>
+                <Box sx={{ marginBottom: '150px' }}>
                     {error ? (
                         <Box display="flex" justifyContent="center" alignItems="center" height={200}>
                             Error: {error}

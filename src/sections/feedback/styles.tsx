@@ -76,7 +76,6 @@ export const FeedbackWrapper = styled(Box)`
     gap: 0px;
     width: 100%;
     height: 100%;
-    padding: 0 30px;
 
     table {
         tbody {
@@ -123,4 +122,7 @@ export const FeedbackContainer = styled(Box)`
     position: relative;
     background-color: #f7faf5;
     height: 100%;
+    padding: 0 30px;
+    overflow-y: scroll;
+    scrollbar-width: none;
 `;

@@ -582,7 +582,6 @@ export const LeftContent = styled(Box)`
 
 export const BookingContent = styled(Box)`
     width: 100%;
-    padding: 0 30px;
     display: flex;
     flex-direction: row;
     gap: 20px;
@@ -598,4 +597,5 @@ export const BookingContainer = styled(Box)`
     height: 100%;
     overflow-y: scroll;
     scrollbar-width: none;
+    padding: 0 30px;
 `;
