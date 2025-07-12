@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import CustomDatePicker from '@/components/datepicker';
 import dayjs from 'dayjs';
 import { 
@@ -13,14 +13,15 @@ import {
     LinkAttached,
     ActionButton 
 } from './styles';
-import { Box, Typography, CircularProgress, Button } from '@mui/material';
+import { Box, Typography, CircularProgress, Button, styled } from '@mui/material';
 import { icons } from '@/icons';
 import Image from 'next/image';
 import { DeliverableStatus, MappedWorkloadItem, WorkloadApiItem, statusMap, Employee, statusOptions, statusStringToNumberMap } from '@/types/workload';
 import { fetchAvailableEmployees, fetchWorkloadDetailsById, showConfirmationDialog, showValidationError, updateWorkloadAssignment, validateAssignment, updateEmployeeWorkloadStatus } from '@/lib/api/fetchWorkloads';
 import Swal from 'sweetalert2';
 import { useAuth } from '@/context/AuthContext';
-
+import { fadeInRight, fadeOutRight } from "@/utils/animate";
+import Preloader from '@/components/Preloader';
 
 export interface EditModalProps {
     open: boolean;
@@ -28,6 +29,28 @@ export interface EditModalProps {
     eventData: MappedWorkloadItem | null;
     onUpdateSuccess?: () => void;
 }
+
+// Define ModalContainer with transient prop $closing
+const StyledModalContainer = styled(Box, {
+  shouldForwardProp: (prop) => prop !== '$closing',
+})<{ $closing?: boolean }>(({ theme, $closing }) => ({
+  animation: `${$closing ? fadeOutRight : fadeInRight} 0.3s forwards`,
+  position: 'absolute',
+  top: '0px',
+  right: 0,
+  maxWidth: '560px',
+  width: '100%',
+  height: 'auto',
+  backgroundColor: '#FFFFFF',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'flex-start',
+  alignItems: 'flex-start',
+  paddingBottom: '30px',
+  zIndex: 1,
+  border: '0.3px solid #E0E0E0',
+  borderRadius: '4px',
+}));
 
 export default function EditModal({ open, onClose, eventData, onUpdateSuccess }: EditModalProps) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -40,8 +63,53 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
     const [fetching, setFetching] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [bookingDetails, setBookingDetails] = useState<WorkloadApiItem | null>(null);
+    const modalRef = useRef<HTMLDivElement>(null);
+    const [shouldRender, setShouldRender] = useState(false);
+    const [closing, setClosing] = useState(false);
+
     const { user, loading: authLoading } = useAuth();
     const isEmployee = user?.user_role === 'Editor' || user?.user_role === 'Photographer';
+    
+    // Handle open/close transitions
+    useEffect(() => {
+        if (open) {
+            // Open modal: show and animate in
+            setShouldRender(true);
+            setClosing(false);
+        } else if (shouldRender) {
+            // Start closing animation
+            setClosing(true);
+            const timer = setTimeout(() => {
+                setShouldRender(false);
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [open]);
+
+    const handleClose = useCallback(() => {
+        // Start closing animation
+        setClosing(true);
+        setTimeout(() => {
+            onClose();
+        }, 300);
+    }, [onClose]);
+    
+    // Handle escape key
+    useEffect(() => {
+        const handleEscapeKey = (event: KeyboardEvent) => {
+            if (event.key === 'Escape' && open) {
+                onClose();
+            }
+        };
+
+        if (open) {
+            document.addEventListener('keydown', handleEscapeKey);
+        }
+
+        return () => {
+            document.removeEventListener('keydown', handleEscapeKey);
+        };
+    }, [open, handleClose]);
 
     useEffect(() => {
         if (!open || !eventData) return;
@@ -100,6 +168,12 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
         );
     };
 
+    const formatDateForBackend = (date: dayjs.Dayjs | null): string | null => {
+        if (!date) return null;
+        // Use ISO format that backend expects
+        return date.format('YYYY-MM-DD');
+    };
+
     const handleUpdate = async () => {
         if (!eventData || !bookingDetails) return;
 
@@ -114,7 +188,24 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
             return;
         }
 
+        // Validate link when status is Completed
+        if (selectedStatus !== 0) {
+            if (!link.trim()) {
+                await showValidationError("Please provide a link for completed deliverables");
+                return;
+            }
+            
+            // Validate Google Drive/Dropbox pattern
+            const drivePattern = /^https:\/\/drive\.google\.com\/.+/;
+            const dropboxPattern = /^https:\/\/www\.dropbox\.com\/.+/;
+            if (!drivePattern.test(link) && !dropboxPattern.test(link)) {
+                await showValidationError("Please provide a valid Google Drive or Dropbox link");
+                return;
+            }
+        }
+
         try {
+
             // Confirmation dialog
             const confirmed = await showConfirmationDialog();
             if (!confirmed) return;
@@ -129,7 +220,7 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                 });
             } else {
                 await updateWorkloadAssignment(eventData.id, {
-                    expected_completion_date: completionDate?.format('YYYY-MM-DD') || null,
+                    expected_completion_date: formatDateForBackend(completionDate),
                     deliverable_status: selectedStatus,
                     link: link || '',
                     user_id: selectedEmployeeIds
@@ -138,6 +229,7 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
 
             onUpdateSuccess?.();
             onClose();
+            handleClose();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Update failed');
         } finally {
@@ -158,224 +250,223 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
 
     if (!open || !eventData || !bookingDetails) return null;
 
+    if (!shouldRender) return null;
+
+    if (fetching) {
+        return (
+            <Preloader />
+        )
+    }
+
     return (
-        <ModalContainer>
-            <CloseWrapper onClick={onClose}>
+        <StyledModalContainer
+            ref={modalRef}
+            $closing={closing}
+        >
+            
+            <CloseWrapper onClick={handleClose}>
                 <Image width={18} height={18} src={icons.closeIcon} alt="close icon" />
             </CloseWrapper>
 
-            {fetching ? (
-                <Box sx={{ 
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    width: '100%',
-                    height: '50vh'
-                }}>
-                    <CircularProgress color="inherit" />
+            <Details>
+                <Box className="event-head">
+                    <Box className="event-icon"/>
+                    <Box className="event-name">
+                        <h2 className="title">{eventData.eventName}</h2>
+                        <Typography component="span" className="event-date">
+                            {eventData.bookingDate}
+                        </Typography>
+                    </Box>
                 </Box>
-            ) : (
-                <>
-                    <Details>
-                        <Box className="event-head">
-                            <Box className="event-icon"/>
-                            <Box className="event-name">
-                                <h2 className="title">{eventData.eventName}</h2>
-                                <Typography component="span" className="event-date">
-                                    {eventData.bookingDate}
-                                </Typography>
-                            </Box>
-                        </Box>
-                        <Box className="client-info">
-                            <Image width={25} height={25} src={icons.eventProfile} alt="profile icon" />
-                            <Typography component="span">{eventData.client}</Typography>
-                        </Box>
-                        <Box className="client-info">
-                            <Image width={25} height={25} src={icons.packageIcon} alt="profile icon" />
-                            <Typography component="span">{eventData.package_name}</Typography>
-                        </Box>
-                        <Box className="client-info">
-                            <Image width={25} height={25} src={icons.clockIcon} alt="profile icon" />
-                            <Typography component="span">{eventData.ceremony_time}</Typography>
-                        </Box>
-                        <Box className="client-info">
-                            <Image width={25} height={25} src={icons.locationIcon} alt="profile icon" />
-                            <Typography component="span">{eventData.booking_address}</Typography>
-                        </Box>
-                        
-                    </Details>
+                <Box className="client-info">
+                    <Image width={25} height={25} src={icons.eventProfile} alt="profile icon" />
+                    <Typography component="span">{eventData.client}</Typography>
+                </Box>
+                <Box className="client-info">
+                    <Image width={25} height={25} src={icons.packageIcon} alt="profile icon" />
+                    <Typography component="span">{eventData.package_name}</Typography>
+                </Box>
+                <Box className="client-info">
+                    <Image width={25} height={25} src={icons.clockIcon} alt="profile icon" />
+                    <Typography component="span">{eventData.ceremony_time}</Typography>
+                </Box>
+                <Box className="client-info">
+                    <Image width={25} height={25} src={icons.locationIcon} alt="profile icon" />
+                    <Typography component="span">{eventData.booking_address}</Typography>
+                </Box>
+                
+            </Details>
 
-                    <StatusWrapper>
-                        <Box className="label">Status:</Box>
-                        <Box className="status-to" onClick={handleStatusClick}>
+            <StatusWrapper>
+                <Box className="label">Status:</Box>
+                <Box className="status-to" onClick={handleStatusClick}>
+                    <Typography component="span">
+                        {statusMap[selectedStatus]}
+                    </Typography>
+                    <Image
+                        width={12}
+                        height={7}
+                        src={icons.angleDown}
+                        alt="angle down"
+                        className={isStatusDropdownOpen ? 'rotated' : ''}
+                    />
+                </Box>
+                
+                {isStatusDropdownOpen && (
+                    <Box className="dropdown-list">
+                        {statusOptions.map((status) => (
+                            <Box
+                                className="row status-option"
+                                key={status.id}
+                                onClick={() => handleStatusSelect(status.value)}
+                            >
+                                <Typography component="span">{status.name}</Typography>
+                            </Box>
+                        ))}
+                    </Box>
+                )}
+            </StatusWrapper>
+
+            <AssignedWrapper>
+
+                {!isEmployee ? (
+                    <>
+                        <Box className="label">Assigned To:</Box>
+                        <Box 
+                            className="assigned-to" 
+                            onClick={handleAssignedClick}
+                            sx={{
+                                cursor: 'pointer',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '8px 12px',
+                                border: '1px solid #ccc',
+                                borderRadius: '4px'
+                            }}
+                        >
                             <Typography component="span">
-                                {statusMap[selectedStatus]}
+                                {employees.filter(e => e.selected).length > 0 
+                                    ? `${employees.filter(e => e.selected).length} selected` 
+                                    : 'Select employees'}
                             </Typography>
                             <Image
                                 width={12}
                                 height={7}
                                 src={icons.angleDown}
                                 alt="angle down"
-                                className={isStatusDropdownOpen ? 'rotated' : ''}
+                                className={isDropdownOpen ? 'rotated' : ''}
                             />
                         </Box>
-                        
-                        {isStatusDropdownOpen && (
-                            <Box className="dropdown-list">
-                                {statusOptions.map((status) => (
-                                    <Box
-                                        className="row status-option"
-                                        key={status.id}
-                                        onClick={() => handleStatusSelect(status.value)}
+                    </>
+                ) : (
+                    <>
+                        <Box className="label">Assigned To:</Box>
+                        <Box sx={{ marginTop: '10px' }}>
+                            {employees.map((employee) => (
+                                employee.selected && (
+                                    <Box key={employee.id}>
+                                    <Typography 
+                                        component="span" 
+                                        sx={{
+                                            fontFamily: 'Nunito Sans',
+                                            fontWeight: '500', 
+                                            fontSize: '16px',
+                                            color: '#000000'
+                                        }}
                                     >
-                                        <Typography component="span">{status.name}</Typography>
+                                        {employee.full_name}</Typography>
                                     </Box>
-                                ))}
-                            </Box>
-                        )}
-                    </StatusWrapper>
+                                )
+                            ))}
+                        </Box>
+                    </>
+                )}
 
-                    <AssignedWrapper>
-
-                        {!isEmployee ? (
-                            <>
-                                <Box className="label">Assigned To:</Box>
-                                <Box 
-                                    className="assigned-to" 
-                                    onClick={handleAssignedClick}
-                                    sx={{
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        padding: '8px 12px',
-                                        border: '1px solid #ccc',
-                                        borderRadius: '4px'
-                                    }}
-                                >
-                                    <Typography component="span">
-                                        {employees.filter(e => e.selected).length > 0 
-                                            ? `${employees.filter(e => e.selected).length} selected` 
-                                            : 'Select employees'}
-                                    </Typography>
-                                    <Image
-                                        width={12}
-                                        height={7}
-                                        src={icons.angleDown}
-                                        alt="angle down"
-                                        className={isDropdownOpen ? 'rotated' : ''}
+                
+                {isDropdownOpen && (
+                    <Box className="dropdown-list">
+                        {employees.map((employee) => (
+                            <Box className="row" key={employee.id}>
+                                <Box className="checkbox">
+                                    <input
+                                        type="checkbox"
+                                        id={`employee-${employee.id}`}
+                                        checked={employee.selected || false}
+                                        onChange={() => toggleEmployeeSelection(employee.id)}
                                     />
+                                    <label htmlFor={`employee-${employee.id}`}>
+                                        {employee.full_name}
+                                        <span> ({employee.user_role})</span>
+                                    </label>
                                 </Box>
-                            </>
-                        ) : (
-                            <>
-                                <Box className="label">Assigned To:</Box>
-                                <Box sx={{ marginTop: '10px' }}>
-                                    {employees.map((employee) => (
-                                        employee.selected && (
-                                            <Box key={employee.id}>
-                                            <Typography 
-                                                component="span" 
-                                                sx={{
-                                                    fontFamily: 'Nunito Sans',
-                                                    fontWeight: '500', 
-                                                    fontSize: '16px',
-                                                    color: '#000000'
-                                                }}
-                                            >
-                                                {employee.full_name}</Typography>
-                                            </Box>
-                                        )
-                                    ))}
-                                </Box>
-                            </>
-                        )}
-
-                        
-                        {isDropdownOpen && (
-                            <Box className="dropdown-list">
-                                {employees.map((employee) => (
-                                    <Box className="row" key={employee.id}>
-                                        <Box className="checkbox">
-                                            <input
-                                                type="checkbox"
-                                                id={`employee-${employee.id}`}
-                                                checked={employee.selected || false}
-                                                onChange={() => toggleEmployeeSelection(employee.id)}
-                                            />
-                                            <label htmlFor={`employee-${employee.id}`}>
-                                                {employee.full_name}
-                                                <span> ({employee.user_role})</span>
-                                            </label>
-                                        </Box>
-                                    </Box>
-                                ))}
                             </Box>
-                        )}
-                    </AssignedWrapper>
+                        ))}
+                    </Box>
+                )}
+            </AssignedWrapper>
 
-                    <ReleaseDateWrapper>
-                        <Box className="label">Release Date:</Box>
-                        <CustomDatePicker
-                            value={completionDate}
-                            onChange={setCompletionDate}
-                            minDate={dayjs().add(1, 'day')}
-                            label=""
-                            required
-                            disabled
-                        />
-                    </ReleaseDateWrapper>
+            <ReleaseDateWrapper>
+                <Box className="label">Release Date:</Box>
+                <CustomDatePicker
+                    value={completionDate}
+                    onChange={(newValue) => setCompletionDate(newValue)}
+                    minDate={dayjs().add(1, 'day')}
+                    label=""
+                    required
+                    disabled
+                />
+            </ReleaseDateWrapper>
 
-                    <LinkAttached>
-                        <Box className="label">Link Attached:</Box>
-                        <input 
-                            type="text" 
-                            value={link}
-                            onChange={(e) => setLink(e.target.value)}
-                            placeholder="Paste Google Drive or Dropbox link" 
-                        />
-                    </LinkAttached>
+            <LinkAttached>
+                <Box className="label">Link Attached:</Box>
+                <input 
+                    type="text" 
+                    value={link}
+                    onChange={(e) => setLink(e.target.value)}
+                    placeholder="Paste Google Drive or Dropbox link" 
+                />
+            </LinkAttached>
 
-                    <ActionButton>
-                        <Button 
-                            variant="outlined" 
-                            onClick={onClose}
-                            disabled={loading}
-                            sx={{
-                                color: '#FFFFFF',
-                                borderColor: '#AAAAAA',
-                                backgroundColor: '#AAAAAA',
-                                '&:hover': {
-                                    backgroundColor: '#898989',
-                                    color: 'white'
-                                },
-                                padding: '10px 15px',
-                                fontSize: '14px',
-                                fontWeight: '500 !important'
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button 
-                            variant="contained" 
-                            onClick={handleUpdate}
-                            disabled={loading}
-                            sx={{
-                                backgroundColor: '#2BB673',
-                                '&:hover': {
-                                    backgroundColor: '#155D3A'
-                                },
-                                padding: '10px 15px',
-                                fontSize: '14px',
-                                fontWeight: '500 !important'
-                            }}
-                            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
-                        >
-                            {loading ? 'Updating...' : 'Update'}
-                        </Button>
-                    </ActionButton>
-                </>
-            )}
-        </ModalContainer>
+            <ActionButton>
+                <Button 
+                    variant="outlined" 
+                    onClick={handleClose}
+                    disabled={loading}
+                    sx={{
+                        color: '#FFFFFF',
+                        borderColor: '#AAAAAA',
+                        backgroundColor: '#AAAAAA',
+                        '&:hover': {
+                            backgroundColor: '#898989',
+                            color: 'white'
+                        },
+                        padding: '10px 15px',
+                        fontSize: '14px',
+                        fontWeight: '500 !important'
+                    }}
+                >
+                    Cancel
+                </Button>
+                <Button 
+                    variant="contained" 
+                    onClick={handleUpdate}
+                    disabled={loading || selectedStatus === 0}
+                    sx={{
+                        backgroundColor: selectedStatus === 0 ? '#AAAAAA' : '#2BB673',
+                        pointerEvents: selectedStatus === 0 ? 'none' : 'auto',
+                        '&:hover': {
+                            backgroundColor: '#155D3A'
+                        },
+                        padding: '10px 15px',
+                        fontSize: '14px',
+                        fontWeight: '500 !important'
+                    }}
+                    startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+                >
+                    {loading ? 'Updating...' : 'Update'}
+                </Button>
+            </ActionButton>
+        </StyledModalContainer>
     );
 }

@@ -3,6 +3,35 @@ import { Box, styled } from "@mui/material";
 import { max } from "@/types/breakpoints";
 import "../../app/globals.css";
 
+export const ActionButton = styled(Box)`
+    width: 100%;
+    height: auto;
+
+    p {
+        font-family: Nunito Sans;
+        font-weight: 500;
+        font-size: 18px;
+        line-height: 100%;
+        letter-spacing: -0.06px;
+        opacity: 0.65;
+        text-align: center;
+
+        a {
+            font-family: Nunito Sans;
+            font-weight: 600;
+            font-size: 18px;
+            line-height: 100%;
+            letter-spacing: -0.06px;
+            text-align: right;
+            text-decoration: underline;
+            text-decoration-style: solid;
+            text-underline-offset: 3px;
+            text-decoration-thickness: 0%;
+            color: #2BB673;
+        }
+    }
+`;
+
 export const Heading = styled(Box)`
     width: 100%;
     height: auto;
@@ -46,6 +75,13 @@ export const FormWrapper = styled(Box)`
         display: flex;
         flex-direction: column;
         gap: 15px;
+
+        .password-input {
+            .toggle-password {
+                background: transparent !important;
+                width: fit-content !important;
+            }
+        }
 
         .label {
             width: 100%;
@@ -193,48 +229,21 @@ export const LoginWrapper = styled(Box)`
             }
         }
     }
-
-    .sign-up {
-        width: 100%;
-        height: auto;
-
-        p {
-            font-family: Nunito Sans;
-            font-weight: 500;
-            font-size: 18px;
-            line-height: 100%;
-            letter-spacing: -0.06px;
-            opacity: 0.65;
-            text-align: center;
-
-            a {
-                font-family: Nunito Sans;
-                font-weight: 600;
-                font-size: 18px;
-                line-height: 100%;
-                letter-spacing: -0.06px;
-                text-align: right;
-                text-decoration: underline;
-                text-decoration-style: solid;
-                text-underline-offset: 3px;
-                text-decoration-thickness: 0%;
-                color: #2BB673;
-            }
-        }
-    }
 `
 
 export const LoginContainer = styled(Box)`
     max-width: 630px;
     width: 100%;
     height: auto;
-    // min-height: 735px;
     border-radius: 24px;
     background: #FFFFFF;
     border: 0.3px solid #B9B9B9;
     padding: 60px;
     padding-top: 20px;
     zoom: 0.8;
+    margin: auto;
+    margin-top: 100px;
+    margin-bottom: 100px;
 
     @media (max-width: 600px) {
         padding: 30px 30px 40px 30px;
@@ -248,16 +257,16 @@ export const LoginContainer = styled(Box)`
 `
 
 export const Login = styled('section')`
-    display: flex;
-    justify-content: center;
-    align-items: center;
     width: 100%;
     height: 100%;
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     padding: 0;
     margin: 0;
     background: #2BB673;
     z-index: 3;
+    overflow-y: scroll;
+    scrollbar-width: none;
 `;

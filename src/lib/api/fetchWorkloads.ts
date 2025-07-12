@@ -12,6 +12,56 @@ import {
   DeliverableStatus
 } from '@/types/workload';
 
+export async function ensureCsrfToken(): Promise<string> {
+  const getCookieValue = (name: string): string | null => {
+    if (typeof document === 'undefined') return null;
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      const cookieValue = parts.pop()?.split(';').shift();
+      return cookieValue ? decodeURIComponent(cookieValue) : null;
+    }
+    return null;
+  };
+
+  const existingToken = getCookieValue('XSRF-TOKEN');
+  if (existingToken) return existingToken;
+
+  try {
+    const response = await fetch(`/api/sanctum/csrf-cookie`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!response.ok) throw new Error(`CSRF fetch failed with status ${response.status}`);
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const csrfToken = getCookieValue('XSRF-TOKEN');
+    if (!csrfToken) throw new Error('XSRF-TOKEN cookie not found');
+    return csrfToken;
+  } catch (error) {
+    console.error('CSRF Token Error:', error);
+    throw new Error('Failed to obtain CSRF token');
+  }
+}
+
+async function handleApiResponse(response: Response): Promise<{ success: boolean; message?: string }> {
+  let data = {};
+  const contentType = response.headers.get('content-type');
+  
+  if (response.status !== 204 && contentType?.includes('application/json')) {
+      data = await response.json();
+  }
+
+  if (!response.ok) {
+      const message = (data as any)?.message || 'Operation failed';
+      throw new Error(message);
+  }
+
+  return { success: true };
+}
+
 function mapApiItem(item: WorkloadApiItem): MappedWorkloadItem {
   const avatars: WorkloadAvatar[] = (item.assigned_employees || []).map(emp => ({
     id: emp.id,
@@ -236,35 +286,45 @@ export const updateWorkloadAssignment = async (
     link: string;
     user_id: number[];
   }
-): Promise<void> => {
-  const accessToken = localStorage.getItem('access_token');
-  if (!accessToken) throw new Error('No access token found');
+): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const csrfToken = await ensureCsrfToken();
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) throw new Error('No access token found');
 
-  const form = new FormData();
-  
-  if (payload.expected_completion_date) {
-    form.append('expected_completion_date', payload.expected_completion_date);
-  }
-  
-  form.append('deliverable_status', payload.deliverable_status.toString());
-  form.append('link', payload.link || '');
-  
-  payload.user_id.forEach((id, index) => {
-    form.append(`user_id[${index}]`, id.toString());
-  });
-
-  const response = await fetch(`/api/workload/${workloadId}/assign`, {
-    method: 'POST',
-    headers: {
+    const headers = {
+      'Accept': 'application/json',
+      'X-XSRF-TOKEN': csrfToken,
       'Authorization': `Bearer ${accessToken}`
-    },
-    body: form
-  });
+    };
 
-  const responseData = await response.json();
+    const form = new FormData();
+    if (payload.expected_completion_date) {
+      form.append('expected_completion_date', payload.expected_completion_date);
+    } else {
+      form.append('expected_completion_date', '');
+    }
+    form.append('deliverable_status', payload.deliverable_status.toString());
+    form.append('link', payload.link || '');
+    
+    payload.user_id.forEach((id, index) => {
+      form.append(`user_id[${index}]`, id.toString());
+    });
 
-  if (!response.ok || responseData.status !== true) {
-    throw new Error(responseData.message || 'Failed to update workload');
+    const response = await fetch(`/api/workload/${workloadId}/assign`, {
+      method: 'POST',
+      headers,
+      body: form,
+      credentials: 'include'
+    });
+
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error updating workload assignment:', error);
+    return { 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Failed to add employee' 
+    };
   }
 };
 

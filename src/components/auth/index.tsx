@@ -1,10 +1,12 @@
 'use client';
 import React, { useState } from 'react';
 import HeadingComponent from "./Heading";
-import { LoginContainer, LoginWrapper, Login, FormWrapper } from "./styles";
+import { LoginContainer, LoginWrapper, Login, FormWrapper, ActionButton } from "./styles";
 import type { FormSection } from '@/types/field';
 import CheckboxComponent from '@/components/checkbox';
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, IconButton } from "@mui/material";
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import Link from "next/link";
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -43,6 +45,10 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
     hasUpperCase: false,
     hasLowerCase: false,
     hasNumber: false,
+  });
+  const [showPassword, setShowPassword] = useState({
+    password: false,
+    confirm_password: false,
   });
   const { login } = useAuth();
   const router = useRouter();
@@ -147,6 +153,10 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
           }],
         }
       ];
+
+  const togglePasswordVisibility = (field: string) => {
+    setShowPassword(prev => ({ ...prev, [field]: !prev[field as keyof typeof prev] }));
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -320,15 +330,49 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
                         </Link>
                       )}
                     </Box>
-                    <input
-                      type={field.type}
-                      name={field.name}
-                      id={field.id}
-                      required={field.required}
-                      onChange={handleInputChange}
-                      value={formData[field.name] || ''}
-                      maxLength={field.name === 'contact_no' ? 11 : undefined}
-                    />
+                    
+                    {field.type === 'password' ? (
+                      <Box className="password-input" sx={{ position: 'relative' }}>
+                        <input
+                          type={showPassword[field.name as keyof typeof showPassword] ? 'text' : 'password'}
+                          name={field.name}
+                          id={field.id}
+                          required={field.required}
+                          onChange={handleInputChange}
+                          value={formData[field.name] || ''}
+                          style={{ width: '100%', paddingRight: '40px' }}
+                        />
+                        <IconButton
+                          size="small"
+                          className='toggle-password'
+                          onClick={() => togglePasswordVisibility(field.name)}
+                          sx={{
+                            position: 'absolute',
+                            right: 8,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            color: 'action.active',
+                          }}
+                        >
+                          {showPassword[field.name as keyof typeof showPassword] ? (
+                            <VisibilityOffIcon fontSize="small" />
+                          ) : (
+                            <VisibilityIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </Box>
+                    ) : (
+                      <input
+                        type={field.type}
+                        name={field.name}
+                        id={field.id}
+                        required={field.required}
+                        onChange={handleInputChange}
+                        value={formData[field.name] || ''}
+                        maxLength={field.name === 'contact_no' ? 11 : undefined}
+                      />
+                    )}
+                    
                     {fieldErrors[field.name] && (
                       <Typography color="error" variant="caption" component="div">
                         {fieldErrors[field.name]}
@@ -386,7 +430,7 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
             </Box>
           )}
 
-          <Box className="sign-up">
+          <ActionButton>
             <Typography component="p">
               {isLogin ? (
                 <>Don't have an account? <Link href={paths.register}>Create Account</Link></>
@@ -394,7 +438,7 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
                 <>Already have an account? <Link href={paths.login}>Sign In</Link></>
               )}
             </Typography>
-          </Box>
+          </ActionButton>
         </LoginWrapper>
       </LoginContainer>
     </Login>

@@ -89,7 +89,7 @@ export function ModalComponent({
         }, 300);
     }, [onClose]);
 
-    // Handle click outside and escape key
+    // Handle escape key
     useEffect(() => {
 
         const handleEscapeKey = (event: KeyboardEvent) => {
