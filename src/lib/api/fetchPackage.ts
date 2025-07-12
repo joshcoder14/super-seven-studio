@@ -1,4 +1,8 @@
-export const fetchPackages = async (searchTerm: string = ''): Promise<any> => {
+export const fetchPackages = async (
+    searchTerm: string = '', 
+    page: number = 1,
+    perPage: number = 10
+): Promise<any> => {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
     
@@ -7,10 +11,9 @@ export const fetchPackages = async (searchTerm: string = ''): Promise<any> => {
     const user = userString ? JSON.parse(userString) : null;
     const isClient = user?.user_role === 'Client';
 
-    const url = isClient 
+    let url = isClient 
         ? '/api/customer/packages'
-        : `/api/packages?search[value]=${encodeURIComponent(searchTerm)}`;
-
+        : `/api/packages?search[value]=${encodeURIComponent(searchTerm)}&page=${page}&per_page=${perPage}`;
 
     const response = await fetch(url, {
         headers: {
@@ -25,7 +28,11 @@ export const fetchPackages = async (searchTerm: string = ''): Promise<any> => {
     return response.json();
 };
 
-export const fetchAddons = async (searchTerm: string = ''): Promise<any> => {
+export const fetchAddons = async (
+    searchTerm: string = '', 
+    page: number = 1,
+    perPage: number = 10
+): Promise<any> => {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
     
@@ -34,11 +41,10 @@ export const fetchAddons = async (searchTerm: string = ''): Promise<any> => {
     const user = userString ? JSON.parse(userString) : null;
     const isClient = user?.user_role === 'Client';
 
-    const url = isClient 
+    let url = isClient 
         ? '/api/customer/addons'
-        : `/api/addons?search[value]=${encodeURIComponent(searchTerm)}`;
+        : `/api/addons?search[value]=${encodeURIComponent(searchTerm)}&page=${page}&per_page=${perPage}`;
 
-    // const url = `/api/addons?search[value]=${encodeURIComponent(searchTerm)}`;
     const response = await fetch(url, {
         headers: {
             'Authorization': `Bearer ${accessToken}`
@@ -52,7 +58,6 @@ export const fetchAddons = async (searchTerm: string = ''): Promise<any> => {
     return response.json();
 };
 
-// Add functions
 export const createPackage = async (data: { name: string; price: string; details: string }) => {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');

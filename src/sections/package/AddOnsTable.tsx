@@ -59,7 +59,7 @@ export default function AddOnsTable({ data, loading }: { data: any[]; loading: b
                                 <TableCell align='left'>{row.add_on_name}</TableCell>
                                 <TableCell align="left">P{row.add_on_price}</TableCell>
                                 <TableCell align="left">{row.add_on_details}</TableCell>
-                                <TableCell align="left" sx={{ display: 'flex', gap: '10px' }}>
+                                <TableCell align="left">
                                     <IconButton>
                                         <img src={icons.removeIcon} className="remove-icon" alt="remove icon" />
                                     </IconButton>

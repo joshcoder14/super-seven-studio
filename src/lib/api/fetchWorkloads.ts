@@ -12,11 +12,41 @@ import {
   DeliverableStatus
 } from '@/types/workload';
 
+function mapApiItem(item: WorkloadApiItem): MappedWorkloadItem {
+  const avatars: WorkloadAvatar[] = (item.assigned_employees || []).map(emp => ({
+    id: emp.id,
+    name: emp.full_name,
+    avatar: emp.avatar || icons.profileIcon
+  }));
+
+  return {
+    id: item.id.toString(),
+    eventName: item.event_name,
+    client: item.customer_name?.trim() || 'Unknown Client',
+    bookingDate: item.booking_date,
+    assigned: avatars,
+    releaseDate: item.expected_completion_date,
+    ceremony_time: item.ceremony_time,
+    package_name: item.package_name,
+    status: statusMap[item.deliverable_status || 0],
+    deliverableStatus: item.deliverable_status || 0,
+    booking_workload_status: item.booking_workload_status,
+    booking_address: item.booking_address,
+    link: item.link || ''
+  };
+}
+
 export async function fetchWorkloads(
   searchTerm: string = '',
   filterValue: string = 'all',
-  router: any
-): Promise<MappedWorkloadItem[]> {
+  router: any,
+  page: number = 1,
+  perPage: number = 10
+): Promise<{ 
+  data: MappedWorkloadItem[]; 
+  total: number;
+  lastPage: number;
+}> {
   try {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('No access token found');
@@ -27,7 +57,9 @@ export async function fetchWorkloads(
     };
 
     const params = new URLSearchParams({
-      'search[value]': searchTerm || ''
+      'search[value]': searchTerm || '',
+      page: page.toString(),
+      per_page: perPage.toString()
     });
 
     if (filterValue !== 'all') {
@@ -53,46 +85,11 @@ export async function fetchWorkloads(
       throw new Error('Invalid data format received from API');
     }
 
-    return result.data.data.map((item: WorkloadApiItem) => {
-      const avatars: WorkloadAvatar[] = [];
-      const count = item.assigned_count || 0;
-      
-      // Create avatars based on assigned_count
-      for (let i = 0; i < count; i++) {
-        const employee = item.assigned_employees[i];
-        
-        if (employee) {
-          avatars.push({
-            id: employee.id,
-            name: employee.full_name,
-            avatar: employee.avatar || icons.profileIcon
-          });
-        } else {
-          // Placeholder for missing employee data
-          avatars.push({
-            id: null,
-            name: 'Unknown Employee',
-            avatar: icons.profileIcon
-          });
-        }
-      }
-
-      return {
-        id: item.id.toString(),
-        eventName: item.event_name,
-        client: item.customer_name?.trim() || 'Unknown Client',
-        bookingDate: item.booking_date,
-        assigned: avatars,
-        releaseDate: item.expected_completion_date,
-        ceremony_time: item.ceremony_time,
-        package_name: item.package_name,
-        status: statusMap[item.deliverable_status || 0],
-        deliverableStatus: item.deliverable_status || 0,
-        booking_workload_status: item.booking_workload_status,
-        booking_address: item.booking_address,
-        link: item.link || ''
-      };
-    });
+    return {
+      data: result.data.data.map(mapApiItem),
+      total: result.data.meta.total,
+      lastPage: result.data.meta.last_page
+    };
 
   } catch (error) {
     console.error('Error fetching workloads:', error);
@@ -108,7 +105,11 @@ export async function fetchWorkloads(
       router.push(paths.login);
     }
 
-    return [];
+    return {
+      data: [],
+      total: 0,
+      lastPage: 1
+    };
   }
 }
 
@@ -153,8 +154,14 @@ export const fetchWorkloadDetailsById = async (workloadId: string): Promise<Work
 export async function fetchEmployeeWorkloads(
   searchTerm: string = '',
   filterValue: string = 'all',
-  router: any
-): Promise<MappedWorkloadItem[]> {
+  router: any,
+  page: number = 1,
+  perPage: number = 10
+): Promise<{ 
+  data: MappedWorkloadItem[]; 
+  total: number;
+  lastPage: number;
+}> {
   try {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('No access token found');
@@ -165,7 +172,9 @@ export async function fetchEmployeeWorkloads(
     };
 
     const params = new URLSearchParams({
-      'search[value]': searchTerm || ''
+      'search[value]': searchTerm || '',
+      page: page.toString(),
+      per_page: perPage.toString()
     });
 
     if (filterValue !== 'all') {
@@ -183,42 +192,19 @@ export async function fetchEmployeeWorkloads(
       throw new Error(responseData.message || 'Failed to fetch employee workloads');
     }
 
-    // CORRECTED: Access the right data path based on your API response
     const apiData = responseData.data?.data;
+    const meta = responseData.data?.meta;
+    
     if (!Array.isArray(apiData)) {
       console.error('Invalid employee workload data format:', responseData);
       throw new Error('Invalid data format received from employee workload API');
     }
 
-    return apiData.map((item: WorkloadApiItem) => {
-      const avatars: WorkloadAvatar[] = [];
-      const assignedEmployees = item.assigned_employees || [];
-      
-      // Map all assigned employees
-      for (const employee of assignedEmployees) {
-        avatars.push({
-          id: employee.id,
-          name: employee.full_name,
-          avatar: employee.avatar || icons.profileIcon
-        });
-      }
-
-      return {
-        id: item.id.toString(),
-        eventName: item.event_name,
-        client: item.customer_name?.trim() || 'Unknown Client',
-        bookingDate: item.booking_date,
-        assigned: avatars,
-        releaseDate: item.expected_completion_date,
-        ceremony_time: item.ceremony_time,
-        package_name: item.package_name,
-        status: statusMap[item.deliverable_status || 0],
-        deliverableStatus: item.deliverable_status || 0,
-        booking_workload_status: item.booking_workload_status,
-        booking_address: item.booking_address,
-        link: item.link || ''
-      };
-    });
+    return {
+      data: apiData.map(mapApiItem),
+      total: meta?.total || 0,
+      lastPage: meta?.last_page || 1
+    };
 
   } catch (error) {
     console.error('Error fetching employee workloads:', error);
@@ -234,7 +220,11 @@ export async function fetchEmployeeWorkloads(
       router.push(paths.login);
     }
 
-    return [];
+    return {
+      data: [],
+      total: 0,
+      lastPage: 1
+    };
   }
 }
 

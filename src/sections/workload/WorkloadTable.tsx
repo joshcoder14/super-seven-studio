@@ -115,7 +115,7 @@ export function WorkLoadTable({ data, loading, onEditClick }: WorkLoadTableProps
                 <TableCell align="left" className={`${row.booking_workload_status.toLowerCase()}`}> 
                   <Typography component="span">{row.booking_workload_status}</Typography>
                 </TableCell>
-                <TableCell align="left" style={{ display: 'flex', gap: '10px' }}>
+                <TableCell align="left">
                   <IconButton onClick={() => onEditClick(row)}>
                     <img src={icons.editIcon} className="edit-icon" alt="edit icon" />
                   </IconButton>

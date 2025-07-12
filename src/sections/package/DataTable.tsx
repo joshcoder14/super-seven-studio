@@ -89,7 +89,7 @@ export default function DataTable({
                   <TableCell align='left'>{rowData.name}</TableCell>
                   <TableCell align="left">{rowData.price}</TableCell>
                   <TableCell align="left">{rowData.details}</TableCell>
-                  <TableCell align="left" sx={{ display: 'flex', gap: '10px' }}>
+                  <TableCell align="left">
                     <IconButton onClick={() => onDelete(row)}>
                       <img src={icons.removeIcon} className="remove-icon" alt="remove icon" />
                     </IconButton>

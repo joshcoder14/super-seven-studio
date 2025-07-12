@@ -6,7 +6,6 @@ import {
     FeedbackDetailResponse,
     FeedbackApiResponse
 } from '@/types/feedback';
-import { ApiResponse } from '@/types/user';
 
 export async function fetchFeedbacks(
     searchTerm: string = '',

@@ -19,7 +19,7 @@ import { icons } from '@/icons';
 import Image from 'next/image';
 import { fetchBillings } from '@/lib/api/fetchBilling';
 import { useRouter } from 'next/navigation';
-import Preloader from '@/components/Preloader';
+import { CustomTablePagination } from '@/components/TablePagination';
 
 const CalendarIcon = (props: any) => (
   <Image
@@ -53,6 +53,9 @@ export default function BillingComponent() {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [totalCount, setTotalCount] = useState(0);
 
     const generateYearPairs = (): YearPair[] => {
         const currentYear = new Date().getFullYear();
@@ -72,10 +75,57 @@ export default function BillingComponent() {
     const handleYearChange = (event: SelectChangeEvent<string>) => {
         const [start, end] = event.target.value.split('-').map(Number);
         setSelectedYearPair({ start, end });
+        setPage(0);
     };
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
+        setPage(0);
+    };
+
+    const loadBillingData = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            const response = await fetchBillings({
+                start_year: selectedYearPair.start,
+                end_year: selectedYearPair.end,
+                page: page + 1,  // API uses 1-based indexing
+                perPage: rowsPerPage
+            });
+            
+            setBillingData(response.data);
+            setTotalCount(response.total);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to fetch billing data');
+        } finally {
+            setLoading(false);
+        }
+    }, [selectedYearPair, page, rowsPerPage]);
+
+   useEffect(() => {
+        loadBillingData();
+    }, [loadBillingData]);
+
+    const handleViewBilling = (billingId: string) => {
+        router.push(`/billing/${billingId}`);
+    };
+
+    // Handle pagination changes
+    const handlePageChange = (
+        event: React.MouseEvent<HTMLButtonElement> | null, 
+        newPage: number
+    ) => {
+        setPage(newPage);
+    };
+
+    const handleRowsPerPageChange = (
+        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        const newRowsPerPage = parseInt(event.target.value, 10);
+        setRowsPerPage(newRowsPerPage);
+        setPage(0); // Reset to first page when rows per page changes
     };
 
     const filterData = useCallback(() => {
@@ -83,48 +133,16 @@ export default function BillingComponent() {
         
         const term = searchTerm.toLowerCase();
         return billingData.filter(item => 
-        (item.event_name?.toLowerCase().includes(term)) ||
-        (item.customer_name?.toLowerCase().includes(term)) ||
-        (item.status?.toLowerCase().includes(term)) ||
-        (item.package?.toLowerCase().includes(term))
+            (item.event_name?.toLowerCase().includes(term)) ||
+            (item.customer_name?.toLowerCase().includes(term)) ||
+            (item.status?.toLowerCase().includes(term)) ||
+            (item.package?.toLowerCase().includes(term))
         );
     }, [billingData, searchTerm]);
-
-    const loadBillingData = useCallback(async () => {
-        try {
-        setLoading(true);
-        setError(null);
-        
-        const data = await fetchBillings({
-            start_year: selectedYearPair.start,
-            end_year: selectedYearPair.end
-        });
-        
-        setBillingData(data);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to fetch billing data');
-        } finally {
-            setLoading(false);
-        }
-    }, [selectedYearPair]);
-
-    useEffect(() => {
-        setLoading(false);
-    }, []);
-
-    useEffect(() => {
-        loadBillingData();
-    }, [loadBillingData]);
 
     useEffect(() => {
         setFilteredData(filterData());
     }, [billingData, searchTerm, filterData]);
-
-    const handleViewBilling = (billingId: string) => {
-        router.push(`/billing/${billingId}`);
-    };
-
-    if (loading) return <Preloader />;
 
     return (
         <HomeContainer>
@@ -171,11 +189,18 @@ export default function BillingComponent() {
                 </Box>
             )}
             
-            <Box sx={{ padding: '0 30px' }}>
+            <Box sx={{ padding: '0 30px', marginBottom: '150px' }}>
                 <BillingTable 
                     billingData={filteredData} 
                     loading={loading}
                     onView={handleViewBilling}
+                />
+                <CustomTablePagination
+                    count={totalCount}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handlePageChange}
+                    onRowsPerPageChange={handleRowsPerPageChange}
                 />
             </Box>
         </HomeContainer>

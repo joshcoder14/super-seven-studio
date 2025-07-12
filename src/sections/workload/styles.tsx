@@ -599,6 +599,7 @@ export const WorkloadWrapper = styled(Box)`
     width: 100%;
     height: 100%;
     padding: 0 30px;
+    margin-bottom: 150px;
 `;
 
 export const WorkloadContainer = styled(Box)`
@@ -608,5 +609,6 @@ export const WorkloadContainer = styled(Box)`
     position: relative;
     background-color: #f7faf5;
     height: 100%;
-    // padding-top: 70px;
+    overflow-y: scroll;
+    scrollbar-width: none;
 `;

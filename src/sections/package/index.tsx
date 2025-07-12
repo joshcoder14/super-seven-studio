@@ -1,4 +1,3 @@
-// PackageHome.tsx
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -15,7 +14,7 @@ import DataTable from './DataTable';
 import { ModalComponent } from '@/components/Modal';
 import Swal from 'sweetalert2'; 
 import { useAuth } from '@/context/AuthContext';
-import Preloader from '@/components/Preloader';
+import { CustomTablePagination } from '@/components/TablePagination';
 
 export function PackageHome(): React.JSX.Element {
     const [activeTab, setActiveTab] = useState<'package' | 'add-ons'>('package');
@@ -29,6 +28,17 @@ export function PackageHome(): React.JSX.Element {
     const [currentItem, setCurrentItem] = useState<any>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     
+    // Pagination states
+    const [packagePage, setPackagePage] = useState(1);
+    const [packageRowsPerPage, setPackageRowsPerPage] = useState(10);
+    const [packageTotal, setPackageTotal] = useState(0);
+    // const [packageLastPage, setPackageLastPage] = useState(1);
+    
+    const [addonsPage, setAddonsPage] = useState(1);
+    const [addonsRowsPerPage, setAddonsRowsPerPage] = useState(10);
+    const [addonsTotal, setAddonsTotal] = useState(0);
+    // const [addonsLastPage, setAddonsLastPage] = useState(1);
+
     const { user } = useAuth();
     const isClient = user?.user_role === 'Client';
 
@@ -38,17 +48,39 @@ export function PackageHome(): React.JSX.Element {
             setError(null);
             
             if (activeTab === 'package') {
-                const response = await fetchPackages(searchTerm);
+                const response = await fetchPackages(
+                    searchTerm, 
+                    packagePage, 
+                    packageRowsPerPage
+                );
+                
                 const data = isClient 
                     ? Array.isArray(response?.data) ? response.data : []
                     : Array.isArray(response?.data?.data) ? response.data.data : [];
+                    
                 setPackageData(data);
+                
+                if (!isClient && response?.data?.meta) {
+                    setPackageTotal(response.data.meta.total);
+                    // setPackageLastPage(response.data.meta.last_page);
+                }
             } else {
-                const response = await fetchAddons(searchTerm);
+                const response = await fetchAddons(
+                    searchTerm, 
+                    addonsPage, 
+                    addonsRowsPerPage
+                );
+                
                 const data = isClient 
                     ? Array.isArray(response?.data) ? response.data : []
                     : Array.isArray(response?.data?.data) ? response.data.data : [];
+                    
                 setAddonsData(data);
+                
+                if (!isClient && response?.data?.meta) {
+                    setAddonsTotal(response.data.meta.total);
+                    // setAddonsLastPage(response.data.meta.last_page);
+                }
             }
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -56,15 +88,32 @@ export function PackageHome(): React.JSX.Element {
         } finally {
             setLoading(false);
         }
-    }, [activeTab, searchTerm, isClient]);
-    
-    useEffect(() => {
-        setLoading(false);
-    }, []);
+    }, [
+        activeTab, 
+        searchTerm, 
+        isClient,
+        packagePage,
+        packageRowsPerPage,
+        addonsPage,
+        addonsRowsPerPage
+    ]);
 
     useEffect(() => {
         fetchData();
-    }, [activeTab, fetchData]);
+    }, [
+        activeTab, 
+        fetchData,
+        packagePage,
+        packageRowsPerPage,
+        addonsPage,
+        addonsRowsPerPage
+    ]);
+
+    // Reset to first page when filters change
+    useEffect(() => {
+        setPackagePage(1);
+        setAddonsPage(1);
+    }, [searchTerm, activeTab]);
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
@@ -132,6 +181,36 @@ export function PackageHome(): React.JSX.Element {
         }
     };
 
+    const handlePackagePageChange = (
+        event: React.MouseEvent<HTMLButtonElement> | null, 
+        newPage: number
+    ) => {
+        setPackagePage(newPage + 1);
+    };
+
+    const handlePackageRowsPerPageChange = (
+        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        const newRowsPerPage = parseInt(event.target.value, 10);
+        setPackageRowsPerPage(newRowsPerPage);
+        setPackagePage(1);
+    };
+
+    const handleAddonsPageChange = (
+        event: React.MouseEvent<HTMLButtonElement> | null, 
+        newPage: number
+    ) => {
+        setAddonsPage(newPage + 1);
+    };
+
+    const handleAddonsRowsPerPageChange = (
+        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        const newRowsPerPage = parseInt(event.target.value, 10);
+        setAddonsRowsPerPage(newRowsPerPage);
+        setAddonsPage(1);
+    };
+
     const tableConfig = {
         package: {
             headers: ['Package Name', 'Price', 'Details', 'Action'],
@@ -156,8 +235,6 @@ export function PackageHome(): React.JSX.Element {
     };
 
     const currentData = getCurrentData();
-    
-    if (loading) return <Preloader />;
 
     return (
         <HomeContainer>
@@ -195,18 +272,42 @@ export function PackageHome(): React.JSX.Element {
             </PackageContent>
             
             {!isClient ? (
-                <Box sx={{ padding: '0 30px' }}>
+                <Box sx={{ padding: '0 30px', marginBottom: '150px' }}>
                     {error ? (
                         <Box display="flex" justifyContent="center" alignItems="center" height={200}>
                             Error: {error}
                         </Box>
                     ) : (
-                        <DataTable
-                            {...tableConfig[activeTab]}
-                            loading={loading || isDeleting}
-                            onEdit={handleOpenModal}
-                            onDelete={handleDelete}
-                        />
+                        <>
+                            <DataTable
+                                {...tableConfig[activeTab]}
+                                loading={loading || isDeleting}
+                                onEdit={handleOpenModal}
+                                onDelete={handleDelete}
+                            />
+                            
+                            {/* Pagination for package tab */}
+                            {activeTab === 'package' && !isClient && (
+                                <CustomTablePagination
+                                    count={packageTotal}
+                                    rowsPerPage={packageRowsPerPage}
+                                    page={packagePage - 1}
+                                    onPageChange={handlePackagePageChange}
+                                    onRowsPerPageChange={handlePackageRowsPerPageChange}
+                                />
+                            )}
+                            
+                            {/* Pagination for addons tab */}
+                            {activeTab === 'add-ons' && !isClient && (
+                                <CustomTablePagination
+                                    count={addonsTotal}
+                                    rowsPerPage={addonsRowsPerPage}
+                                    page={addonsPage - 1}
+                                    onPageChange={handleAddonsPageChange}
+                                    onRowsPerPageChange={handleAddonsRowsPerPageChange}
+                                />
+                            )}
+                        </>
                     )}
                 </Box>
             ) : (

@@ -39,7 +39,7 @@ export const FormContainer = styled(Box)`
                 width: 100%;
                 display: flex;
                 flex-direction: row;
-                gap: 25px;
+                gap: 20px;
                 position: relative;
 
                 &.right {
@@ -52,20 +52,33 @@ export const FormContainer = styled(Box)`
                     border-radius: 6px;
                     width: fit-content;
                     height: fit-content;
-                    font-weight: 600;
+                    font-weight: 500;
                     font-size: 14px;
                     line-height: 27px;
                     letter-spacing: 0px;
                     color: #FFFFFF;
                     padding: 10px 15px;
+                    box-shadow: none;
+                    text-transform: capitalize;
+                    transition: all 0.2s ease-in-out;
 
                     &.cancel {
                         background: #AAAAAA;
+
+                        &:hover {
+                            background-color: #777777;
+                            transition: all 0.2s ease-in-out;
+                        }
                     }
 
                     &.update,
                     &.register {
                         background: #2BB673;
+
+                        &:hover {
+                            background-color: #155D3A;
+                            transition: all 0.2s ease-in-out;
+                        }
                     }
                 }
 
@@ -142,6 +155,7 @@ export const FormContainer = styled(Box)`
     }
 
     &.register-account {
+        margin-bottom: 150px;
         .wrapper {
             form {
                 .filter {

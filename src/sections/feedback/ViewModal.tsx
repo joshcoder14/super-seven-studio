@@ -13,6 +13,7 @@ import { FeedbackApiItem, FeedbackDetailResponse } from '@/types/feedback';
 import { markAsPosted, markAsUnposted, viewFeedback } from '@/lib/api/fetchFeedback';
 import { getAddonNames } from '@/utils/billing';
 import Swal from 'sweetalert2';
+import { fadeInRight, fadeOutRight } from '@/utils/animate';
 
 export interface ViewModalProps {
     open: boolean;
@@ -20,6 +21,28 @@ export interface ViewModalProps {
     feedbackId: string | null;
     onFeedbackUpdated?: () => void;
 }
+
+// Define ModalContainer with transient prop $closing
+const StyledModalContainer = styled(Box, {
+  shouldForwardProp: (prop) => prop !== '$closing',
+})<{ $closing?: boolean }>(({ theme, $closing }) => ({
+  animation: `${$closing ? fadeOutRight : fadeInRight} 0.3s forwards`,
+  position: 'absolute',
+  top: '0px',
+  right: 0,
+  maxWidth: '560px',
+  width: '100%',
+  height: 'auto',
+  backgroundColor: '#FFFFFF',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'flex-start',
+  alignItems: 'flex-start',
+  paddingBottom: '30px',
+  zIndex: 1,
+  border: '0.3px solid #E0E0E0',
+  borderRadius: '4px',
+}));
 
 export default function FeedbackViewModal({ 
     open, 
@@ -30,55 +53,53 @@ export default function FeedbackViewModal({
     const [details, setDetails] = useState<FeedbackApiItem | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [closing, setClosing] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const modalRef = useRef<HTMLDivElement>(null);
+    const [shouldRender, setShouldRender] = useState(false);
+    const [closing, setClosing] = useState(false);
 
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Memoized closeModal function
-    const closeModal = useCallback(() => {
-        setClosing(true);
-        timeoutRef.current = setTimeout(() => {
-            onClose();
+    // Handle open/close transitions
+    
+    useEffect(() => {
+        if (open) {
+            // Open modal: show and animate in
+            setShouldRender(true);
             setClosing(false);
+        } else if (shouldRender) {
+            // Start closing animation
+            setClosing(true);
+            const timer = setTimeout(() => {
+                setShouldRender(false);
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [open]);
+
+    const handleClose = useCallback(() => {
+        // Start closing animation
+        setClosing(true);
+        setTimeout(() => {
+            onClose();
         }, 300);
     }, [onClose]);
 
-    // Cleanup timeout on unmount
     useEffect(() => {
-        return () => {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-        };
-    }, []);
-
-    // Handle click outside modal
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                onClose();
-            }
-        };
 
         // Handle Escape key press
         const handleEscapeKey = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
-                onClose();
+                handleClose();
             }
         };
 
         if (open) {
-            document.addEventListener('mousedown', handleClickOutside);
             document.addEventListener('keydown', handleEscapeKey);
         }
 
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('keydown', handleEscapeKey);
         };
-    }, [open, closeModal]);
+    }, [open, handleClose]);
 
     useEffect(() => {
         if (open && feedbackId) {
@@ -155,6 +176,8 @@ export default function FeedbackViewModal({
             
             // Notify parent component to refresh list
             if (onFeedbackUpdated) onFeedbackUpdated();
+            
+            handleClose();
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'An error occurred';
             setError(errorMessage);
@@ -172,17 +195,16 @@ export default function FeedbackViewModal({
 
     return (
         <>
-            {loading && error ? (
-                <Box display="flex" justifyContent="center" p={4}>
+            {loading ? (
+                <Box display="none" justifyContent="center" p={4}>
                     <CircularProgress />
                 </Box>
             ) : details ? (
                 <StyledModalContainer 
-                    style={{ display: open ? 'block' : 'none' }}
                     ref={modalRef}
                     $closing={closing}
                 >
-                    <CloseWrapper onClick={closeModal}>
+                    <CloseWrapper onClick={handleClose}>
                         <Image width={18} height={18} src={icons.closeIcon} alt="close icon" />
                     </CloseWrapper>
                     <Details>
@@ -255,54 +277,12 @@ export default function FeedbackViewModal({
                             </Box>
                         </form>
                     </FeedbackField>
-                    
                 </StyledModalContainer>
+            ) : error ? (
+                <Box display="flex" justifyContent="center" p={4}>
+                    <Typography color="error">{error}</Typography>
+                </Box>
             ) : null}
         </>
     );
 }
-
-// Define keyframes animations
-export const fadeInLeft = keyframes`
-  from {
-    opacity: 0;
-    transform: translateX(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-`;
-
-export const fadeOutRight = keyframes`
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(50px);
-  }
-`;
-
-// Define ModalContainer with transient prop $closing
-const StyledModalContainer = styled(Box, {
-  shouldForwardProp: (prop) => prop !== '$closing',
-})<{ $closing?: boolean }>(({ theme, $closing }) => ({
-  animation: `${$closing ? fadeOutRight : fadeInLeft} 0.3s forwards`,
-  position: 'absolute',
-  top: '0px',
-  right: 0,
-  maxWidth: '560px',
-  width: '100%',
-  height: 'auto',
-  backgroundColor: '#FFFFFF',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'flex-start',
-  alignItems: 'flex-start',
-  paddingBottom: '30px',
-  zIndex: 1,
-  border: '0.3px solid #E0E0E0',
-  borderRadius: '4px',
-}));

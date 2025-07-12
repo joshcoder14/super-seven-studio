@@ -337,7 +337,7 @@ export function BookingComponent(): React.JSX.Element {
           );
 
           await fetchData();
-          Swal.fire('Approved!', 'The booking has been approved and other pending bookings for this date have been rejected.', 'success');
+          Swal.fire('Approved!', 'The booking has been approved.', 'success');
           break;
 
         case 'reject':

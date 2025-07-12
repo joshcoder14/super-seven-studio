@@ -1,6 +1,8 @@
 export interface FetchBillingsParams {
   start_year: number;
   end_year: number;
+  page?: number;
+  perPage?: number;
 };
 
 export interface TransactionProps {

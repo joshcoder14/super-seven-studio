@@ -26,6 +26,24 @@ export interface WorkloadApiItem {
   deliverable_status?: DeliverableStatus;
 }
 
+export interface WorkloadApiResponse {
+  status: boolean;
+  message: string;
+  data: {
+    data: WorkloadApiItem[];
+    links: {
+      previous: string;
+      next: string;
+    };
+    meta: {
+      current_page: number;
+      per_page: number;
+      last_page: number;
+      total: number;
+    };
+  };
+}
+
 export interface ApiWorkloadResponse {
   status: boolean;
   message: string;

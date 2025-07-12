@@ -281,6 +281,8 @@ form button {
   appearance: none;
   border: none;
   cursor: pointer;
+  box-shadow: none !important;
+  text-transform: capitalize !important;
 }
 
 .billing-view-button {

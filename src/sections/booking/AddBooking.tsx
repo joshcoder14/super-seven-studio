@@ -828,47 +828,96 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
                   </Box>
                 )}
               </Box>
+
+              {userRole !== 'Client' ? (
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
+                  <Button 
+                    variant="outlined" 
+                    onClick={handleCancel}
+                    sx={{
+                      color: '#FFFFFF',
+                      borderColor: '#AAAAAA',
+                      backgroundColor: '#AAAAAA',
+                      '&:hover': {
+                        backgroundColor: '#898989',
+                        color: 'white'
+                      },
+                      padding: '10px 15px',
+                      fontSize: '14px',
+                      fontWeight: '500 !important'
+                    }}
+                  >
+                    Cancel
+                  </Button>
+
+                  <Button 
+                    variant="contained" 
+                    type="submit"
+                    disabled={state.loading.submitting || state.loading.user}
+                    startIcon={state.loading.submitting ? <CircularProgress size={20} /> : null}
+                    sx={{
+                      backgroundColor: '#2BB673',
+                      '&:hover': {
+                        backgroundColor: '#155D3A'
+                      },
+                      padding: '10px 15px',
+                      fontSize: '14px',
+                      fontWeight: '500 !important'
+                    }}
+                  >
+                    {state.loading.submitting ? 'Submitting...' : 'Submit Booking'}
+                  </Button>
+                </Box>
+              ) : null}
+
             </Box>
+            
           </Box>
           
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
-            <Button 
-              variant="outlined" 
-              onClick={handleCancel}
-              sx={{
-                color: '#FFFFFF',
-                borderColor: '#AAAAAA',
-                backgroundColor: '#AAAAAA',
-                '&:hover': {
-                  backgroundColor: '#898989',
-                  color: 'white'
-                },
-                padding: '10px 15px',
-                fontSize: '14px',
-                fontWeight: '500 !important'
-              }}
-            >
-              Cancel
-            </Button>
+          {userRole === 'Client' ? (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
+              <Button 
+                variant="outlined" 
+                onClick={handleCancel}
+                sx={{
+                  color: '#FFFFFF',
+                  borderColor: '#AAAAAA',
+                  backgroundColor: '#AAAAAA',
+                  padding: '10px 15px',
+                  fontSize: '14px',
+                  fontWeight: '500 !important',
+                  boxShadow: 'none',
+                  
+                  '&:hover': {
+                    backgroundColor: '#898989',
+                    color: 'white'
+                  },
+                }}
+              >
+                Cancel
+              </Button>
 
-            <Button 
-              variant="contained" 
-              type="submit"
-              disabled={state.loading.submitting || state.loading.user}
-              startIcon={state.loading.submitting ? <CircularProgress size={20} /> : null}
-              sx={{
-                backgroundColor: '#2BB673',
-                '&:hover': {
-                  backgroundColor: '#155D3A'
-                },
-                padding: '10px 15px',
-                fontSize: '14px',
-                fontWeight: '500 !important'
-              }}
-            >
-              {state.loading.submitting ? 'Submitting...' : 'Submit Booking'}
-            </Button>
-          </Box>
+              <Button 
+                variant="contained" 
+                type="submit"
+                disabled={state.loading.submitting || state.loading.user}
+                startIcon={state.loading.submitting ? <CircularProgress size={20} /> : null}
+                sx={{
+                  backgroundColor: '#2BB673',
+                  padding: '10px 15px',
+                  fontSize: '14px',
+                  fontWeight: '500 !important',
+                  boxShadow: 'none',
+                  
+                  '&:hover': {
+                    backgroundColor: '#155D3A'
+                  },
+                }}
+              >
+                {state.loading.submitting ? 'Submitting...' : 'Submit Booking'}
+              </Button>
+            </Box>
+          ) : null}
         </form>
       </BookingWrapper>
     </AddBookingContainer>

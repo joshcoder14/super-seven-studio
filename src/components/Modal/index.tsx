@@ -1,12 +1,13 @@
 'use client';
-import React, { useRef, useEffect, useState } from "react";
-import { Box, Button, TextField } from "@mui/material";
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import { Box, Button, styled, TextField } from "@mui/material";
 import Image from "next/image";
 import { ModalContainer, CloseWrapper } from "@/sections/workload/styles";
 import { FormHeading } from '@/components/Heading/FormHeading';
 import { icons } from '@/icons';
 import { createPackage, createAddon, updatePackage, updateAddon } from '@/lib/api/fetchPackage';
 import Swal from "sweetalert2";
+import { fadeInRight, fadeOutRight } from "@/utils/animate";
 
 interface ModalProps {
     open: boolean;
@@ -15,6 +16,28 @@ interface ModalProps {
     onSuccess: () => void;
     item?: any;
 }
+
+// Define ModalContainer with transient prop $closing
+const StyledModalContainer = styled(Box, {
+  shouldForwardProp: (prop) => prop !== '$closing',
+})<{ $closing?: boolean }>(({ theme, $closing }) => ({
+  animation: `${$closing ? fadeOutRight : fadeInRight} 0.3s forwards`,
+  position: 'absolute',
+  top: '0px',
+  right: 0,
+  maxWidth: '560px',
+  width: '100%',
+  height: 'auto',
+  backgroundColor: '#FFFFFF',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'flex-start',
+  alignItems: 'flex-start',
+  paddingBottom: '30px',
+  zIndex: 1,
+  border: '0.3px solid #E0E0E0',
+  borderRadius: '4px',
+}));
 
 export function ModalComponent({ 
     open, 
@@ -36,19 +59,38 @@ export function ModalComponent({
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
+    const [shouldRender, setShouldRender] = useState(false);
+    const [closing, setClosing] = useState(false);
     
     // Derive editing state from item presence
     const isEditing = !!item;
 
+    // Handle open/close transitions
+    useEffect(() => {
+        if (open) {
+            // Open modal: show and animate in
+            setShouldRender(true);
+            setClosing(false);
+        } else if (shouldRender) {
+            // Start closing animation
+            setClosing(true);
+            const timer = setTimeout(() => {
+                setShouldRender(false);
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [open]);
+
+    const handleClose = useCallback(() => {
+        // Start closing animation
+        setClosing(true);
+        setTimeout(() => {
+            onClose();
+        }, 300);
+    }, [onClose]);
+
     // Handle click outside and escape key
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (modalRef.current && 
-                !modalRef.current.contains(event.target as Node) &&
-                open) {
-                onClose();
-            }
-        };
 
         const handleEscapeKey = (event: KeyboardEvent) => {
             if (event.key === 'Escape' && open) {
@@ -57,17 +99,13 @@ export function ModalComponent({
         };
 
         if (open) {
-            document.addEventListener('mousedown', handleClickOutside);
             document.addEventListener('keydown', handleEscapeKey);
         }
 
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('keydown', handleEscapeKey);
         };
-    }, [open, onClose]);
-
-
+    }, [open, handleClose]);
 
     // Prefill form when editing
     useEffect(() => {
@@ -155,6 +193,21 @@ export function ModalComponent({
         
         if (!validateForm()) return;
 
+        const confirmation = await Swal.fire({
+            title: 'Are you sure?',
+            text: `You're about to ${isEditing ? 'update' : 'create'} a ${modalType}.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#2BB673',
+            cancelButtonColor: '#AAAAAA',
+            confirmButtonText: 'Yes, proceed!',
+            cancelButtonText: 'Cancel',
+        });
+
+        if (!confirmation.isConfirmed) {
+            return;
+        }
+
         try {
             setIsSubmitting(true);
             
@@ -191,6 +244,7 @@ export function ModalComponent({
 
             onClose();
             onSuccess();
+            handleClose();
         
         } catch (err) {
             console.error('Submission error:', err);
@@ -234,10 +288,15 @@ export function ModalComponent({
 
     const currentContent = content[modalType];
 
+    if (!shouldRender) return null;
+
     return (
-        <ModalContainer ref={modalRef}>
-            <CloseWrapper onClick={onClose}>
-            <Image width={18} height={18} src={icons.closeIcon} alt="close icon" />
+        <StyledModalContainer
+            ref={modalRef}
+            $closing={closing}
+        >
+            <CloseWrapper onClick={handleClose}>
+                <Image width={18} height={18} src={icons.closeIcon} alt="close icon" />
             </CloseWrapper>
             <Box sx={{ padding: '40px', width: '100%' }}>
                 <FormHeading title={currentContent.title}/>
@@ -292,7 +351,7 @@ export function ModalComponent({
                             <Box className="action-btn" sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', gap: 1 }}>
                                 <Button
                                     variant="outlined"
-                                    onClick={onClose}
+                                    onClick={handleClose}
                                     disabled={isSubmitting}
                                     sx={{
                                     color: '#FFFFFF',
@@ -336,6 +395,6 @@ export function ModalComponent({
                     </form>
                 </Box>
             </Box>
-      </ModalContainer>
+      </StyledModalContainer>
     );
 }

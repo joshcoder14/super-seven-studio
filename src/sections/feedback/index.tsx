@@ -16,7 +16,6 @@ import {
 } from '@/types/feedback';
 import FeedbackViewModal from './ViewModal';
 import { CustomTablePagination } from '@/components/TablePagination';
-import Preloader from '@/components/Preloader';
 
 export function FeedbackComponent(): React.JSX.Element {
     const router = useRouter();

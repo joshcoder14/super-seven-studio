@@ -1,6 +1,7 @@
 import { Box, styled } from "@mui/material";
 
 export const IconButton = styled(Box)`
+    display: inline-block;
     width: 35px;
     height: 35px;
     border-radius: 8px;
@@ -9,6 +10,7 @@ export const IconButton = styled(Box)`
     background: #FAFBFD;
     border: 0.6px solid #D5D5D5;
     padding-left: 9px;
+    margin-right: 10px;
     cursor: pointer;
     
     &:hover {
@@ -71,9 +73,11 @@ export const AddAccount = styled(Box)`
     cursor: pointer;
     border: none;
     border-radius: 6px;
+    transition: all 0.2s ease-in-out;
 
     &:hover {
         background-color: #155D3A;
+        transition: all 0.2s ease-in-out;
     }
 `;
 
@@ -127,7 +131,7 @@ export const AccountWrapper = styled(Box)`
     width: 100%;
     height: 100%;
     padding: 0 30px;
-    margin-bottom: 100px;
+    margin-bottom: 150px;
 
     .account-table {
         scrollbar-width: thin;

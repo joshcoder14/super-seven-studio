@@ -12,13 +12,12 @@ import { paths } from '@/paths';
 import { fetchWorkloads, fetchEmployeeWorkloads } from '@/lib/api/fetchWorkloads';
 import { MappedWorkloadItem } from '@/types/workload';
 import { useAuth } from '@/context/AuthContext';
-import Preloader from '@/components/Preloader';
+import { CustomTablePagination } from '@/components/TablePagination';
 
 export function WorkloadComponent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
-  
   const [filterValue, setFilterValue] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -26,6 +25,12 @@ export function WorkloadComponent(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<MappedWorkloadItem | null>(null);
+
+  // Pagination state
+  const [page, setPage] = useState(1); // API uses 1-based indexing
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [lastPage, setLastPage] = useState(1);
 
   const fetchData = useCallback(async () => {
     if (authLoading) {
@@ -35,23 +40,47 @@ export function WorkloadComponent(): React.JSX.Element {
 
     setLoading(true);
     try {
-      let data: MappedWorkloadItem[] = [];
+      let response: { 
+        data: MappedWorkloadItem[]; 
+        total: number;
+        lastPage: number;
+      };
 
       const isEmployee = user?.user_role === 'Editor' || user?.user_role === 'Photographer';
       
       if (isEmployee) {
-        data = await fetchEmployeeWorkloads(debouncedSearchTerm, filterValue, router);
+        response = await fetchEmployeeWorkloads(
+          debouncedSearchTerm, 
+          filterValue, 
+          router,
+          page,
+          rowsPerPage
+        );
       } else {
-        data = await fetchWorkloads(debouncedSearchTerm, filterValue, router);
+        response = await fetchWorkloads(
+          debouncedSearchTerm, 
+          filterValue, 
+          router,
+          page,
+          rowsPerPage
+        );
       }
-      setWorkloadData(data);
+      setWorkloadData(response.data);
+      setTotalCount(response.total);
+      setLastPage(response.lastPage);
+      
+      // Reset to first page if current page exceeds last page
+      if (page > response.lastPage) {
+        setPage(1);
+      }
     } catch (error) {
       console.error('Data fetching error:', error);
       setWorkloadData([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
-  }, [filterValue, debouncedSearchTerm, router, user]);
+  }, [filterValue, debouncedSearchTerm, page, rowsPerPage, router, user, authLoading]);
 
   useEffect(() => {
     if (!authLoading) { // Only fetch when auth is done loading
@@ -80,6 +109,22 @@ export function WorkloadComponent(): React.JSX.Element {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+  };
+
+  const handlePageChange = (
+    event: React.MouseEvent<HTMLButtonElement> | null, 
+    newPage: number
+  ) => {
+    // Convert to 1-based index for API
+    setPage(newPage + 1);
+  };
+
+  const handleRowsPerPageChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const newRowsPerPage = parseInt(event.target.value, 10);
+    setRowsPerPage(newRowsPerPage);
+    setPage(1);  // Reset to first page
   };
 
   const openModal = (eventData: MappedWorkloadItem) => {
@@ -120,6 +165,14 @@ export function WorkloadComponent(): React.JSX.Element {
           data={workloadData} 
           loading={loading}
           onEditClick={openModal}
+        />
+
+        <CustomTablePagination
+          count={totalCount}
+          rowsPerPage={rowsPerPage}
+          page={page - 1}  // Convert to 0-based for MUI component
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
         />
 
         <EditModal 

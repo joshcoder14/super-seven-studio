@@ -383,6 +383,7 @@ export const AddBookingContainer = styled(Box)`
     flex-direction: row;
     gap: 30px;
     padding: 0 30px;
+    margin-bottom: 150px;
 
     .heading {
         padding: 0px !important;
@@ -547,9 +548,15 @@ export const AddBooking = styled(Box)`
         border-radius: 8px;
         padding: 12px 16px;
         color: #fff;
-        font-weight: 600;
+        font-weight: 500;
         font-size: 14px;
         line-height: 100%;
+        transition: all 0.2s ease-in-out;
+
+        &:hover {
+            background-color: #155D3A;
+            transition: all 0.2s ease-in-out;
+        }
 
         svg {
             path {
@@ -579,7 +586,7 @@ export const BookingContent = styled(Box)`
     display: flex;
     flex-direction: row;
     gap: 20px;
-    margin-bottom: 100px;
+    margin-bottom: 150px;
 `;
 
 export const BookingContainer = styled(Box)`

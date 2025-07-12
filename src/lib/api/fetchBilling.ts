@@ -2,8 +2,10 @@ import { Billing, FetchBillingsParams } from '@/types/billing';
 
 export const fetchBillings = async ({ 
   start_year, 
-  end_year 
-}: FetchBillingsParams): Promise<Billing[]> => {
+  end_year,
+  page = 1,
+  perPage  = 10
+}: FetchBillingsParams): Promise<{ data: Billing[], total: number }> => {
     try {
         const accessToken = localStorage.getItem('access_token');
         if (!accessToken) throw new Error('No access token found');
@@ -14,8 +16,8 @@ export const fetchBillings = async ({
         const isClient = user?.user_role === 'Client';
 
         const fetchBillingsUrl = isClient 
-            ? `/api/customer/billings?search[value]=&start_year=${start_year}&end_year=${end_year}`
-            : `/api/billings/?search[value]=&start_year=${start_year}&end_year=${end_year}`;
+            ? `/api/customer/billings?search[value]=&start_year=${start_year}&end_year=${end_year}&page=${page}&per_page=${perPage}`
+            : `/api/billings/?search[value]=&start_year=${start_year}&end_year=${end_year}&page=${page}&per_page=${perPage}`;
             
         const response = await fetch(fetchBillingsUrl, {
             headers: {
@@ -30,7 +32,10 @@ export const fetchBillings = async ({
         const result = await response.json();
         
         if (result.status && result.data) {
-            return result.data.data;
+            return {
+                data: result.data.data,
+                total: result.data.meta.total
+            };
         }
         throw new Error(result.message || 'Failed to fetch billing data');
     } catch (error) {
