@@ -8,122 +8,133 @@ const mapApiStatusToFrontend = (apiStatus: string | boolean | null): string => {
 };
 
 export async function fetchClients(
-  searchTerm: string,
-  page: number = 1,
-  perPage: number = 10
+    searchTerm: string,
+    page: number = 1,
+    perPage: number = 10,
+    showInactive: boolean = false
 ): Promise<ApiResponse> {
-  const accessToken = localStorage.getItem('access_token');
-  if (!accessToken) throw new Error('No access token found');
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) throw new Error('No access token found');
 
-  const headers = {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${accessToken}`,
-  };
+    const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+    };
 
-  const queryParams = new URLSearchParams();
-  queryParams.set('search[value]', searchTerm || '');
-  queryParams.set('filters[user_type]', '1');
-  queryParams.set('page', page.toString());
-  queryParams.set('per_page', perPage.toString());
-
-  const response = await fetch(`/api/customers?${queryParams.toString()}`, {
-    credentials: 'include',
-    headers,
-  });
-
-  if (!response.ok) throw new Error('Failed to fetch client data');
-  
-  const responseData = await response.json();
-  
-  return {
-    ...responseData,
-    data: {
-      ...responseData.data,
-      data: responseData.data?.data?.map((user: any) => ({
-        id: user.id,
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-        mid_name: user.mid_name || '',
-        full_name: user.full_name,
-        email: user.email,
-        contact_no: user.contact_no || user.contact_num || '',
-        address: user.address,
-        user_role: 'Clients',
-        user_type: '1',
-        status: user.status === 'active' || user.status === true || user.status === '1' ? '1' : '0',
-        source: 'client'
-      })) || []
+    const queryParams = new URLSearchParams();
+    queryParams.set('search[value]', searchTerm || '');
+    queryParams.set('filters[user_type]', '1');
+    queryParams.set('page', page.toString());
+    queryParams.set('per_page', perPage.toString());
+    
+    if (showInactive) {
+        queryParams.set('filters[inactive]', '1');
     }
-  };
+
+    const response = await fetch(`/api/customers?${queryParams.toString()}`, {
+        credentials: 'include',
+        headers,
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch client data');
+    
+    const responseData = await response.json();
+  
+    return {
+        ...responseData,
+        data: {
+            ...responseData.data,
+            data: responseData.data?.data?.map((user: any) => ({
+                id: user.id,
+                first_name: user.first_name || '',
+                last_name: user.last_name || '',
+                mid_name: user.mid_name || '',
+                full_name: user.full_name,
+                email: user.email,
+                contact_no: user.contact_no || user.contact_num || '',
+                address: user.address,
+                user_role: 'Clients',
+                user_type: '1',
+                status: user.status === 'active' || user.status === true || user.status === '1' ? '1' : '0',
+                source: 'client'
+            })) || []
+        }
+    };
 }
 
 export async function fetchEmployees(
-  searchTerm: string,
-  filterValue: string,
-  page: number = 1,
-  perPage: number = 10
+    searchTerm: string,
+    filterValue: string,
+    page: number = 1,
+    perPage: number = 10,
+    showInactive: boolean = false
 ): Promise<ApiResponse> {
-  const accessToken = localStorage.getItem('access_token');
-  if (!accessToken) throw new Error('No access token found');
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) throw new Error('No access token found');
 
-  const headers = {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${accessToken}`,
-  };
+    const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+    };
 
-  const queryParams = new URLSearchParams();
-  queryParams.set('search[value]', searchTerm || '');
-  queryParams.set('filters[user_type]', filterValue);
-  queryParams.set('page', page.toString());
-  queryParams.set('per_page', perPage.toString());
-
-  const response = await fetch(`/api/employees?${queryParams.toString()}`, {
-    credentials: 'include',
-    headers,
-  });
-
-  if (!response.ok) throw new Error('Failed to fetch employee data');
-  
-  const responseData = await response.json();
-  
-  return {
-    ...responseData,
-    data: {
-      ...responseData.data,
-      data: responseData.data?.data?.map((user: any) => ({
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        contact_no: user.contact_no,
-        address: user.address,
-        user_role: accountFilterOptions.find(opt => opt.value === filterValue)?.label || '',
-        status: user.status === 'active' ? '1' : '0',
-        source: 'employee',
-        first_name: user.first_name,
-        last_name: user.last_name,
-        mid_name: user.mid_name
-      })) || []
+    const queryParams = new URLSearchParams();
+    queryParams.set('search[value]', searchTerm || '');
+    queryParams.set('filters[user_type]', filterValue);
+    queryParams.set('page', page.toString());
+    queryParams.set('per_page', perPage.toString());
+    
+    if (showInactive) {
+        queryParams.set('filters[inactive]', '1');
     }
-  };
+
+    const response = await fetch(`/api/employees?${queryParams.toString()}`, {
+        credentials: 'include',
+        headers,
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch employee data');
+    
+    const responseData = await response.json();
+  
+    return {
+        ...responseData,
+        data: {
+            ...responseData.data,
+            data: responseData.data?.data?.map((user: any) => ({
+                id: user.id,
+                full_name: user.full_name,
+                email: user.email,
+                contact_no: user.contact_no,
+                address: user.address,
+                user_role: accountFilterOptions.find(opt => opt.value === filterValue)?.label || '',
+                status: user.status === 'active' ? '1' : '0',
+                source: 'employee',
+                first_name: user.first_name,
+                last_name: user.last_name,
+                mid_name: user.mid_name
+            })) || []
+        }
+    };
 }
 
 export async function fetchAllUsers(
-  searchTerm: string,
-  filterValue: string,
-  page: number = 1,
-  perPage: number = 10
+    searchTerm: string,
+    filterValue: string,
+    page: number = 1,
+    perPage: number = 10,
+    showInactive: boolean = false
 ): Promise<ApiResponse> {
-  try {
-    if (filterValue === '1') {
-      return await fetchClients(searchTerm, page, perPage);
+    try {
+        if (filterValue === '1') {
+            return await fetchClients(searchTerm, page, perPage, showInactive);
+        }
+        return await fetchEmployees(searchTerm, filterValue, page, perPage, showInactive);
+    } catch (error) {
+        console.error('Failed to fetch users', error);
+        throw error;
     }
-    return await fetchEmployees(searchTerm, filterValue, page, perPage);
-  } catch (error) {
-    console.error('Failed to fetch users', error);
-    throw error;
-  }
 }
 
 // Add and Update Account

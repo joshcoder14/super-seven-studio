@@ -12,23 +12,27 @@ import { User, ApiResponse } from '@/types/user';
 import { icons } from '@/icons';
 import { fetchAllUsers } from '@/lib/api/fetchAccount';
 import { accountFilterOptions } from '@/utils/filterOptions';
+import { Box } from '@mui/material';
+import CheckboxComponent from '@/components/checkbox';
 
 export function AccountComponent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [apiResponse, setApiResponse] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1); // 1-based to match backend
+  const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterValue, setFilterValue] = useState('3'); // Default to 'Owner'
+  const [filterValue, setFilterValue] = useState('3');
   const [error, setError] = useState<string | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
   
   // Initialize from URL parameters
   useEffect(() => {
     const urlFilter = searchParams.get('filter');
     const urlPage = searchParams.get('page');
     const urlSearch = searchParams.get('search');
+    const urlInactive = searchParams.get('inactive');
 
     if (urlFilter && accountFilterOptions.some(opt => opt.value === urlFilter)) {
       setFilterValue(urlFilter);
@@ -41,6 +45,10 @@ export function AccountComponent(): React.JSX.Element {
     if (urlSearch) {
       setSearchTerm(urlSearch);
     }
+
+    if (urlInactive) {
+      setShowInactive(urlInactive === 'true');
+    }
   }, [searchParams]);
 
   // Fetch data when params change
@@ -49,7 +57,13 @@ export function AccountComponent(): React.JSX.Element {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetchAllUsers(searchTerm, filterValue, page, rowsPerPage);
+        const response = await fetchAllUsers(
+          searchTerm, 
+          filterValue, 
+          page, 
+          rowsPerPage,
+          showInactive
+        );
         setApiResponse(response);
         
         // Update URL to reflect current state
@@ -57,6 +71,7 @@ export function AccountComponent(): React.JSX.Element {
         params.set('filter', filterValue);
         params.set('page', page.toString());
         if (searchTerm) params.set('search', searchTerm);
+        if (showInactive) params.set('inactive', 'true');
         router.replace(`/accounts?${params.toString()}`, { scroll: false });
       } catch (error) {
         console.error('Failed to fetch users', error);
@@ -71,7 +86,7 @@ export function AccountComponent(): React.JSX.Element {
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [filterValue, searchTerm, page, rowsPerPage, router]);
+  }, [filterValue, searchTerm, page, rowsPerPage, router, showInactive]);
 
   const handleFilterChange = (value: string) => {
     setFilterValue(value);
@@ -95,7 +110,7 @@ export function AccountComponent(): React.JSX.Element {
   ) => {
     const newRowsPerPage = parseInt(event.target.value, 10);
     setRowsPerPage(newRowsPerPage);
-    setPage(1); // Reset to first page when changing page size
+    setPage(1);
   };
 
   const handleEditClick = (account: User) => {
@@ -108,6 +123,11 @@ export function AccountComponent(): React.JSX.Element {
 
   const handleAddAccountClick = () => {
     router.push('/accounts/employees/add');
+  };
+
+  const handleInactiveChange = (checked: boolean) => {
+    setShowInactive(checked);
+    setPage(1);
   };
 
   // Extract data from API response
@@ -132,6 +152,16 @@ export function AccountComponent(): React.JSX.Element {
           <AddAccount onClick={handleAddAccountClick}>
             Add Account
           </AddAccount>
+
+          <Box className="form-group inactive-user">
+            <CheckboxComponent
+              checked={showInactive}
+              id='inactive-user'
+              name='inactive-user'
+              label='Inactive Users'
+              onChange={handleInactiveChange}
+            />
+          </Box>
           
           <SearchBox 
             searchTerm={searchTerm}

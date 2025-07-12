@@ -16,7 +16,7 @@ export default function CheckboxComponent({
   id,
   name,
   label,
-  checked = true,
+  checked = false,
   onChange,
 }: CheckboxComponentProps) {
     const [isChecked, setIsChecked] = useState(true);
@@ -50,14 +50,14 @@ export default function CheckboxComponent({
             />
             {isChecked && (
                 <FontAwesomeIcon 
-                icon={faCheck} 
-                style={{
-                    position: 'absolute',
-                    left: '6px',
-                    color: 'white',
-                    fontSize: 14,
-                    pointerEvents: 'none',
-                }}
+                    icon={faCheck} 
+                    style={{
+                        position: 'absolute',
+                        left: '6px',
+                        color: 'white',
+                        fontSize: 14,
+                        pointerEvents: 'none',
+                    }}
                 />
             )}
             <label htmlFor={id} style={{ marginLeft: '12px' }}>

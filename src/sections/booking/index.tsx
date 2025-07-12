@@ -746,6 +746,12 @@ export function BookingComponent(): React.JSX.Element {
                 </Box>
                 <Box className="event-info">
                   <Box className="left-info">
+                    {!isClient ? (
+                      <Box className="client-info">
+                        <Image width={20} height={20} src={icons.eventProfile} alt="package icon" />
+                        <Typography component="span">{selectedEvent.customer_name}</Typography>
+                      </Box>
+                    ) : null}
                     <Box className="client-info">
                       <Image width={20} height={20} src={icons.deliberableIcon} alt="package icon" />
                       <Typography component="span">{selectedEvent.deliverable_status}</Typography>
