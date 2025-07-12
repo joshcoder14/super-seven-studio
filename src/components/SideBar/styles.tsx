@@ -1,7 +1,6 @@
 import { Box, styled} from "@mui/material";
 
 export const SideBarContainer = styled(Box)`
-    
     display: flex;
     flex-direction: column;
     height: 100%; 
@@ -23,8 +22,8 @@ export const SideBarContainer = styled(Box)`
         flex-direction: column;
         gap: 5px;
         padding-bottom: 40px;
-        overflow-y: scroll;
-        scrollbar-width: none;
+        width: auto;
+        min-width: 205px;
 
         .menu-item{
             display: flex;
@@ -171,7 +170,7 @@ export const SideBarContainer = styled(Box)`
 
     .side-bar-horizontal-rule{
         border: 1px solid #E0E0E0;
-        padding: 2px 0;
+        padding: 0;
         margin: 15px 0;
     }
     

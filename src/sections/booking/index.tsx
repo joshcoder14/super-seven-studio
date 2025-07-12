@@ -39,7 +39,7 @@ import {
 import { getAddonNames } from '@/utils/billing';
 import { useAuth } from '@/context/AuthContext';
 import { submitFeedback } from '@/lib/api/fetchFeedback';
-import { paths } from '@/paths';
+import Preloader from '@/components/Preloader';
 
 const locales = { 'en-US': enUS };
 
@@ -71,7 +71,7 @@ export function BookingComponent(): React.JSX.Element {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [feedbackBooking, setFeedbackBooking] = useState<BookingEvent | null>(null);
-
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const isClient = user?.user_role === 'Client';
   const canDisableDates = user?.user_role === 'Owner' || user?.user_role === 'Secretary';
@@ -82,6 +82,10 @@ export function BookingComponent(): React.JSX.Element {
     pending: true,
     unavailable: true,
   });
+
+  useEffect(() => {
+    setLoading(false);
+  }, []);
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -95,9 +99,6 @@ export function BookingComponent(): React.JSX.Element {
         fetchBookings(month, year),
         fetchUnavailableDateRecords(month, year)
       ]);
-
-      console.log("Bookings:", bookings);
-      console.log("Unavailable Dates:", unavailable);
       
       setEvents(bookings);
       setUnavailableDates(unavailable);
@@ -504,6 +505,8 @@ export function BookingComponent(): React.JSX.Element {
       .map(event => dayjs(normalizeToPHDate(new Date(event.start)))),
     ...unavailableDates.map(d => dayjs(normalizeToPHDate(new Date(d.date))))
   ];
+
+  if (loading) return <Preloader />;
 
   return (
     <BookingContainer>

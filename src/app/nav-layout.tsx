@@ -3,6 +3,7 @@ import { NavBar } from "@/components/SideBar";
 import { TopBar } from "@/components/topbar";
 import { type ReactNode } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
+import { Box } from "@mui/material";
 
 interface LayoutProps {
   children: ReactNode;
@@ -10,24 +11,17 @@ interface LayoutProps {
 
   export function NavLayout({ children }: LayoutProps): React.JSX.Element {
     return (
-      <div 
+      <Box 
         style={{ 
           display: "flex", 
-          height: "auto", 
-          minHeight: "100vh" 
+          height: "100%", 
+          background: "#f7faf5"
         }}>
-        
-        <div style={{ flexShrink: 1 }}>
-          <NavBar />
-        </div>
-  
-        <div style={{ flex: 1, background: "#f7faf5" }}>
-          <AuthProvider>
-            <TopBar/>
-            {children}
-          </AuthProvider>
-        </div>
-      </div>
+          
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </Box>
     );
   }
   

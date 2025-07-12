@@ -1,14 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SettingsContainer, ActionButton, LeftButton, RightButton } from './styles';
 import { HeadingComponent } from '@/components/Heading';
 import { EditProfile } from './editProfile';
 import { ChangePasswordComponent } from './changePassword';
+import Preloader from '@/components/Preloader';
 
 export function Settings(): React.JSX.Element {
-
+    
+    const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'edit' | 'password'>('edit');
+    
+    useEffect(() => {
+        setLoading(false);
+    }, []);
+
+    if (loading) return <Preloader />;
 
     return (
         <SettingsContainer>

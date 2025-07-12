@@ -579,6 +579,7 @@ export const BookingContent = styled(Box)`
     display: flex;
     flex-direction: row;
     gap: 20px;
+    margin-bottom: 100px;
 `;
 
 export const BookingContainer = styled(Box)`
@@ -588,5 +589,6 @@ export const BookingContainer = styled(Box)`
     position: relative;
     background-color: #f7faf5;
     height: 100%;
-    // margin-top: 70px;
+    overflow-y: scroll;
+    scrollbar-width: none;
 `;

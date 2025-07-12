@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import { fetchClientById } from '@/lib/api/fetchAccount';
 import { useEffect, useState, use } from 'react';
 import { User } from '@/types/user';
+import { Box } from '@mui/material';
+import { NavBar } from '@/components/SideBar';
+import { TopBar } from '@/components/topbar';
+import Preloader from '@/components/Preloader';
 
 export default function UpdateCustomerPage({
   params,
@@ -34,15 +38,26 @@ export default function UpdateCustomerPage({
     loadAccount();
   }, [id]);
 
-  if (loading) return <div>Loading...</div>;
+  useEffect(() => {
+    setLoading(false);
+  }, []);
+
+  if (loading) return <Preloader />;
   if (error) return <div>{error}</div>;
 
   return (
-    <RegisterAccount 
-      account={account}
-      isEditMode={true}
-      onBackClick={() => router.push('/accounts')}
-      onSuccess={() => router.push('/accounts')}
-    />
+    <Box sx={{ display: 'flex', width: '100%' }}>
+      <NavBar />
+      <Box sx={{ flexDirection: 'column', flex: 1 }}>
+        <TopBar />
+        
+        <RegisterAccount 
+          account={account}
+          isEditMode={true}
+          onBackClick={() => router.push('/accounts')}
+          onSuccess={() => router.push('/accounts')}
+        />
+      </Box>
+    </Box>
   );
 }

@@ -12,11 +12,11 @@ import { FeedBackTable } from './FeedbackTable';
 import { fetchFeedbacks } from '@/lib/api/fetchFeedback';
 import { useAuth } from '@/context/AuthContext';
 import { 
-  MappedFeedbackItem,
-  FeedbackApiItem
+  MappedFeedbackItem
 } from '@/types/feedback';
 import FeedbackViewModal from './ViewModal';
 import { CustomTablePagination } from '@/components/TablePagination';
+import Preloader from '@/components/Preloader';
 
 export function FeedbackComponent(): React.JSX.Element {
     const router = useRouter();

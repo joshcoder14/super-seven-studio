@@ -19,7 +19,7 @@ import { icons } from '@/icons';
 import Image from 'next/image';
 import { fetchBillings } from '@/lib/api/fetchBilling';
 import { useRouter } from 'next/navigation';
-import { paths } from '@/paths';
+import Preloader from '@/components/Preloader';
 
 const CalendarIcon = (props: any) => (
   <Image
@@ -109,6 +109,10 @@ export default function BillingComponent() {
     }, [selectedYearPair]);
 
     useEffect(() => {
+        setLoading(false);
+    }, []);
+
+    useEffect(() => {
         loadBillingData();
     }, [loadBillingData]);
 
@@ -119,6 +123,8 @@ export default function BillingComponent() {
     const handleViewBilling = (billingId: string) => {
         router.push(`/billing/${billingId}`);
     };
+
+    if (loading) return <Preloader />;
 
     return (
         <HomeContainer>

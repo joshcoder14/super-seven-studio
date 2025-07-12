@@ -21,6 +21,7 @@ import {
   updateBooking
 } from '@/lib/api/fetchBooking';
 import { AddOnsProps, PackageProps } from '@/types/field';
+import Preloader from '@/components/Preloader';
 
 interface EditBookingProps {
   bookingId: string;
@@ -29,6 +30,11 @@ interface EditBookingProps {
 
 export default function EditBookingComponent({ bookingId, onCancel }: EditBookingProps) {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(false);
+  }, []);
 
   const formatBookingDate = (date: Date | string | null | { iso: string }) => {
     if (!date) return "";
@@ -297,6 +303,8 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
       </Box>
     );
   }
+
+  if (loading) return <Preloader />;
 
   return (
     <AddBookingContainer sx={{ display: 'flex', flexDirection: 'column' }}>

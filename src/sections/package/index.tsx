@@ -15,6 +15,7 @@ import DataTable from './DataTable';
 import { ModalComponent } from '@/components/Modal';
 import Swal from 'sweetalert2'; 
 import { useAuth } from '@/context/AuthContext';
+import Preloader from '@/components/Preloader';
 
 export function PackageHome(): React.JSX.Element {
     const [activeTab, setActiveTab] = useState<'package' | 'add-ons'>('package');
@@ -56,6 +57,10 @@ export function PackageHome(): React.JSX.Element {
             setLoading(false);
         }
     }, [activeTab, searchTerm, isClient]);
+    
+    useEffect(() => {
+        setLoading(false);
+    }, []);
 
     useEffect(() => {
         fetchData();
@@ -151,6 +156,8 @@ export function PackageHome(): React.JSX.Element {
     };
 
     const currentData = getCurrentData();
+    
+    if (loading) return <Preloader />;
 
     return (
         <HomeContainer>

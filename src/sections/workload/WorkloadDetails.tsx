@@ -5,13 +5,14 @@ import { WorkloadContainer, WorkloadWrapper } from './styles';
 import { HeadingComponent } from '@/components/Heading';
 import { WorkLoadViewTable } from './WorkloadViewTable';
 import { Details } from './styles';
-import { Box, Typography, CircularProgress, Alert } from '@mui/material';
+import { Box, Typography, Alert } from '@mui/material';
 import { icons } from '@/icons';
 import Image from 'next/image';
 import Link from 'next/link';
 import { fetchWorkloadDetailsById } from '@/lib/api/fetchWorkloads';
-import { WorkloadApiItem, WorkloadEmployee } from '@/types/workload'; // Added WorkloadEmployee import
+import { WorkloadApiItem } from '@/types/workload';
 import dayjs from 'dayjs';
+import Preloader from '@/components/Preloader';
 
 interface WorkloadDetailsComponentProps {
     workloadId: string;
@@ -21,6 +22,10 @@ export function WorkloadDetailsComponent({ workloadId }: WorkloadDetailsComponen
     const [workloadDetails, setWorkloadDetails] = useState<WorkloadApiItem | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        setLoading(false);
+    }, []);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -41,21 +46,7 @@ export function WorkloadDetailsComponent({ workloadId }: WorkloadDetailsComponen
         fetchData();
     }, [workloadId]);
 
-    if (loading) {
-        return (
-            <WorkloadContainer sx={{ paddingBottom: '30px' }}>
-                <HeadingComponent />
-                <Box sx={{ 
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '50vh'
-                }}>
-                    <CircularProgress color="inherit" />
-                </Box>
-            </WorkloadContainer>
-        );
-    }
+    if (loading) return <Preloader />;
 
     if (error) {
         return (

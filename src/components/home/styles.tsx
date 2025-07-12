@@ -141,7 +141,7 @@ export const BoxContent = styled(Box)`
 
 export const HomeContentContainer = styled(Box)`
     display: flex;
-    padding: 0 26px 40px 26px;
+    padding: 0 26px 100px 26px;
     background-color: #f7faf5;
 `;
 

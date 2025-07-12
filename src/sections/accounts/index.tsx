@@ -23,7 +23,7 @@ export function AccountComponent(): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValue, setFilterValue] = useState('3'); // Default to 'Owner'
   const [error, setError] = useState<string | null>(null);
-
+  
   // Initialize from URL parameters
   useEffect(() => {
     const urlFilter = searchParams.get('filter');

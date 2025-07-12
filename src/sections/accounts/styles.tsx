@@ -127,7 +127,7 @@ export const AccountWrapper = styled(Box)`
     width: 100%;
     height: 100%;
     padding: 0 30px;
-    padding-bottom: 50px;
+    margin-bottom: 100px;
 
     .account-table {
         scrollbar-width: thin;
@@ -196,4 +196,6 @@ export const AccountContainer = styled(Box)`
     position: relative;
     background-color: #f7faf5;
     height: 100%;
+    overflow-y: scroll;
+    scrollbar-width: none;
 `;

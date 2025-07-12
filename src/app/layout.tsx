@@ -7,18 +7,7 @@ import { config } from '@fortawesome/fontawesome-svg-core';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import { AuthProvider } from '@/context/AuthContext';
 
-config.autoAddCss = false
-
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// config.autoAddCss = false
 
 export const metadata: Metadata = {
   title: "SUPER SEVEN STUDIO",
@@ -32,12 +21,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body>
         
         <AuthProvider>
-          <Preloader>
-            <NavLayout>{children}</NavLayout>
-          </Preloader>
+          <NavLayout>{children}</NavLayout>
         </AuthProvider>
         
       </body>

@@ -12,6 +12,7 @@ import { paths } from '@/paths';
 import { fetchWorkloads, fetchEmployeeWorkloads } from '@/lib/api/fetchWorkloads';
 import { MappedWorkloadItem } from '@/types/workload';
 import { useAuth } from '@/context/AuthContext';
+import Preloader from '@/components/Preloader';
 
 export function WorkloadComponent(): React.JSX.Element {
   const router = useRouter();
@@ -94,7 +95,7 @@ export function WorkloadComponent(): React.JSX.Element {
   const handleUpdateSuccess = () => {
     fetchData();
   };
-  
+
   return (
     <WorkloadContainer>
       <HeadingComponent /> 
