@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Box, Button, styled, TextField } from "@mui/material";
 import Image from "next/image";
-import { ModalContainer, CloseWrapper } from "@/sections/workload/styles";
+import { CloseWrapper } from "@/sections/workload/styles";
 import { FormHeading } from '@/components/Heading/FormHeading';
 import { icons } from '@/icons';
 import { createPackage, createAddon, updatePackage, updateAddon } from '@/lib/api/fetchPackage';
@@ -61,9 +61,20 @@ export function ModalComponent({
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [shouldRender, setShouldRender] = useState(false);
     const [closing, setClosing] = useState(false);
+    const isMounted = useRef(true);
+    const isClosing = useRef(false);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     
     // Derive editing state from item presence
     const isEditing = !!item;
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            isMounted.current = false;
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+    }, []);
 
     // Handle open/close transitions
     useEffect(() => {
@@ -82,10 +93,16 @@ export function ModalComponent({
     }, [open]);
 
     const handleClose = useCallback(() => {
-        // Start closing animation
+        if (isClosing.current) return;
+        isClosing.current = true;
+        
         setClosing(true);
-        setTimeout(() => {
-            onClose();
+        onClose();
+        timeoutRef.current = setTimeout(() => {
+            if (isMounted.current) {
+                setShouldRender(false);
+                onClose();
+            }
         }, 300);
     }, [onClose]);
 
@@ -94,7 +111,7 @@ export function ModalComponent({
 
         const handleEscapeKey = (event: KeyboardEvent) => {
             if (event.key === 'Escape' && open) {
-                onClose();
+                handleClose();
             }
         };
 

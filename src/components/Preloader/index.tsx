@@ -3,6 +3,8 @@
 import { Box, CircularProgress } from '@mui/material';
 import { useEffect } from 'react';
 
+import { PreloadWrapper } from './styles';
+
 export default function Preloader() {
 
   useEffect(() => {
@@ -14,23 +16,7 @@ export default function Preloader() {
   }, [])
 
   return (
-    <Box 
-      className="preloader"
-      sx={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: 'rgba(255, 255, 255, 0.5)',
-        // backdropFilter: 'blur(2px)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 9999,
-        pointerEvents: 'none',
-      }}
-    >
+    <PreloadWrapper className="preloader">
       <CircularProgress 
         size={60} 
         thickness={4}
@@ -39,7 +25,7 @@ export default function Preloader() {
           animationDuration: '800ms',
         }} 
       />
-    </Box>
+    </PreloadWrapper>
   )
 }
 

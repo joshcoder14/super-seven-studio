@@ -41,7 +41,9 @@ export default function ReportsHome(): React.JSX.Element {
                 <Typography>Availed Packages</Typography>
             </Box>
 
-
+            <Box>
+                
+            </Box>
         </HomeContainer>
     );
 }

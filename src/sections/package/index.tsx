@@ -32,12 +32,10 @@ export function PackageHome(): React.JSX.Element {
     const [packagePage, setPackagePage] = useState(1);
     const [packageRowsPerPage, setPackageRowsPerPage] = useState(10);
     const [packageTotal, setPackageTotal] = useState(0);
-    // const [packageLastPage, setPackageLastPage] = useState(1);
     
     const [addonsPage, setAddonsPage] = useState(1);
     const [addonsRowsPerPage, setAddonsRowsPerPage] = useState(10);
     const [addonsTotal, setAddonsTotal] = useState(0);
-    // const [addonsLastPage, setAddonsLastPage] = useState(1);
 
     const { user } = useAuth();
     const isClient = user?.user_role === 'Client';
@@ -126,7 +124,8 @@ export function PackageHome(): React.JSX.Element {
     };
 
     const handleCloseModal = () => {
-        setIsModalOpen(false); 
+        setIsModalOpen(false);
+        console.log('Modal closed');
     };
 
     const handleSuccess = () => {

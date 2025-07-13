@@ -3,15 +3,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import CustomDatePicker from '@/components/datepicker';
 import dayjs from 'dayjs';
-import { 
-    ModalContainer, 
+import {
     CloseWrapper, 
     Details, 
     AssignedWrapper,
     ReleaseDateWrapper,
     StatusWrapper,
     LinkAttached,
-    ActionButton 
+    ActionButton,
+    ModalWrapper 
 } from './styles';
 import { Box, Typography, CircularProgress, Button, styled } from '@mui/material';
 import { icons } from '@/icons';
@@ -35,22 +35,24 @@ const StyledModalContainer = styled(Box, {
   shouldForwardProp: (prop) => prop !== '$closing',
 })<{ $closing?: boolean }>(({ theme, $closing }) => ({
   animation: `${$closing ? fadeOutRight : fadeInRight} 0.3s forwards`,
-  position: 'absolute',
+  position: 'relative',
   top: '0px',
   right: 0,
   maxWidth: '560px',
   width: '100%',
-  minHeight: '300px',
   height: 'auto',
   backgroundColor: '#FFFFFF',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'flex-start',
   alignItems: 'flex-start',
-  paddingBottom: '30px',
   zIndex: 1,
   border: '0.3px solid #E0E0E0',
   borderRadius: '4px',
+  paddingBottom: '30px',
+  marginBottom: '150px',
+  marginTop: '100px',
+  marginLeft: 'auto',
 }));
 
 export default function EditModal({ open, onClose, eventData, onUpdateSuccess }: EditModalProps) {
@@ -67,9 +69,20 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
     const modalRef = useRef<HTMLDivElement>(null);
     const [shouldRender, setShouldRender] = useState(false);
     const [closing, setClosing] = useState(false);
+    const isMounted = useRef(true);
+    const isClosing = useRef(false);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const { user, loading: authLoading } = useAuth();
     const isEmployee = user?.user_role === 'Editor' || user?.user_role === 'Photographer';
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+        isMounted.current = false;
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+    }, []);
     
     // Handle open/close transitions
     useEffect(() => {
@@ -86,12 +99,18 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
             return () => clearTimeout(timer);
         }
     }, [open]);
-
+    
     const handleClose = useCallback(() => {
-        // Start closing animation
+        if (isClosing.current) return;
+        isClosing.current = true;
+        
         setClosing(true);
-        setTimeout(() => {
-            onClose();
+        onClose();
+        timeoutRef.current = setTimeout(() => {
+            if (isMounted.current) {
+                setShouldRender(false);
+                onClose();
+            }
         }, 300);
     }, [onClose]);
     
@@ -99,7 +118,7 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
     useEffect(() => {
         const handleEscapeKey = (event: KeyboardEvent) => {
             if (event.key === 'Escape' && open) {
-                onClose();
+                handleClose();
             }
         };
 
@@ -260,7 +279,7 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
     }
 
     return (
-        <Box sx={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+        <ModalWrapper>
             <StyledModalContainer
                 ref={modalRef}
                 $closing={closing}
@@ -469,6 +488,6 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                     </Button>
                 </ActionButton>
             </StyledModalContainer>
-        </Box>
+        </ModalWrapper>
     );
 }

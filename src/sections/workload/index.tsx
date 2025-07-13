@@ -135,6 +135,7 @@ export function WorkloadComponent(): React.JSX.Element {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedEvent(null);
+    console.log('Modal closed');
   };
 
   const handleUpdateSuccess = () => {
@@ -175,12 +176,14 @@ export function WorkloadComponent(): React.JSX.Element {
           onRowsPerPageChange={handleRowsPerPageChange}
         />
 
-        <EditModal 
-          open={isModalOpen} 
-          onClose={closeModal} 
-          eventData={selectedEvent}
-          onUpdateSuccess={handleUpdateSuccess}
-        />
+        {isModalOpen && (
+          <EditModal 
+            open={isModalOpen} 
+            onClose={closeModal} 
+            eventData={selectedEvent}
+            onUpdateSuccess={handleUpdateSuccess}
+          />
+        )}
       </WorkloadWrapper>
     </WorkloadContainer>
   );

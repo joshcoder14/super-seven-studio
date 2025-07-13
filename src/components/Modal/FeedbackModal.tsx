@@ -10,7 +10,6 @@ import {
 import { Typography, Button, CircularProgress, TextField, styled, Box  } from '@mui/material';
 import { BookingEvent } from '@/types/booking';
 import { format } from 'date-fns';
-import { fadeInLeft, fadeOutRight } from '@/sections/feedback/ViewModal';
 
 type FeedbackModalProps = {
   isOpen: boolean;
