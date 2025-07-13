@@ -532,18 +532,28 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
 
       const defaultPassword = `${formattedFirstName}${formattedLastName}12345`;
 
-      await Swal.fire({
-        title: 'Success!',
-        text: 'Booking created successfully!',
-        html: `
-          <div>
-            <p><strong>Temporary Password: </strong>${defaultPassword}</p>
-            <p>Please instruct the user to change this password after first login.</p>
-          </div>
-        `,
-        icon: 'success',
-        confirmButtonText: 'OK'
-      });
+      if (userRole === 'Client') {
+        await Swal.fire({
+          title: 'Success!',
+          text: 'Booking created successfully!',
+          icon: 'success',
+          confirmButtonText: 'OK'
+        });
+      } else {
+        await Swal.fire({
+          title: 'Success!',
+          text: 'Booking created successfully!',
+          html: `
+            <div>
+              <p><strong>Temporary Password: </strong>${defaultPassword}</p>
+              <p>Please instruct the user to change this password after first login.</p>
+            </div>
+          `,
+          icon: 'success',
+          confirmButtonText: 'OK'
+        });
+      }
+      
       
       window.location.href = paths.booking;
     } catch (err: any) {

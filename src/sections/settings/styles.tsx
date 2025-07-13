@@ -15,7 +15,6 @@ export const Heading = styled(Box)`
 
 export const FormContainer = styled(Box)`
     width: 100%;
-    padding-top: 40px;
 
     .wrapper {
         width: 100%;
@@ -155,6 +154,7 @@ export const FormContainer = styled(Box)`
 
     &.register-account {
         margin-bottom: 150px;
+
         .wrapper {
             form {
                 .filter {

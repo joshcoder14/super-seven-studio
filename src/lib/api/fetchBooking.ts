@@ -270,6 +270,8 @@ export const cancelBooking = async (id: number): Promise<void> => {
       ? `/api/customer/bookings/${id}/delete`
       : `/api/bookings/${id}/cancel`;
 
+  console.log('Endpoint:', endpoint);
+
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {

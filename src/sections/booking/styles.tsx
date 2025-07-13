@@ -382,7 +382,6 @@ export const AddBookingContainer = styled(Box)`
     justify-content: space-between;
     flex-direction: row;
     gap: 30px;
-    padding: 0 30px;
     margin-bottom: 150px;
 
     .heading {

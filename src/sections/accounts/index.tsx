@@ -25,7 +25,7 @@ export function AccountComponent(): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValue, setFilterValue] = useState('3');
   const [error, setError] = useState<string | null>(null);
-  const [showInactive, setShowInactive] = useState(false);
+  const [showInactive, setShowInactive] = useState(true);
   
   // Initialize from URL parameters
   useEffect(() => {
@@ -71,7 +71,7 @@ export function AccountComponent(): React.JSX.Element {
         params.set('filter', filterValue);
         params.set('page', page.toString());
         if (searchTerm) params.set('search', searchTerm);
-        if (showInactive) params.set('inactive', 'true');
+        params.set('inactive', showInactive.toString());
         router.replace(`/accounts?${params.toString()}`, { scroll: false });
       } catch (error) {
         console.error('Failed to fetch users', error);

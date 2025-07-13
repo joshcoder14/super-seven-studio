@@ -52,7 +52,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Editor/Photographer: Strict allowlist
-  if (role === 'Editor' || role === 'Photographer') {
+  if (role === 'Editor' || role === 'Photographer' || role === 'Coordinator' || role === 'Freelancer') {
     const allowedPaths = ['/', '/workload', '/settings']
     const isAllowed = allowedPaths.some(
       path => pathname === path || pathname.startsWith(`${path}/`)

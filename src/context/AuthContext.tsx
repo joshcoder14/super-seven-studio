@@ -129,6 +129,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return !path.startsWith('/billing')
       case 'Editor':
       case 'Photographer':
+      case 'Freelancer':
+      case 'Coordinator':
         return ['/', '/workload', '/settings'].some(
           allowed => path === allowed || path.startsWith(`${allowed}/`)
         )

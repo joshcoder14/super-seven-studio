@@ -3,7 +3,6 @@ import { Box, styled } from "@mui/material";
 export const TransactionWrapper = styled(Box)`
     width: 100%;
     height: auto;
-    padding: 0 30px;
     margin-bottom: 30px;
 `;
 
@@ -11,7 +10,6 @@ export const BillingDetails = styled(Box)`
     width: 100%;
     height: auto;
     padding-top: 40px;
-    padding-left: 30px;
     display: flex;
     gap: 30px;
 
@@ -28,6 +26,7 @@ export const BillingDetails = styled(Box)`
 export const BillingPaymentContainer = styled(Box)`
     width: 100%;
     height: auto;
+    padding: 0 30px;
 `;
 
 export const YearSelector = styled(Box)`

@@ -171,6 +171,8 @@ export function NavBar(): React.JSX.Element {
                     return ['Home', 'Booking', 'Package', 'Billing'].includes(item.label);
                 case 'Photographer':
                 case 'Editor':
+                case 'Freelancer':
+                case 'Coordinator':
                     return ['Home', 'Workload'].includes(item.label);
                 case 'Owner':
                     return true;
