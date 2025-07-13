@@ -3,9 +3,9 @@ import { Box, styled} from "@mui/material";
 export const SideBarContainer = styled(Box)`
     display: flex;
     flex-direction: column;
+    gap: 20px;
     height: 100%; 
     background-color: #ffffff;
-    gap: 20px;
     border-right: 2px solid #E0E0E0;
     font-family: 'Nunito', sans-serif;
     color: #000000;
@@ -24,8 +24,9 @@ export const SideBarContainer = styled(Box)`
         padding-bottom: 40px;
         width: auto;
         min-width: 205px;
+        transition: min-width 0.5s ease-in-out;
 
-        .menu-item{
+        .menu-item {
             display: flex;
             align-items: center;
             gap: 20px;
@@ -43,6 +44,7 @@ export const SideBarContainer = styled(Box)`
                 line-height: 100%;
                 letter-spacing: 0.3px;
                 color: #000000;
+                transition: all 0.2s ease-in-out;
             }
 
             svg{
@@ -178,5 +180,38 @@ export const SideBarContainer = styled(Box)`
         display: flex;
         justify-content: center;
         align-items: center;
+        margin-top: 30px;
+
+        img {
+            height: auto;
+            transition: width 0.5s ease-in-out;
+        }
+    }
+
+    &.minimized {
+        .logo-container {
+
+            img:first-of-type {
+                transition: width 0.5s ease-in-out;
+            }
+
+            img:last-of-type {
+                transition: width 0.5s ease-in-out;
+                display: none;
+            }
+        }
+
+        .menu-items-container {
+            min-width: 0px;
+            transition: min-width 0.5s ease-in-out;
+            .menu-item {
+                width: fit-content;
+
+                p {
+                    transition: all 0.2s ease-in-out;
+                    display: none;
+                }
+            }
+        }
     }
 `

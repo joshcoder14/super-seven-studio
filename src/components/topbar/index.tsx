@@ -13,19 +13,23 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Box } from "@mui/material";
 import { useAuth } from '@/context/AuthContext';
+import { useSidebar } from "@/context/SidebarContext";
 
 export function TopBar(): React.JSX.Element {
     const { user, isAuthenticated, loading  } = useAuth();
-    const [isMobile, setIsMobile] = React.useState(false);
+    const { toggleSidebar } = useSidebar();
 
     if (loading) {
         return (
         <TopBarContainer>
-            <Box className="menu-icon-container">
-            <MenuIcon onClick={() => setIsMobile(!isMobile)}/>
+            <Box 
+                className="menu-icon-container"
+                onClick={toggleSidebar}
+            >
+                <MenuIcon/>
             </Box>
             <Box display="flex" justifyContent="flex-end" width="100%" pr={2}>
-            <CircularProgress size={24} />
+                <CircularProgress size={24} />
             </Box>
         </TopBarContainer>
         )
@@ -33,8 +37,11 @@ export function TopBar(): React.JSX.Element {
 
     return (
         <TopBarContainer>
-            <Box className="menu-icon-container">
-                <MenuIcon onClick={() => setIsMobile(!isMobile)}/>
+            <Box 
+                className="menu-icon-container"
+                onClick={toggleSidebar}
+            >
+                <MenuIcon/>
             </Box>
             <TopbarUserContainer className="user-container">
                 <TopBarUserImage>

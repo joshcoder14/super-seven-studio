@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
 import { icons } from '@/icons';
+import { useSidebar } from '@/context/SidebarContext';
 
 interface MenuItem {
     id: string;
@@ -32,6 +33,7 @@ export function NavBar(): React.JSX.Element {
     const pathname = usePathname();
     const { logout, user } = useAuth();
     const [isClient, setIsClient] = useState(false);
+    const { isOpen } = useSidebar();
     
     useEffect(() => {
         setIsClient(true);
@@ -187,10 +189,10 @@ export function NavBar(): React.JSX.Element {
     const filteredMenuItems = isClient ? getFilteredMenuItems() : [];
 
     return (
-        <SideBarContainer className="navbar">
+        <SideBarContainer className={`navbar ${isOpen ? '' : 'minimized'}`}>
             <Box className="logo-container">
                 <Image width={60} height={60} src={icons.favIcon} alt="fav icon" />
-                <Image width={100} height={100} priority src={icons.logo} alt="logo" />
+                <Image width={150} height={100} priority src={icons.logo} alt="logo" />
             </Box>
             <Box className="menu-items-container">
                 {filteredMenuItems.map((item, index) => {

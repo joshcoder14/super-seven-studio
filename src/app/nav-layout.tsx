@@ -1,6 +1,4 @@
 import React from "react";
-import { NavBar } from "@/components/SideBar";
-import { TopBar } from "@/components/topbar";
 import { type ReactNode } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
 import { Box } from "@mui/material";
