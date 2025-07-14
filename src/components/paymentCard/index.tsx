@@ -42,9 +42,27 @@ export function PaymentCardComponent({
     };
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/,/g, '');
-        const formattedValue = Number(value).toLocaleString();
-        setAmount(formattedValue);
+        const value = e.target.value;
+        
+        // Allow only numbers, commas, and a single decimal point with max 2 decimal places
+        const regex = /^[0-9,]*(\.[0-9]{0,2})?$/;
+        
+        // Check if the input matches our allowed pattern
+        if (value === '' || regex.test(value)) {
+            // Remove all commas to check the numeric value
+            const rawValue = value.replace(/,/g, '');
+            
+            // Format with commas as thousand separators
+            if (rawValue.includes('.')) {
+                const parts = rawValue.split('.');
+                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                // Ensure we only keep 2 decimal places
+                parts[1] = parts[1].slice(0, 2);
+                setAmount(parts.join('.'));
+            } else {
+                setAmount(rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+            }
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
