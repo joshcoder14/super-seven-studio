@@ -383,10 +383,6 @@ export const AddBookingContainer = styled(Box)`
     flex-direction: row;
     gap: 30px;
     margin-bottom: 150px;
-
-    .heading {
-        padding: 0px !important;
-    }
 `;
 
 export const BigCalendar = styled(Box)`
@@ -537,6 +533,14 @@ export const CalendarWrapper = styled(Box)`
 export const AddBooking = styled(Box)`
     width: 100%;
 
+    @media (max-width: 1200px) {
+        max-width: 300px;
+    }
+
+    @media (max-width: 768px) {
+        max-width: 100%;
+    }
+    
     .add-booking-link {
         display: flex;
         justify-content: center;
@@ -568,11 +572,31 @@ export const AddBooking = styled(Box)`
 export const LeftContent = styled(Box)`
     max-width: 350px;
     width: 100%;
-    height: 100%;
+    height: auto;
     background: #FFFFFF;
     border: 0.3px solid #E0E0E0;
     border-radius: 14px;
     padding: 24px;
+
+    @media (max-width: 1200px) {
+        max-width: fit-content;
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+    }
+
+    .upcoming-event {
+        border-top: 1px solid #E0E0E0;
+        padding-top: 20px;
+
+        @media (max-width: 1200px) {
+            border: none;
+        }
+    }
 
     .horizontal-rule {
         margin: 15px 0;
@@ -585,6 +609,10 @@ export const BookingContent = styled(Box)`
     flex-direction: row;
     gap: 20px;
     margin-bottom: 150px;
+
+    @media (max-width: 1200px) {
+        flex-direction: column;
+    }
 `;
 
 export const BookingContainer = styled(Box)`

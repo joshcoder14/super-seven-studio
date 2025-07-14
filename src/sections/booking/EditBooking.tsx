@@ -307,7 +307,7 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
   if (loading) return <Preloader />;
 
   return (
-    <AddBookingContainer sx={{ display: 'flex', flexDirection: 'column' }}>
+    <AddBookingContainer sx={{ display: 'flex', flexDirection: 'column', padding: '0 30px' }}>
       <HeadingComponent />
       <BookingWrapper>
         <FormHeading title="Edit Booking"/>

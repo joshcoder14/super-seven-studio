@@ -1,22 +1,16 @@
 'use client'
 
-import { Box, CircularProgress } from '@mui/material';
-import { useEffect } from 'react';
-
-import { PreloadWrapper } from './styles';
+import { CircularProgress } from '@mui/material'
+import { PreloadWrapper } from './styles'
+import { useLoading } from '@/context/LoadingContext'
 
 export default function Preloader() {
+  const { isLoading } = useLoading()
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      document.querySelector('.preloader')?.remove()
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [])
+  if (!isLoading) return null
 
   return (
-    <PreloadWrapper className="preloader">
+    <PreloadWrapper>
       <CircularProgress 
         size={60} 
         thickness={4}
@@ -28,4 +22,3 @@ export default function Preloader() {
     </PreloadWrapper>
   )
 }
-

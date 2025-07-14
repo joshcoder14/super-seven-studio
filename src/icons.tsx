@@ -1,3 +1,4 @@
+import { faAngleLeft } from "@fortawesome/free-solid-svg-icons";
 
 export const icons = {
     favIcon : "/assets/icons/favicon.svg",
@@ -9,6 +10,8 @@ export const icons = {
     clockIcon : "/assets/icons/clock.svg",
     locationIcon : "/assets/icons/location.svg",
     angleDown : "/assets/icons/angle-down.svg",
+    angleLeft: '/assets/icons/angle-left-solid.svg',
+    angleRight: '/assets/icons/angle-right-solid.svg',
     editIcon : "/assets/icons/pencil-write.svg",
     removeIcon : "/assets/icons/trash.svg",
     displayIcon : "/assets/icons/eye-icon.svg",

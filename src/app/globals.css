@@ -356,3 +356,8 @@ form button {
 .table-pagination .MuiTablePagination-toolbar .MuiTablePagination-actions #pagination-next-button {
   border-radius: 0px 8px 8px 0px;
 }
+
+/* Calendar Toolbar */
+.rbc-toolbar {
+  gap: 15px;
+}

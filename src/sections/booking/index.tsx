@@ -515,7 +515,7 @@ export function BookingComponent(): React.JSX.Element {
       {!showAddBooking && (
         <BookingContent>
           <LeftContent>
-            <AddBooking sx={{ borderBottom: '1px solid #E0E0E0', paddingBottom: '20px' }}>
+            <AddBooking>
               <Box
                 component="button"
                 className="add-booking-link"
@@ -529,45 +529,46 @@ export function BookingComponent(): React.JSX.Element {
                   alignItems: 'center',
                   color: 'inherit',
                   cursor: 'pointer',
+                  paddingBottom: '20px'
                 }}
               >
                 <FontAwesomeIcon icon={faPlus} style={{ fontSize: 14, pointerEvents: 'none', marginRight: 5 }} />
                 Add New Booking
               </Box>
+
+              <StatusFilter>
+                <Box
+                  className="status"
+                  onClick={() => setIsSelectOpen(!isSelectOpen)}
+                  sx={{ cursor: 'pointer', position: 'relative' }}
+                >
+                  <label htmlFor="statusFilter">Status</label>
+                  <FontAwesomeIcon
+                    icon={faChevronDown}
+                    style={{
+                      position: 'absolute',
+                      right: '25px',
+                      top: '27px',
+                      transform: isSelectOpen ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%) rotate(0deg)',
+                      transition: 'transform 0.3s ease',
+                      pointerEvents: 'none',
+                      color: '#202224'
+                    }}
+                  />
+                </Box>
+                <Box
+                  id="status-filter-dropdown"
+                  className={`dropdown-checkbox ${isSelectOpen ? 'open' : ''}`}
+                  ref={dropdownRef}
+                  sx={{ display: isSelectOpen ? 'block' : 'none' }}
+                >
+                  <CheckboxComponent id='approved' name='approved' label='Approved' checked={statusFilters.booked} onChange={() => handleStatusFilterChange('booked')} />
+                  <CheckboxComponent id='pending' name='pending' label='Pending' checked={statusFilters.pending} onChange={() => handleStatusFilterChange('pending')} />
+                </Box>
+              </StatusFilter>
             </AddBooking>
 
-            <StatusFilter>
-              <Box
-                className="status"
-                onClick={() => setIsSelectOpen(!isSelectOpen)}
-                sx={{ cursor: 'pointer', position: 'relative' }}
-              >
-                <label htmlFor="statusFilter">Status</label>
-                <FontAwesomeIcon
-                  icon={faChevronDown}
-                  style={{
-                    position: 'absolute',
-                    right: '25px',
-                    top: '27px',
-                    transform: isSelectOpen ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%) rotate(0deg)',
-                    transition: 'transform 0.3s ease',
-                    pointerEvents: 'none',
-                    color: '#202224'
-                  }}
-                />
-              </Box>
-              <Box
-                id="status-filter-dropdown"
-                className={`dropdown-checkbox ${isSelectOpen ? 'open' : ''}`}
-                ref={dropdownRef}
-                sx={{ display: isSelectOpen ? 'block' : 'none' }}
-              >
-                <CheckboxComponent id='approved' name='approved' label='Approved' checked={statusFilters.booked} onChange={() => handleStatusFilterChange('booked')} />
-                <CheckboxComponent id='pending' name='pending' label='Pending' checked={statusFilters.pending} onChange={() => handleStatusFilterChange('pending')} />
-              </Box>
-            </StatusFilter>
-
-            <Box className="upcoming-event" sx={{ borderTop: '1px solid #E0E0E0', paddingTop: '20px' }}>
+            <Box className="upcoming-event">
               <EventHeading>Upcoming Event</EventHeading>
               <EventDetails sx={{ borderRadius: '22px' }}>
                 {isLoading ? (
