@@ -70,7 +70,7 @@ export const DropdownList = styled(Box)`
     display: flex;
     flex-direction: column;
     position: absolute;
-    top: 30px;
+    top: 40px;
     right: 0;
 `;
 

@@ -9,7 +9,7 @@ export const ModalWrapper = styled(Box)`
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 9999;
+    z-index: 10;
     overflow-y: auto;
     overflow-x: hidden;
 `;

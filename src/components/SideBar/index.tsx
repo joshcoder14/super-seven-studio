@@ -20,6 +20,7 @@ import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
 import { icons } from '@/icons';
 import { useSidebar } from '@/context/SidebarContext';
+import { useLoading } from '@/context/LoadingContext'
 
 interface MenuItem {
     id: string;
@@ -34,6 +35,7 @@ export function NavBar(): React.JSX.Element {
     const { logout, user } = useAuth();
     const [isClient, setIsClient] = useState(false);
     const { isOpen } = useSidebar();
+    const { showLoader } = useLoading()
     
     useEffect(() => {
         setIsClient(true);
@@ -222,6 +224,7 @@ export function NavBar(): React.JSX.Element {
                             href={item.link} 
                             className={className}  
                             key={item.id}
+                            onClick={() => showLoader()}
                         >
                             {item.icon}
                             <p>{item.label}</p>

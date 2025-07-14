@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { HomeContainer } from '@/sections/adminHome/styles';
 import { BoxWrapper, Heading, YearDropdown, PackageBar, SelectBox, DropdownList, DropdownMonth, YearBox } from './styles';
 import { HeadingComponent } from '@/components/Heading';
@@ -20,6 +20,9 @@ import { Line, Bar } from 'react-chartjs-2';
 import { icons } from '@/icons';
 import { ReportsTable } from './ReportTable';
 import Image from 'next/image';
+import { ReportData } from '@/types/reports';
+import { fetchReports, fetchBookingData, fetchPackageData } from '@/lib/api/fetchReport';
+import { CustomTablePagination } from '@/components/TablePagination';
 
 // Register ChartJS components
 ChartJS.register(
@@ -59,12 +62,31 @@ type YearPair = {
   end: number;
 };
 
+const monthLabels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
 export default function ReportsHome(): React.JSX.Element {
+    const currentDate = new Date();
+    const currentYearValue = currentDate.getFullYear();
+    const currentMonthName = monthLabels[currentDate.getMonth()];
+    
     const [open, setOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [currentYear, setCurrentYear] = useState(2024);
-    const [year, setYear] = useState(2025);
-    const [selectedMonth, setSelectedMonth] = useState<string>('');
+    const [currentYear, setCurrentYear] = useState(currentYearValue);
+    const [year, setYear] = useState(currentYearValue);
+    const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthName);
+    const [reportData, setReportData] = useState<ReportData[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [totalCount, setTotalCount] = useState(0);
+    const [bookingData, setBookingData] = useState<Record<string, number>>({});
+    const [bookingLoading, setBookingLoading] = useState(false);
+    const [bookingError, setBookingError] = useState<string | null>(null);
+    const [packageData, setPackageData] = useState<{package_name: string; count: number}[]>([]);
+    const [packageLoading, setPackageLoading] = useState(false);
+    const [packageError, setPackageError] = useState<string | null>(null);
+
     const [selectedYearPair, setSelectedYearPair] = useState<YearPair>({
         start: new Date().getFullYear(),
         end: new Date().getFullYear() + 1
@@ -84,11 +106,83 @@ export default function ReportsHome(): React.JSX.Element {
     };
 
     const yearPairs = generateYearPairs();
+
+    const fetchReportData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const result = await fetchReports({
+                start_year: selectedYearPair.start,
+                end_year: selectedYearPair.end,
+                page: page + 1,
+                perPage: rowsPerPage
+            });
+            setReportData(result.data);
+            setTotalCount(result.meta.total);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const loadBookingData = async () => {
+            try {
+                setBookingLoading(true);
+                setBookingError(null);
+                const data = await fetchBookingData(year);
+                setBookingData(data);
+            } catch (err) {
+                setBookingError(err instanceof Error ? err.message : 'Failed to load booking data');
+            } finally {
+                setBookingLoading(false);
+            }
+        };
+
+        loadBookingData();
+    }, [year]);
+
+    useEffect(() => {
+        const loadPackageData = async () => {
+            try {
+                setPackageLoading(true);
+                setPackageError(null);
+                const monthNumber = selectedMonth ? monthLabels.indexOf(selectedMonth) + 1 : undefined;
+                const data = await fetchPackageData(currentYear, monthNumber);
+                setPackageData(data);
+            } catch (err) {
+                setPackageError(err instanceof Error ? err.message : 'Failed to load package data');
+            } finally {
+                setPackageLoading(false);
+            }
+        };
+
+        loadPackageData();
+    }, [currentYear, selectedMonth]);
+
+    // Fetch data when year pair or pagination changes
+    useEffect(() => {
+        fetchReportData();
+    }, [selectedYearPair, page, rowsPerPage]);
+
+    const handlePageChange = (
+        event: React.MouseEvent<HTMLButtonElement> | null,
+        newPage: number,
+    ) => {
+        setPage(newPage);
+    };
+
+    const handleRowsPerPageChange = (
+        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
     
     const handleYearChange = (event: SelectChangeEvent<string>) => {
         const [start, end] = event.target.value.split('-').map(Number);
         setSelectedYearPair({ start, end });
-        // setPage(0);
     };
 
     const handleChange = (event: SelectChangeEvent<number>) => {
@@ -163,7 +257,7 @@ export default function ReportsHome(): React.JSX.Element {
         scales: {
             y: {
                 min: 0,
-                max: 30,
+                max: Math.max(...Object.values(bookingData), 10) + 5,
                 ticks: {
                     stepSize: 5,
                     color: '#000',
@@ -199,13 +293,12 @@ export default function ReportsHome(): React.JSX.Element {
     };
 
     // Sample data for line chart
-    const lineLabels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const lineData = {
-        labels: lineLabels,
+        labels: monthLabels,
         datasets: [
             {
                 label: 'Bookings',
-                data: [10, 20, 15, 5, 9, 16, 12],
+                data: monthLabels.map(month => bookingData[month] || 0),
                 borderColor: '#2BB673',
                 backgroundColor: '#2BB673',
                 tension: 0,
@@ -222,6 +315,59 @@ export default function ReportsHome(): React.JSX.Element {
         ],
     };
 
+    const yearSelect = [
+        {
+            id: 1,
+            value: '2024',
+            label: '2024'
+        },
+        {
+            id: 2,
+            value: '2025',
+            label: '2025'
+        },
+        {
+            id: 3,
+            value: '2026',
+            label: '2026'
+        },
+        {
+            id: 4,
+            value: '2027',
+            label: '2027'
+        },
+        {
+            id: 5,
+            value: '2028',
+            label: '2028'
+        },
+        {
+            id: 6,
+            value: '2029',
+            label: '2029'
+        },
+        {
+            id: 7,
+            value: '2030',
+            label: '2030'
+        },
+        {
+            id: 8,
+            value: '2031',
+            label: '2031'
+        },
+        {
+            id: 9,
+            value: '2032',
+            label: '2032'
+        },
+        {
+            id: 10,
+            value: '2033',
+            label: '2033'
+        }
+    ]
+
     // Horizontal bar chart options and data
     const barOptions = {
         indexAxis: 'y' as const,
@@ -233,7 +379,7 @@ export default function ReportsHome(): React.JSX.Element {
         scales: {
             x: { 
                 min: 0,
-                max: 60,
+                max: Math.max(...packageData.map(item => item.count), 10) + 5,
                 ticks: { display: false },
                 grid: { display: false, drawBorder: false }
             },
@@ -245,24 +391,19 @@ export default function ReportsHome(): React.JSX.Element {
                     padding: 4,
                     crossAlign: 'far' as const
                 }
-
             }
         },
         categoryPercentage: 0.9,
         barPercentage: 0.8
     };
-    const barLabels = ['Package A', 'Package B', 'Package C'];
+
     const barData = {
-        labels: barLabels,
+        labels: packageData.map(item => item.package_name),
         datasets: [
             {
-                data: [59, 28, 45],
-                backgroundColor: [
-                    '#2BB673',
-                ],
-                borderColor: [
-                    '#2BB673',
-                ],
+                data: packageData.map(item => item.count),
+                backgroundColor: '#2BB673',
+                borderColor: '#2BB673',
                 borderWidth: 1,
                 borderRadius: 4,
                 barThickness: 10,
@@ -271,8 +412,6 @@ export default function ReportsHome(): React.JSX.Element {
             }
         ]
     };
-
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
     return (
         <HomeContainer>
@@ -307,19 +446,27 @@ export default function ReportsHome(): React.JSX.Element {
                                     },
                                 }}
                             >
-                                <MenuItem className='menu-item' value={2024}>2024</MenuItem>
-                                <MenuItem className='menu-item' value={2025}>2025</MenuItem>
-                                <MenuItem className='menu-item' value={2026}>2026</MenuItem>
+                                {yearSelect.map((option) => (
+                                    <MenuItem key={option.id} value={option.value}>
+                                        {option.label}
+                                    </MenuItem>
+                                ))}
                             </Select>
                         </FormControl>
                     </YearDropdown>
                 </Heading>
                 <Box sx={{ width: '100%', height: 'auto' }}>
-                    <Line 
-                        height={100}
-                        options={lineOptions} 
-                        data={lineData}
-                    />
+                    {bookingLoading ? (
+                        <Box sx={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Loading booking data...</Box>
+                    ) : bookingError ? (
+                        <Typography color="error">Error loading booking data: {bookingError}</Typography>
+                    ) : (
+                        <Line 
+                            height={100}
+                            options={lineOptions} 
+                            data={lineData}
+                        />
+                    )}
                 </Box>
             </BoxWrapper>
             
@@ -367,7 +514,7 @@ export default function ReportsHome(): React.JSX.Element {
                                         </Box>
                                     </YearBox>
                                     <DropdownMonth>
-                                        {months.map((month, index) => (
+                                        {monthLabels.map((month, index) => (
                                             <Typography 
                                                 key={index} 
                                                 component="p"
@@ -383,15 +530,25 @@ export default function ReportsHome(): React.JSX.Element {
                     </YearDropdown>
                 </Heading>
                 <PackageBar sx={{ width: '100%', height: '300px' }}>
-                    <Bar 
-                        height={100}
-                        options={barOptions} 
-                        data={barData}
-                    />
+                    {packageLoading ? (
+                        <Box sx={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            Loading package data...
+                        </Box>
+                    ) : packageError ? (
+                        <Typography color="error">Error loading package data: {packageError}</Typography>
+                    ) : packageData.length > 0 ? (
+                        <Bar 
+                            height={100}
+                            options={barOptions} 
+                            data={barData}
+                        />
+                    ) : packageData.length < 0 ? (
+                        <Typography>No package data available</Typography>
+                    ) : null}
                 </PackageBar>
             </BoxWrapper>
 
-            <BoxWrapper sx={{ marginBottom: '150px', padding: '0px' }}>
+            <BoxWrapper sx={{ padding: '0px' }}>
                 <Box
                     sx={{
                         padding: '30px 30px 0px 30px',
@@ -424,8 +581,20 @@ export default function ReportsHome(): React.JSX.Element {
                         </Select>
                     </FormControl>
                 </Box>
-                <ReportsTable />
+
+                <ReportsTable data={reportData} loading={loading} error={error} />
+
             </BoxWrapper>
+
+            <Box sx={{ marginBottom: '150px', marginTop: '-40px', padding: '0px' }}>
+                <CustomTablePagination
+                    count={totalCount}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handlePageChange}
+                    onRowsPerPageChange={handleRowsPerPageChange}
+                />
+            </Box>
         </HomeContainer>
     );
 }

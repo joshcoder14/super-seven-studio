@@ -2,6 +2,7 @@ import React from "react";
 import { type ReactNode } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
 import { Box } from "@mui/material";
+import NavigationProgress from '@/components/NavigationProgress';
 
 interface LayoutProps {
   children: ReactNode;
@@ -17,6 +18,7 @@ interface LayoutProps {
         }}>
           
         <AuthProvider>
+          <NavigationProgress />
           {children}
         </AuthProvider>
       </Box>
