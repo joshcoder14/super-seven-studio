@@ -125,7 +125,6 @@ export function PackageHome(): React.JSX.Element {
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
-        console.log('Modal closed');
     };
 
     const handleSuccess = () => {

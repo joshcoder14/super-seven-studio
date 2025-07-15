@@ -135,7 +135,6 @@ export function WorkloadComponent(): React.JSX.Element {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedEvent(null);
-    console.log('Modal closed');
   };
 
   const handleUpdateSuccess = () => {

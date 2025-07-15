@@ -606,7 +606,7 @@ export default function ReportsHome(): React.JSX.Element {
 
             </BoxWrapper>
 
-            <Box sx={{ marginBottom: '150px', marginTop: '-40px', padding: '0px' }}>
+            <Box sx={{ marginBottom: '150px', marginTop: '-40px', padding: '0px', maxWidth: '1640px' }}>
                 <CustomTablePagination
                     count={totalCount}
                     rowsPerPage={rowsPerPage}

@@ -227,6 +227,56 @@ export const BookingWrapper = styled(Box)`
                 background: #F7FAF5;
             }
 
+            .dropdown-options {
+                
+                .dropdown-item {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    border-bottom: 0.6px solid #D5D5D5;
+
+                    &:hover {
+                        cursor: pointer;
+                        background: #D5D5D5;
+                    }
+
+                    &:last-of-type {
+                        border-bottom: none;
+                    }
+                    
+                    p {
+                        font-family: Nunito Sans;
+                        font-weight: 400;
+                        font-size: 14px;
+                        line-height: 100%;
+                        letter-spacing: 0px;
+                        color: #202224;
+                        padding: 0;
+                        margin: 0;
+
+                        .package-name {
+                            font-weight: 600;
+                        }
+
+                        .package-details {
+                            font-weight: 400;
+                            font-size: 12px;
+                            line-height: 100%;
+                            letter-spacing: 0px;
+                            color: #828282;
+                        }
+
+                        .package-price {
+                            font-weight: 600;
+                            font-size: 14px;
+                            line-height: 100%;
+                            letter-spacing: 0px;
+                            color: #202224;
+                        }
+                    }
+                }
+            }
+
             label, .form-label {
                 color: #ADADAD;
             }
@@ -267,28 +317,49 @@ export const BookingWrapper = styled(Box)`
                 &.addon-list {
                     padding: 0!important;
                     height: auto;
-                    max-height: 168px;
+                    max-height: 200px;
                     margin-top: 0px;
                 }
 
                 .addon-item.row {
-                    padding: 16px;
+                    padding: 12px;
 
                     input[type="checkbox"] {
                         display: none;
                     }
 
                     label {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
                         position: relative;
+                        padding-top: 4px;
                         padding-left: 30px;
                         cursor: pointer;
                         user-select: none;
-                        font-family: Nunito Sans;
-                        font-weight: 400;
-                        font-size: 14px;
-                        line-height: 100%;
-                        letter-spacing: 0px;
-                        color: #202224;
+
+                        p, span {
+                            font-family: 'Nunito Sans';
+                            font-weight: 600;
+                            font-size: 14px;
+                            line-height: 100%;
+                            letter-spacing: 0px;
+                            color: #202224;
+                            margin: 0;
+                            padding: 0;
+
+                            &.addon-details {
+                                font-weight: 400;
+                                font-size: 12px;
+                                color: #828282;
+                            }
+
+                            &.addon-price {
+                                font-weight: 600;
+                                font-size: 14px;
+                                color: #202224;
+                            }
+                        }
                     }
 
                     label::before {

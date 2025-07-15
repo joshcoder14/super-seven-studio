@@ -270,8 +270,6 @@ export const cancelBooking = async (id: number): Promise<void> => {
       ? `/api/customer/bookings/${id}/delete`
       : `/api/bookings/${id}/cancel`;
 
-  console.log('Endpoint:', endpoint);
-
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
@@ -396,7 +394,9 @@ export const fetchPackagesAddOnsData = async (): Promise<{packages: PackageProps
 
     const transformedPackages = packagesData.data.map((pkg: any) => ({
       id: pkg.id,
-      packageName: pkg.package_name
+      packageName: pkg.package_name,
+      package_details: pkg.package_details,
+      package_price: pkg.package_price
     }));
 
     const transformedAddOns = addOnsData.data.data.map((addOn: any) => ({

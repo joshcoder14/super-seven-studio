@@ -13,6 +13,7 @@ import Swal from 'sweetalert2';
 import { format } from 'date-fns';
 import dayjs, { Dayjs } from 'dayjs';
 import { PackageProps, AddOnsProps } from '@/types/field';
+import { formatCurrency } from '@/utils/billing';
 import {
   fetchInitialBookingData,
   fetchUnavailableDatesForMonth,
@@ -524,8 +525,7 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
     setState(prev => ({ ...prev, loading: { ...prev.loading, submitting: true } }));
 
     try {
-      const data = await submitBooking(state.formData, state.selectedPackage, state.selectedAddOns, state.packages);
-      console.log(data);
+      await submitBooking(state.formData, state.selectedPackage, state.selectedAddOns, state.packages);
       const cleanFirstName = state.formData.firstName.replace(/\s/g, '');
       const cleanLastName = state.formData.lastName.replace(/\s/g, '');
 
@@ -766,7 +766,7 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
                           backgroundColor: '#F7FAF5',
                           border: '1px solid #ccc',
                           borderRadius: '4px',
-                          marginTop: '-10px',
+                          marginTop: '-1px',
                           width: '100%',
                           maxHeight: '200px',
                           overflowY: 'auto',
@@ -774,17 +774,20 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
                       >
                         {state.packages.map((pkg) => (
                           <Box
+                            className="dropdown-item"
                             key={pkg.id}
                             onClick={() => handlePackageSelect(pkg.packageName)}
                             sx={{
-                              padding: '8px 12px',
+                              padding: '12px',
                               cursor: 'pointer',
                               '&:hover': {
                                 backgroundColor: '#f5f5f5'
                               }
                             }}
                           >
-                            <Typography>{pkg.packageName}</Typography>
+                            <Typography component='p' className='package-name'><strong>{pkg.packageName}</strong></Typography>
+                            <Typography component='p' className='package-details'>{pkg.package_details}</Typography>
+                            <Typography component='p' className='package-price'><strong>{formatCurrency(pkg.package_price)}</strong></Typography>
                           </Box>
                         ))}
                       </Box>
@@ -837,9 +840,11 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
                             }}
                           />
                           <label htmlFor={`addon-${addOn.id}`} style={{ flex: 1 }}>
-                            <Typography fontWeight="600" textTransform="capitalize">
+                            <Typography component='p' fontWeight="600" textTransform="capitalize">
                               {addOn.addOnName}
                             </Typography>
+                            <Typography component='span' className='addon-details'>{addOn.addOnDetails}</Typography>
+                            <Typography component='p' className='addon-price'>{formatCurrency(addOn.addOnPrice)}</Typography>
                           </label>
                         </Box>
                       ))
