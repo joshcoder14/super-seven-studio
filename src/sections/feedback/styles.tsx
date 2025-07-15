@@ -74,6 +74,7 @@ export const FeedbackWrapper = styled(Box)`
     display: flex;
     flex-direction: column;
     gap: 0px;
+    max-width: 1640px;
     width: 100%;
     height: 100%;
 

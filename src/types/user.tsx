@@ -1,4 +1,4 @@
-export type UserRole = 'Owner' | 'Coordinator' | 'Secretary' | 'Editor' | 'Photographer' | 'Freelancer' | 'Client' 
+export type UserRole = 'Owner' | 'Secretary' | 'Editor' | 'Photographer' | 'Client' 
 
 export interface AuthResponse {
   status: boolean;

@@ -89,3 +89,54 @@ export const fetchPackageData = async (year: number, month?: number) => {
         throw error;
     }
 };
+
+export const fetchPDFReport = async ({
+    booking_year,
+    package_year,
+    package_month,
+    transaction_start,
+    transaction_end
+}: {
+    booking_year: number;
+    package_year: number;
+    package_month?: number;
+    transaction_start: number;
+    transaction_end: number;
+}) => {
+    try {
+        const accessToken = localStorage.getItem('access_token');
+        if (!accessToken) throw new Error('No access token found');
+
+        let url = `/api/generate-report?booking_year=${booking_year}&package_year=${package_year}&transaction_start=${transaction_start}&transaction_end=${transaction_end}`;
+        
+        if (package_month) {
+            url += `&package_month=${package_month}`;
+        }
+
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.setAttribute('download', `report_${new Date().toISOString()}.pdf`);
+        
+        document.body.appendChild(link);
+        link.click();
+        
+        link.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+
+    } catch (error) {
+        console.error('Error downloading PDF report:', error);
+        throw error;
+    }
+};

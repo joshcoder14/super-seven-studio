@@ -1,5 +1,18 @@
 import { Box, styled } from "@mui/material";
 
+export const AddAccountWrapper = styled(Box)`
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    position: relative;
+    background-color: #f7faf5;
+    width: 100%;
+    height: 100%;
+    overflow-y: scroll;
+    scrollbar-width: none;
+    padding: 0 30px;
+`;
+
 export const IconButton = styled(Box)`
     display: inline-block;
     width: 35px;
@@ -128,6 +141,7 @@ export const AccountWrapper = styled(Box)`
     display: flex;
     flex-direction: column;
     gap: 0px;
+    max-width: 1640px;
     width: 100%;
     height: 100%;
     margin-bottom: 150px;
@@ -198,6 +212,7 @@ export const AccountContainer = styled(Box)`
     gap: 40px;
     position: relative;
     background-color: #f7faf5;
+    width: 100%;
     height: 100%;
     overflow-y: scroll;
     scrollbar-width: none;

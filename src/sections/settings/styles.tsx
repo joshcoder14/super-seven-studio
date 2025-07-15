@@ -14,7 +14,13 @@ export const Heading = styled(Box)`
 `;
 
 export const FormContainer = styled(Box)`
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+    max-width: 1640px;
     width: 100%;
+    height: 100%;
+    margin-bottom: 150px;
 
     .wrapper {
         width: 100%;
@@ -39,9 +45,22 @@ export const FormContainer = styled(Box)`
                 flex-direction: row;
                 gap: 20px;
                 position: relative;
+                transition: all 0.2s ease-in-out;
+
+                @media (max-width: 900px) {
+                    flex-direction: column !important;
+                    transition: all 0.2s ease-in-out;
+                }
 
                 &.right {
                     justify-content: flex-end;
+                    transition: all 0.2s ease-in-out;
+
+                    @media (max-width: 900px) {
+                        flex-direction: row !important;
+                        justify-content: flex-start !important;
+                        transition: all 0.2s ease-in-out;
+                    }
                 } 
 
                 button {
@@ -153,7 +172,6 @@ export const FormContainer = styled(Box)`
     }
 
     &.register-account {
-        margin-bottom: 150px;
 
         .wrapper {
             form {
@@ -204,6 +222,7 @@ export const LeftButton = styled(Box)`
 `;
 
 export const ActionButton = styled(Box)`
+    max-width: 1640px;
     width: 100%;
     display: flex;
     justify-content: flex-start;

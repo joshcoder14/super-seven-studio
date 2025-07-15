@@ -8,6 +8,7 @@ export const HomeContainer = styled(Box)`
     gap: 40px;
     position: relative;
     background-color: #f7faf5;
+    width: 100%;
     height: 100%;
     padding: 0 30px;
     overflow-y: scroll;

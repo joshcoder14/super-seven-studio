@@ -273,13 +273,20 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
   const commonSections: FormSection[] = [
     {
       id: "booking-date",
-      columnCount: 1,
+      columnCount: 2,
       fields: [
         {
           id: "booking-date",
           name: "bookingDate",
           label: "Booking Date",
           type: "custom-date",
+          required: true
+        }, 
+        {
+          id: "ceremony-time",
+          name: "ceremonyTime",
+          label: "Ceremony Time",
+          type: "custom-time",
           required: true
         }
       ]
@@ -597,6 +604,17 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
       );
     }
 
+    if (field.type === "custom-time") {
+      return (
+        <CustomTimePicker 
+          key={field.id}
+          value={state.formData.ceremonyTime}
+          onChange={handleTimeChange}
+          label="Ceremony Time"
+        />
+      );
+    }
+
     const backendFieldName = 
       field.name === 'firstName' ? 'first_name' :
       field.name === 'lastName' ? 'last_name' :
@@ -645,18 +663,18 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
           onSubmit={handleSubmit}
         >
           <Box 
+            className="form-wrapper"
             style={{
-              display: 'flex',
-              gap: '20px',
               flexDirection: userRole === 'Client' ? 'column' : 'row'
             }}
           >
             <Box 
+              className="form-row"
               sx={{ 
                 display: 'flex',
                 gap: '20px', 
                 flexDirection: userRole === 'Client' ? 'row' : 'column', 
-                width: userRole === 'Client' ? '100%' : '50%' 
+                width: userRole === 'Client' ? '100%' : '50%', 
               }}
             >
               {state.loading.user ? (
@@ -675,6 +693,7 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
             </Box>
 
             <Box 
+              className="form-row"
               sx={{ 
                 display: userRole === 'Client' ? 'grid' : 'flex', 
                 gridTemplateColumns: 'repeat(2, 1fr)',
@@ -697,12 +716,6 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
                   helperText={state.errors.bookingAddress || state.errors.booking_address}
                 />
               </Box>
-
-              <CustomTimePicker 
-                value={state.formData.ceremonyTime}
-                onChange={handleTimeChange}
-                label="Ceremony Time"
-              />
 
               <Box className="form-group">
                 <label className="form-label">Package:</label>

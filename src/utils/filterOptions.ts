@@ -1,11 +1,9 @@
 export const accountFilterOptions = [
   { value: '1', label: 'Client' },
-  { value: '2', label: 'Coordinator' },
   { value: '3', label: 'Owner' },
   { value: '4', label: 'Secretary' },
   { value: '5', label: 'Photographer' },
   { value: '6', label: 'Editor' },
-  { value: '7', label: 'Freelancer' },
 ] as const;
 
 export const workloadFilterOptions = [

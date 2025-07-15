@@ -1,12 +1,14 @@
 import { Box, styled } from "@mui/material";
 
 export const TransactionWrapper = styled(Box)`
+    max-width: 1640px;
     width: 100%;
     height: auto;
     margin-bottom: 30px;
 `;
 
 export const BillingDetails = styled(Box)`
+    max-width: 1640px;
     width: 100%;
     height: auto;
     padding-top: 40px;
@@ -30,6 +32,7 @@ export const BillingPaymentContainer = styled(Box)`
 `;
 
 export const YearSelector = styled(Box)`
+    max-width: 1640px;
     display: flex;
     flex-direction: row;
     gap: 10px;

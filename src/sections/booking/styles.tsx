@@ -182,6 +182,26 @@ export const BookingWrapper = styled(Box)`
     border-radius: 14px;
 
     form {
+
+        .form-wrapper{
+            display: flex;
+            gap: 20px;
+
+            @media (max-width: 900px) {
+                flex-direction: column !important;
+
+                .form-row {
+                    width: 100% !important;
+                }
+            }
+
+            .row.col-2 {
+                @media (max-width: 1400px) {
+                    flex-direction: column !important;
+                }
+            }
+        }
+
         .form-group {
             width: 100%;
             display: flex;
@@ -376,6 +396,7 @@ export const BookingWrapper = styled(Box)`
 `;
 
 export const AddBookingContainer = styled(Box)`
+    max-width: 1640px;
     width: 100%;
     height: auto;
     display: flex;
@@ -604,6 +625,7 @@ export const LeftContent = styled(Box)`
 `;
 
 export const BookingContent = styled(Box)`
+    max-width: 1640px;
     width: 100%;
     display: flex;
     flex-direction: row;

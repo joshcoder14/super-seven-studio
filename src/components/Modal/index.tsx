@@ -17,7 +17,6 @@ interface ModalProps {
     item?: any;
 }
 
-// Define ModalContainer with transient prop $closing
 const StyledModalContainer = styled(Box, {
   shouldForwardProp: (prop) => prop !== '$closing',
 })<{ $closing?: boolean }>(({ theme, $closing }) => ({
@@ -65,10 +64,8 @@ export function ModalComponent({
     const isClosing = useRef(false);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     
-    // Derive editing state from item presence
     const isEditing = !!item;
 
-    // Cleanup on unmount
     useEffect(() => {
         return () => {
             isMounted.current = false;
@@ -76,14 +73,11 @@ export function ModalComponent({
         };
     }, []);
 
-    // Handle open/close transitions
     useEffect(() => {
         if (open) {
-            // Open modal: show and animate in
             setShouldRender(true);
             setClosing(false);
         } else if (shouldRender) {
-            // Start closing animation
             setClosing(true);
             const timer = setTimeout(() => {
                 setShouldRender(false);
@@ -106,9 +100,7 @@ export function ModalComponent({
         }, 300);
     }, [onClose]);
 
-    // Handle escape key
     useEffect(() => {
-
         const handleEscapeKey = (event: KeyboardEvent) => {
             if (event.key === 'Escape' && open) {
                 handleClose();
@@ -124,23 +116,32 @@ export function ModalComponent({
         };
     }, [open, handleClose]);
 
-    // Prefill form when editing
     useEffect(() => {
         if (open) {
             if (isEditing && item) {
+                let initialPrice = '';
                 if (modalType === 'package') {
-                    setFormData({
-                        name: item.package_name,
-                        price: item.package_price,
-                        details: item.package_details
-                    });
+                    initialPrice = item.package_price || '';
                 } else {
-                    setFormData({
-                        name: item.add_on_name,
-                        price: item.add_on_price,
-                        details: item.add_on_details
-                    });
+                    initialPrice = item.add_on_price || '';
                 }
+
+                // Format initial price with commas
+                if (initialPrice) {
+                    const numericValue = parseFloat(initialPrice);
+                    if (!isNaN(numericValue)) {
+                        initialPrice = numericValue.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                    }
+                }
+
+                setFormData({
+                    name: modalType === 'package' ? item.package_name : item.add_on_name,
+                    price: initialPrice,
+                    details: modalType === 'package' ? item.package_details : item.add_on_details
+                });
             } else {
                 setFormData({ name: '', price: '', details: '' });
             }
@@ -153,9 +154,28 @@ export function ModalComponent({
         const { name, value } = e.target;
         
         if (name === 'price') {
-            const regex = /^[0-9]*\.?[0-9]*$/;
+            // Allow only numbers, commas, and a single decimal point with max 2 decimal places
+            const regex = /^[0-9,]*(\.[0-9]{0,2})?$/;
+            
             if (value === '' || regex.test(value)) {
-                setFormData(prev => ({ ...prev, [name]: value }));
+                // Remove all commas to check the numeric value
+                const rawValue = value.replace(/,/g, '');
+                
+                // Format with commas as thousand separators
+                if (rawValue.includes('.')) {
+                    const parts = rawValue.split('.');
+                    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                    // Ensure we only keep 2 decimal places
+                    parts[1] = parts[1].slice(0, 2);
+                    setFormData(prev => ({ ...prev, [name]: parts.join('.') }));
+                } else if (rawValue) {
+                    setFormData(prev => ({ 
+                        ...prev, 
+                        [name]: rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',') 
+                    }));
+                } else {
+                    setFormData(prev => ({ ...prev, [name]: '' }));
+                }
             }
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
@@ -179,12 +199,15 @@ export function ModalComponent({
             newErrors.price = 'Price is required';
             isValid = false;
         } else {
+            // Remove commas before validation
+            const priceWithoutCommas = formData.price.replace(/,/g, '');
             const priceRegex = /^\d+(\.\d{1,2})?$/;
-            if (!priceRegex.test(formData.price)) {
-                newErrors.price = 'Invalid price format (e.g., 5000.00)';
+            
+            if (!priceRegex.test(priceWithoutCommas)) {
+                newErrors.price = 'Invalid price format (e.g., 5,000.00)';
                 isValid = false;
             } else {
-                const priceValue = parseFloat(formData.price);
+                const priceValue = parseFloat(priceWithoutCommas);
                 if (isNaN(priceValue)) {
                     newErrors.price = 'Invalid price value';
                     isValid = false;
@@ -228,8 +251,8 @@ export function ModalComponent({
         try {
             setIsSubmitting(true);
             
-            // Format price
-            let formattedPrice = formData.price;
+            // Remove commas and format price
+            let formattedPrice = formData.price.replace(/,/g, '');
             if (!formattedPrice.includes('.')) {
                 formattedPrice += '.00';
             } else {
@@ -244,14 +267,12 @@ export function ModalComponent({
             };
 
             if (isEditing && item) {
-                // Update existing item
                 if (modalType === 'package') {
                     await updatePackage(item.id, data);
                 } else {
                     await updateAddon(item.id, data);
                 }
             } else {
-                // Create new item
                 if (modalType === 'package') {
                     await createPackage(data);
                 } else {
@@ -276,7 +297,6 @@ export function ModalComponent({
         }
     };
 
-    // Content configuration
     const content = {
         package: {
             title: isEditing ? 'Edit Package' : 'Add Package',
@@ -320,7 +340,6 @@ export function ModalComponent({
                 <Box sx={{ width: '100%', paddingTop: '30px' }}>
                     <form onSubmit={handleSubmit}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
-                            {/* Name Field */}
                             <Box className="form-group" sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
                                 <label className="form-label">{currentContent.nameLabel}</label>
                                 <TextField
@@ -333,7 +352,6 @@ export function ModalComponent({
                                 />
                             </Box>
                             
-                            {/* Price Field */}
                             <Box className="form-group" sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
                                 <label className="form-label">{currentContent.priceLabel}</label>
                                 <TextField
@@ -343,16 +361,15 @@ export function ModalComponent({
                                     fullWidth
                                     type="text"
                                     inputProps={{
-                                    inputMode: 'decimal',
-                                    pattern: '[0-9]*\\.?[0-9]*'
+                                        inputMode: 'decimal',
+                                        pattern: '[0-9,]*\\.?[0-9]{0,2}'
                                     }}
                                     error={!!errors.price}
-                                    helperText={errors.price || 'Format: 5000.00'}
+                                    helperText={errors.price || 'Format: 5,000.00'}
                                     placeholder="0.00"
                                 />
                             </Box>
                             
-                            {/* Details Field */}
                             <Box className="form-group" sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
                                 <label className="form-label">{currentContent.detailsLabel}</label>
                                 <TextField
@@ -360,6 +377,8 @@ export function ModalComponent({
                                     value={formData.details}
                                     onChange={handleChange}
                                     fullWidth
+                                    multiline
+                                    rows={4}
                                     error={!!errors.details}
                                     helperText={errors.details}
                                 />

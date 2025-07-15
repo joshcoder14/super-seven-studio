@@ -460,6 +460,7 @@ export const Details = styled(Box)`
                     a {
                         text-decoration: underline;
                         text-underline-offset: 5px;
+                        word-break: break-all;
                     }
                 }
             }
@@ -588,6 +589,7 @@ export const WorkloadWrapper = styled(Box)`
     display: flex;
     flex-direction: column;
     gap: 0px;
+    max-width: 1640px;
     width: 100%;
     height: 100%;
     margin-bottom: 150px;

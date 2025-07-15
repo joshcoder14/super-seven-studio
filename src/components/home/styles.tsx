@@ -140,6 +140,7 @@ export const BoxContent = styled(Box)`
 `;
 
 export const HomeContentContainer = styled(Box)`
+    max-width: 1640px;
     display: flex;
     margin-bottom: 150px;
     background-color: #f7faf5;
@@ -175,21 +176,22 @@ export const TopImageContainer = styled(Box)`
 
     img{
         width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 `;
 
 export const BottomImageContainer = styled(Box)`
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 30px;
-    width: 100%;
+    width: auto;
     height: 100%;
     min-height: 496px;
     max-height: 498px;
-    justify-content: center;
-    align-items: center;
 
     @media (max-width: 1024px) {
+        display: flex;
         min-height: unset;
         max-height: unset;
         flex-direction: column;

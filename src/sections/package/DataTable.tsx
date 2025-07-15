@@ -88,7 +88,11 @@ export default function DataTable({
                 <TableRow key={row.id}>
                   <TableCell align='left'>{rowData.name}</TableCell>
                   <TableCell align="left">{rowData.price}</TableCell>
-                  <TableCell align="left">{rowData.details}</TableCell>
+                  <TableCell align="left">
+                    {rowData.details.split(',').map((part: string, i: number) => (
+                        <div key={i}>{part.trim()}</div>
+                    ))}
+                  </TableCell>
                   <TableCell align="left">
                     <IconButton onClick={() => onDelete(row)}>
                       <img src={icons.removeIcon} className="remove-icon" alt="remove icon" />

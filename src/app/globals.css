@@ -79,6 +79,7 @@ table tbody tr td span {
   font-size: 14px;
   line-height: 100%;
   color: #404040;
+  vertical-align: baseline !important;
 }
 
 table tbody tr td.active span,
@@ -360,4 +361,45 @@ form button {
 /* Calendar Toolbar */
 .rbc-toolbar {
   gap: 15px;
+}
+
+.custom-swiper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.swiper-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.custom-swiper-prev,
+.custom-swiper-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-swiper-prev {
+  left: 20px;
+}
+
+.custom-swiper-next {
+  right: 20px;
+}
+
+.custom-swiper-prev:hover,
+.custom-swiper-next:hover {
+  background: rgba(255, 255, 255, 0.8);
 }

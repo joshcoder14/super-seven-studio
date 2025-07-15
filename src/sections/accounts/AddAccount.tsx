@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { Box, TextField, Button, CircularProgress, Alert } from '@mui/material';
-import { FormContainer } from '../settings/styles';
-import { FormHeading } from '../../components/Heading/FormHeading';
+import { FormContainer } from '@/sections/settings/styles';
+import { AddAccountWrapper } from './styles';
+import { FormHeading } from '@/components/Heading/FormHeading';
 import { HeadingComponent } from '@/components/Heading';
 import { FilterBy } from '@/components/Filter';
 import { User } from '@/types/user';
@@ -44,9 +45,7 @@ export function RegisterAccount({
     const isClient = account?.user_type === '1';
 
     let accountUserType = '4';
-    if (account?.user_role === 'Coordinator') {
-        accountUserType = '2';
-    } else if (account?.user_role === 'Owner') {
+    if (account?.user_role === 'Owner') {
         accountUserType = '3';
     } else if (account?.user_role === 'Secretary') {
         accountUserType = '4';
@@ -54,8 +53,6 @@ export function RegisterAccount({
         accountUserType = '5';
     } else if (account?.user_role === 'Editor') {
         accountUserType = '6';
-    } else if (account?.user_role === 'Freelancer') {
-        accountUserType = '7';
     }
   
     const [formData, setFormData] = useState({
@@ -75,11 +72,9 @@ export function RegisterAccount({
     ];
 
     const userTypeOptions = [
-        { value: '2', label: 'Coordinator' },
         { value: '4', label: 'Secretary' },
         { value: '5', label: 'Photographer' },
         { value: '6', label: 'Editor' },
-        { value: '7', label: 'Freelancer' },
         ...(!ownerExists ? [{ value: '3', label: 'Owner' }] : [])
     ];
 
@@ -358,7 +353,7 @@ export function RegisterAccount({
     };
 
     return (
-        <Box sx={{  padding: '0 30px' }}>
+        <AddAccountWrapper>
             <HeadingComponent/>
             <FormContainer className="register-account">
                 <Box className="wrapper">
@@ -432,6 +427,6 @@ export function RegisterAccount({
                     </form>
                 </Box>
             </FormContainer>
-        </Box>
+        </AddAccountWrapper>
     );
 }

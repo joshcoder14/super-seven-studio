@@ -2,7 +2,6 @@ import React from "react";
 import { type ReactNode } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
 import { Box } from "@mui/material";
-import NavigationProgress from '@/components/NavigationProgress';
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,13 +11,13 @@ interface LayoutProps {
     return (
       <Box 
         style={{ 
-          display: "flex", 
+          display: "flex",
+          width: "100%", 
           height: "100%", 
           background: "#f7faf5"
         }}>
           
         <AuthProvider>
-          <NavigationProgress />
           {children}
         </AuthProvider>
       </Box>

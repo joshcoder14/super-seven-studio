@@ -11,6 +11,7 @@ export const PackageWrapper = styled(Box)`
 `;
 
 export const PackageContent = styled(Box)`
+    max-width: 1640px;
     width: 100%;
     height: auto;
     display: flex;

@@ -1,5 +1,3 @@
-import { faAngleLeft } from "@fortawesome/free-solid-svg-icons";
-
 export const icons = {
     favIcon : "/assets/icons/favicon.svg",
     logo : "/assets/icons/logo.svg",

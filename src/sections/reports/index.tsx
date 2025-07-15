@@ -2,9 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { HomeContainer } from '@/sections/adminHome/styles';
-import { BoxWrapper, Heading, YearDropdown, PackageBar, SelectBox, DropdownList, DropdownMonth, YearBox } from './styles';
-import { HeadingComponent } from '@/components/Heading';
-import { Box, FormControl, MenuItem, Select, styled, Typography, SelectChangeEvent } from '@mui/material';
+import { BoxWrapper, Heading, YearDropdown, PackageBar, SelectBox, DropdownList, DropdownMonth, YearBox, HeadingWrapper } from './styles';
+import { Box, FormControl, MenuItem, Select, styled, Typography, SelectChangeEvent, Button } from '@mui/material';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -21,10 +20,9 @@ import { icons } from '@/icons';
 import { ReportsTable } from './ReportTable';
 import Image from 'next/image';
 import { ReportData } from '@/types/reports';
-import { fetchReports, fetchBookingData, fetchPackageData } from '@/lib/api/fetchReport';
+import { fetchReports, fetchBookingData, fetchPackageData, fetchPDFReport } from '@/lib/api/fetchReport';
 import { CustomTablePagination } from '@/components/TablePagination';
 
-// Register ChartJS components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -86,6 +84,7 @@ export default function ReportsHome(): React.JSX.Element {
     const [packageData, setPackageData] = useState<{package_name: string; count: number}[]>([]);
     const [packageLoading, setPackageLoading] = useState(false);
     const [packageError, setPackageError] = useState<string | null>(null);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     const [selectedYearPair, setSelectedYearPair] = useState<YearPair>({
         start: new Date().getFullYear(),
@@ -126,6 +125,27 @@ export default function ReportsHome(): React.JSX.Element {
         }
     };
 
+    const handleDownloadPDF = async () => {
+        try {
+            setIsDownloading(true);
+            const monthNumber = selectedMonth ? monthLabels.indexOf(selectedMonth) + 1 : undefined;
+            
+            await fetchPDFReport({
+                booking_year: year,
+                package_year: currentYear,
+                package_month: monthNumber,
+                transaction_start: selectedYearPair.start,
+                transaction_end: selectedYearPair.end
+            });
+            
+        } catch (error) {
+            console.error('Failed to download PDF:', error);
+            // You might want to show an error toast/notification here
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
     useEffect(() => {
         const loadBookingData = async () => {
             try {
@@ -161,7 +181,6 @@ export default function ReportsHome(): React.JSX.Element {
         loadPackageData();
     }, [currentYear, selectedMonth]);
 
-    // Fetch data when year pair or pagination changes
     useEffect(() => {
         fetchReportData();
     }, [selectedYearPair, page, rowsPerPage]);
@@ -214,7 +233,6 @@ export default function ReportsHome(): React.JSX.Element {
         setCurrentYear(prevYear => prevYear + 1);
     };
 
-    // Line chart options and data
     const lineOptions = {
         responsive: true,
         plugins: {
@@ -292,7 +310,6 @@ export default function ReportsHome(): React.JSX.Element {
         }
     };
 
-    // Sample data for line chart
     const lineData = {
         labels: monthLabels,
         datasets: [
@@ -318,57 +335,56 @@ export default function ReportsHome(): React.JSX.Element {
     const yearSelect = [
         {
             id: 1,
-            value: '2024',
+            value: 2024,
             label: '2024'
         },
         {
             id: 2,
-            value: '2025',
+            value: 2025,
             label: '2025'
         },
         {
             id: 3,
-            value: '2026',
+            value: 2026,
             label: '2026'
         },
         {
             id: 4,
-            value: '2027',
+            value: 2027,
             label: '2027'
         },
         {
             id: 5,
-            value: '2028',
+            value: 2028,
             label: '2028'
         },
         {
             id: 6,
-            value: '2029',
+            value: 2029,
             label: '2029'
         },
         {
             id: 7,
-            value: '2030',
+            value: 2030,
             label: '2030'
         },
         {
             id: 8,
-            value: '2031',
+            value: 2031,
             label: '2031'
         },
         {
             id: 9,
-            value: '2032',
+            value: 2032,
             label: '2032'
         },
         {
             id: 10,
-            value: '2033',
+            value: 2033,
             label: '2033'
         }
     ]
 
-    // Horizontal bar chart options and data
     const barOptions = {
         indexAxis: 'y' as const,
         responsive: true,
@@ -415,7 +431,12 @@ export default function ReportsHome(): React.JSX.Element {
 
     return (
         <HomeContainer>
-            <HeadingComponent />
+            <HeadingWrapper>
+                <Typography component="h2" className='title'>Reports</Typography>
+                <Button onClick={handleDownloadPDF} disabled={isDownloading}>
+                    {isDownloading ? 'Generating PDF...' : 'Download as PDF'}
+                </Button>
+            </HeadingWrapper>
             <BoxWrapper>
                 <Heading>
                     <Typography component="p">Number of Bookings</Typography>
@@ -470,7 +491,6 @@ export default function ReportsHome(): React.JSX.Element {
                 </Box>
             </BoxWrapper>
             
-            {/* Availed Packages */}
             <BoxWrapper>
                 <Heading>
                     <Typography component="p">Availed Packages</Typography>
