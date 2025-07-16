@@ -362,7 +362,7 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
 
             {/* Booking Address */}
             <Box className="form-group">
-                <label className="form-label">Booking Address</label>
+                <label className="form-label">Reception:</label>
                 <TextField
                   name="bookingAddress"
                   value={state.formData.bookingAddress}
