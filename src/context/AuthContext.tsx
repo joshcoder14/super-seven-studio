@@ -61,6 +61,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (!roleCookie) {
             setRoleCookie(parsedUser.user_role as UserRole)
           }
+        } else {
+          // If no access token or user data, log out
+          await logout()
         }
       } catch (error) {
         console.error('Auth initialization failed:', error)
@@ -112,15 +115,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setIsAuthenticated(false)
       setUser(null)
-      window.location.href = paths.login
+      
+      // Only redirect if we're not already on the login page
+      if (window.location.pathname !== paths.login) {
+        window.location.href = paths.login
+      }
     } catch (error) {
       console.error('Logout failed:', error)
     }
   }
 
+  // Add effect to check authentication status on route changes
+  useEffect(() => {
+    const checkAuth = () => {
+      if (!isAuthenticated && !loading && window.location.pathname !== paths.login) {
+        logout()
+      }
+    }
+
+    checkAuth()
+  }, [isAuthenticated, loading])
+
   // Client-side access check
   const canAccess = (path: string): boolean => {
-    if (!user) return false
+    if (!user || !isAuthenticated) return false
     
     switch (user.user_role) {
       case 'Owner':
@@ -157,9 +175,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 }
 
 export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
-  return context
+    const context = useContext(AuthContext)
+    if (!context) {
+      throw new Error('useAuth must be used within AuthProvider')
+    }
+    return context
 }

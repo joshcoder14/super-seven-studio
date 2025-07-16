@@ -1,8 +1,9 @@
-import React from 'react'; 
+import React, { Suspense } from 'react'; 
 import { BookingComponent } from '@/sections/booking';
 import { Box } from '@mui/material';
 import { NavBar } from '@/components/SideBar';
 import { TopBar } from '@/components/topbar';
+import Preloader from '@/components/Preloader';
 
 export default function Booking() {
     return (
@@ -10,7 +11,9 @@ export default function Booking() {
             <NavBar />
             <Box sx={{ flexDirection: 'column', flex: 1 }}>
                 <TopBar />
-                <BookingComponent/>
+                <Suspense fallback={<Preloader />}>
+                    <BookingComponent/>
+                </Suspense>
             </Box>
         </Box>
     )

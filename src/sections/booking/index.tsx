@@ -40,6 +40,7 @@ import { getAddonNames } from '@/utils/billing';
 import { useAuth } from '@/context/AuthContext';
 import { submitFeedback } from '@/lib/api/fetchFeedback';
 import Preloader from '@/components/Preloader';
+import { useLoading } from '@/context/LoadingContext';
 
 const locales = { 'en-US': enUS };
 

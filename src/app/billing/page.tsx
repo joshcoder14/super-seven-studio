@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import BillingComponent from '@/sections/billing';
 import { Box } from '@mui/material';
 import { NavBar } from '@/components/SideBar';
 import { TopBar } from '@/components/topbar';
+import Preloader from '@/components/Preloader';
 
 export default function Billing() {
     return (
@@ -10,7 +11,9 @@ export default function Billing() {
             <NavBar />
             <Box sx={{ flexDirection: 'column', flex: 1 }}>
                 <TopBar />
-                <BillingComponent />
+                <Suspense fallback={<Preloader />}>
+                    <BillingComponent/>
+                </Suspense>
             </Box>
         </Box>
     )

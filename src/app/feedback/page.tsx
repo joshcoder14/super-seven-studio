@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { FeedbackComponent } from '@/sections/feedback';
 import { Box } from '@mui/material';
 import { NavBar } from '@/components/SideBar';
 import { TopBar } from '@/components/topbar';
+import Preloader from '@/components/Preloader';
 
 export default function Feedback() {
     return (
@@ -10,7 +11,9 @@ export default function Feedback() {
             <NavBar />
             <Box sx={{ flexDirection: 'column', flex: 1 }}>
                 <TopBar />
-                <FeedbackComponent />
+                <Suspense fallback={<Preloader />}>
+                    <FeedbackComponent/>
+                </Suspense>
             </Box>
         </Box>
     )

@@ -9,6 +9,7 @@ export const ArrowRight = styled(Box)`
     border-radius: 50%;
     opacity: 0.73;
     background: #F4F4F4;
+    cursor: pointer;
 
     img {
         width: 12px;
@@ -26,6 +27,7 @@ export const ArrowLeft = styled(Box)`
     border-radius: 50%;
     opacity: 0.73;
     background: #F4F4F4;
+    cursor: pointer;
 
     img {
         width: 12px;
@@ -45,6 +47,8 @@ export const ArrowButton = styled(Box)`
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 0 24px;
+    z-index: 1;
+
 `;
 
 export const BoxWithShadow = styled(Box)`
@@ -86,12 +90,15 @@ export const BoxWithShadow = styled(Box)`
 `;
 
 export const BoxContent = styled(Box)`
+    width: 100%;
+    max-height: 430px;
+    height: 100%;
     display: flex;
     flex-direction: column;
     gap: 8px;
     position: absolute;
-    top: 15%;
-    left: 10%;
+    padding: 80px 150px;
+    background: rgba(0, 0, 0, 0.5);
 
     .date-now {
         font-family: Nunito Sans;
@@ -174,10 +181,33 @@ export const TopImageContainer = styled(Box)`
         max-height: unset;
     }
 
-    img{
+    .swiper {
         width: 100%;
+        max-height: 430px;
         height: 100%;
-        object-fit: cover;
+
+        .swiper-wrapper {
+            width: 100%;
+            height: 100%;
+
+            .swiper-slide {
+                width: 100% !important;
+                height: 100%;
+
+                .image-container {
+                    width: 100%;
+                    height: auto;
+
+                    img {
+                        width: 100% !important;  
+                        max-height: 430px;
+                        height: 100%;
+                        object-fit: cover;
+                        border-radius: 19px;
+                    }
+                }
+            }
+        }
     }
 `;
 

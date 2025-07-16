@@ -3,11 +3,31 @@
 import { CircularProgress } from '@mui/material'
 import { PreloadWrapper } from './styles'
 import { useLoading } from '@/context/LoadingContext'
+import { useEffect, useState } from 'react'
 
 export default function Preloader() {
   const { isLoading } = useLoading()
+  const [showLoader, setShowLoader] = useState(true)
 
-  if (!isLoading) return null
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout
+
+    if (isLoading) {
+      setShowLoader(true)
+
+      timeoutId = setTimeout(() => {
+        setShowLoader(false)
+      }, 5000)
+    } else {
+      setShowLoader(false)
+    }
+
+    return () => {
+      clearTimeout(timeoutId)
+    }
+  }, [isLoading])
+
+  if (!showLoader) return null
 
   return (
     <PreloadWrapper>

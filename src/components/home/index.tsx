@@ -1,32 +1,30 @@
 'use client'
 
 import React from 'react';
-import { Box, Typography } from '@mui/material';
-import Link from 'next/link';
-import { HomeContentContainer, ImageContainer, TopImageContainer, BottomImageContainer,BottomImageContent, BoxContent, BoxWithShadow, ArrowButton, ArrowLeft, ArrowRight } from './styles';
+import { Box, Button, Typography } from '@mui/material';
+import { 
+    HomeContentContainer, 
+    ImageContainer, 
+    TopImageContainer, 
+    BottomImageContainer,
+    BottomImageContent, 
+    BoxContent, 
+    BoxWithShadow, 
+    ArrowButton, 
+    ArrowLeft, 
+    ArrowRight 
+} from './styles';
+import { icons } from '@/icons';
+import Image from 'next/image';
+import { bottomImages, swiperImage } from './MapImages';
 
-
-const topImage ='assets/adminHome/top-image.png';
-const arrowleft = 'assets/icons/angle-left-solid.svg';
-const arrowRight = 'assets/icons/angle-right-solid.svg';
-
-const bottomImages = [
-    {
-        src: 'assets/adminHome/wedding.png',
-        title: 'Kai and Patrick Wedding',
-        link: '/package'
-    },
-    {
-        src: 'assets/adminHome/solo-beach.png',
-        title: 'Harold and Lonie Prenup',
-        link: '/package'
-    },
-    {
-        src: 'assets/adminHome/group-beach.png',
-        title: 'Jose Marie’s Birthday',
-        link: '/package'
-    }
-]
+// Swiper imports
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Autoplay, EffectFade } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/autoplay';
+import 'swiper/css/effect-fade';
 
 export function HomeContent(): React.JSX.Element {
     return (
@@ -34,33 +32,76 @@ export function HomeContent(): React.JSX.Element {
             <ImageContainer className="admin-image-container">
 
                 <TopImageContainer className="top-image-container">
-                    <img src={topImage} alt="" />
-                    <BoxContent>
-                        <Box className="date-now">
-                            Today, January 2
-                        </Box>
-                        <Typography component="h1">Crafting Superb Moments with SuperSeven Studio</Typography>
-                        <Typography component="p">A lot of different packages to choose from and affordable!</Typography>
-                        <Link href="/package" className="btn btn-primary">View Packages</Link>
-                    </BoxContent>
+                    <Swiper
+                        style={{ width: '100%', height: '430px' }}
+                        modules={[Navigation, Autoplay, EffectFade]}
+                        spaceBetween={50}
+                        slidesPerView={1}
+                        loop={true}
+                        effect={'fade'}
+                        speed={1000}
+                        autoplay={{
+                            delay: 3000,
+                            disableOnInteraction: false,
+                        }}
+                        navigation={{
+                            nextEl: '.arrow-right',
+                            prevEl: '.arrow-left',
+                        }}
+                    >
+                        {swiperImage.map((image, index) => (
+                            <SwiperSlide key={index}>
+                                <Box className="image-container" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <Image 
+                                        width={1650} 
+                                        height={100} 
+                                        src={image.src} 
+                                        alt="Event Cover Image" 
+                                        unoptimized={true} 
+                                        style={{
+                                            transition: 'opacity 0.5s ease-in-out'
+                                        }}
+                                    />
+                                    <BoxContent>
+                                        <Box className="date-now">
+                                            <Typography component="p">{image.date}</Typography>
+                                        </Box>
+                                        <Typography component="h1">{image.title}</Typography>
+                                        <Typography component="p">{image.description}</Typography>
+                                        <Button className="btn btn-primary">View Events</Button>
+                                    </BoxContent>
+                                </Box>
+                            </SwiperSlide>
+                        ))}
+                    </Swiper>
+                    
+                    
                     <ArrowButton>
-                        <ArrowLeft>
-                            <img src={arrowleft} alt="arrow left" />
+                        <ArrowLeft className="arrow-left">
+                            <Image width={20} height={20} src={icons.angleLeft} alt="angle left" />
                         </ArrowLeft>
-                        <ArrowRight>
-                            <img src={arrowRight} alt="arrow right" />
+                        <ArrowRight className="arrow-right">
+                            <Image width={20} height={20} src={icons.angleRight} alt="angle right" />
                         </ArrowRight>
                     </ArrowButton>
+                    
                 </TopImageContainer>
 
                 <BottomImageContainer className="bottom-image-container">
                     
                     {bottomImages.map((image, index) => (
                         <BottomImageContent className="bottom-image-content" key={index}>
-                            <img src={image.src} alt=""  key={index}/>
+                            <Image 
+                                width={530} 
+                                height={496} 
+                                src={image.src} 
+                                alt={image.title} 
+                                unoptimized={true}
+                                key={index}
+                            />
                             <BoxWithShadow>
                                 <Typography component="h2">{image.title}</Typography>
-                                <Link href={image.link} className="btn btn-primary">View More</Link>
+                                <Button className="btn btn-primary">View More</Button>
                             </BoxWithShadow>
                         </BottomImageContent>
                     ))}
