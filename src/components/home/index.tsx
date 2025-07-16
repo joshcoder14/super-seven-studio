@@ -1,7 +1,8 @@
 'use client'
 
-import React from 'react';
-import { Box, Button, styled, Typography } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Button, Typography, Modal  } from '@mui/material';
+import { FeedbackPost } from '../home/Feedback';
 import { 
     HomeContentContainer, 
     ImageContainer, 
@@ -9,15 +10,20 @@ import {
     BottomImageContainer,
     BottomImageContent, 
     BoxContent, 
-    BoxWithShadow, 
-    ArrowButton, 
+    BoxWithShadow,
     ArrowLeft, 
     ArrowRight, 
-    SlideContent 
+    SlideContent,
+    AnimatedBox
 } from './styles';
+import {
+  CloseButton
+} from '@/sections/booking/styles';
 import { icons } from '@/icons';
 import Image from 'next/image';
-import { bottomImages, swiperImage } from './MapImages';
+import { regularEvents, bigEvents } from './MapImages';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -27,21 +33,22 @@ import 'swiper/css/navigation';
 import 'swiper/css/autoplay';
 import 'swiper/css/effect-fade';
 
-export const AnimatedBox = styled(Box)<{ delay: number }>`
-  opacity: 0;
-  transform: translateY(20px);
-  animation: fadeUp 0.5s ease-out forwards;
-  animation-delay: ${props => props.delay}s;
-
-  @keyframes fadeUp {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`;
-
 export function HomeContent(): React.JSX.Element {
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [openModal, setOpenModal] = useState(false);
+    const [currentVariations, setCurrentVariations] = useState<string[]>([]);
+    const [currentTitle, setCurrentTitle] = useState('');
+    
+    const handleOpenModal = (variations: string[], title: string) => {
+        setCurrentVariations(variations);
+        setCurrentTitle(title);
+        setOpenModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setOpenModal(false);
+    };
+    
     return (
         <HomeContentContainer className="admin-home-content-container">
             <ImageContainer className="admin-image-container">
@@ -54,7 +61,7 @@ export function HomeContent(): React.JSX.Element {
                         slidesPerView={1}
                         loop={true}
                         effect={'fade'}
-                        speed={1000}
+                        speed={2000}
                         autoplay={{
                             delay: 3000,
                             disableOnInteraction: false,
@@ -63,8 +70,9 @@ export function HomeContent(): React.JSX.Element {
                             nextEl: '.arrow-right',
                             prevEl: '.arrow-left',
                         }}
+                        onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
                     >
-                        {swiperImage.map((image, index) => (
+                        {bigEvents.map((image, index) => (
                             <SwiperSlide key={index}>
                                 <SlideContent className="image-container">
                                     <Image 
@@ -79,18 +87,36 @@ export function HomeContent(): React.JSX.Element {
                                     />
                                     <BoxContent>
                                         <Box className="date-now">
-                                            <AnimatedBox className="date-now" delay={0.3}>
+                                            <AnimatedBox 
+                                                className="date-now" 
+                                                delay={0.3}
+                                                key={`${index}-date-${activeIndex}`}
+                                            >
                                                 <Typography component="p">{image.date}</Typography>
                                             </AnimatedBox>
                                         </Box>
-                                        <AnimatedBox delay={0.6}>
+                                        <AnimatedBox 
+                                            delay={0.6}
+                                            key={`${index}-title-${activeIndex}`}
+                                        >
                                             <Typography component="h1">{image.title}</Typography>
                                         </AnimatedBox>
-                                        <AnimatedBox delay={0.9}>
+                                        <AnimatedBox 
+                                            delay={0.9}
+                                            key={`${index}-desc-${activeIndex}`}
+                                        >
                                             <Typography component="p">{image.description}</Typography>
                                         </AnimatedBox>
-                                        <AnimatedBox delay={1.2}>
-                                            <Button className="btn btn-primary">View Events</Button>
+                                        <AnimatedBox 
+                                            delay={1.2}
+                                            key={`${index}-btn-${activeIndex}`}
+                                        >
+                                             <Button 
+                                                className="btn btn-primary"
+                                                onClick={() => handleOpenModal(image.variations, image.title)}
+                                            >
+                                                View Events
+                                            </Button>
                                         </AnimatedBox>
 
                                     </BoxContent>
@@ -99,21 +125,18 @@ export function HomeContent(): React.JSX.Element {
                         ))}
                     </Swiper>
                     
-                    
-                    <ArrowButton>
-                        <ArrowLeft className="arrow-left">
-                            <Image width={20} height={20} src={icons.angleLeft} alt="angle left" />
-                        </ArrowLeft>
-                        <ArrowRight className="arrow-right">
-                            <Image width={20} height={20} src={icons.angleRight} alt="angle right" />
-                        </ArrowRight>
-                    </ArrowButton>
+                    <ArrowLeft className="arrow-left">
+                        <Image width={20} height={20} src={icons.angleLeft} alt="angle left" />
+                    </ArrowLeft>
+                    <ArrowRight className="arrow-right">
+                        <Image width={20} height={20} src={icons.angleRight} alt="angle right" />
+                    </ArrowRight>
                     
                 </TopImageContainer>
 
                 <BottomImageContainer className="bottom-image-container">
                     
-                    {bottomImages.map((image, index) => (
+                    {regularEvents.map((image, index) => (
                         <BottomImageContent className="bottom-image-content" key={index}>
                             <Image 
                                 width={530} 
@@ -125,12 +148,101 @@ export function HomeContent(): React.JSX.Element {
                             />
                             <BoxWithShadow>
                                 <Typography component="h2">{image.title}</Typography>
-                                <Button className="btn btn-primary">View More</Button>
+                                <Button 
+                                    className="btn btn-primary"
+                                    onClick={() => handleOpenModal(image.variations, image.title)}
+                                >
+                                    View More
+                                </Button>
                             </BoxWithShadow>
                         </BottomImageContent>
                     ))}
                     
                 </BottomImageContainer>
+
+                {/* Modal for image variations */}
+                <Modal
+                    open={openModal}
+                    onClose={handleCloseModal}
+                    aria-labelledby="modal-modal-title"
+                    aria-describedby="modal-modal-description"
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <Box sx={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        padding: '20px 20px 40px',
+                        borderRadius: '8px',
+                        maxWidth: '80vw',
+                        maxHeight: '80vh',
+                        width: '100%',
+                        overflow: 'auto',
+                        position: 'relative',
+                    }}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginBottom: '20px'
+                            }}
+                        >
+                            <Typography id="modal-modal-title" variant="h6" component="h2">
+                                {currentTitle}
+                            </Typography>
+                            <CloseButton onClick={handleCloseModal}>
+                                <FontAwesomeIcon icon={faXmark} />
+                            </CloseButton>
+                        </Box>
+                        <Swiper
+                            style={{ width: '100%', height: '500px' }}
+                            modules={[Navigation]}
+                            spaceBetween={20}
+                            slidesPerView={1}
+                            loop={true}
+                            speed={1500}
+                            navigation={{
+                                nextEl: '.arrow-right-variations',
+                                prevEl: '.arrow-left-variations',
+                            }}
+                        >
+                            {currentVariations.map((image, index) => (
+                                <SwiperSlide key={index}>
+                                    <Box sx={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        height: '100%'
+                                    }}>
+                                        <Image 
+                                            width={800} 
+                                            height={500} 
+                                            src={image} 
+                                            alt={`Variation ${index + 1}`} 
+                                            style={{
+                                                objectFit: 'contain',
+                                                maxWidth: '100%',
+                                                maxHeight: '100%'
+                                            }}
+                                            unoptimized={true}
+                                        />
+                                    </Box>
+                                </SwiperSlide>
+                            ))}
+                        </Swiper>
+                        <ArrowLeft className="arrow-left-variations">
+                            <Image width={20} height={20} src={icons.angleLeft} alt="angle left" />
+                        </ArrowLeft>
+                        <ArrowRight className="arrow-right-variations">
+                            <Image width={20} height={20} src={icons.angleRight} alt="angle right" />
+                        </ArrowRight>
+                    </Box>
+                </Modal>
+
+                <FeedbackPost />
             </ImageContainer>
         </HomeContentContainer>
     );

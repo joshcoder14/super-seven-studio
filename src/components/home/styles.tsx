@@ -1,5 +1,127 @@
 import { Box, styled} from "@mui/material";
 
+export const PostCard = styled(Box)`
+    max-width: 300px;
+    width: 100%;
+    height: auto;
+    padding: 30px;
+    border-radius: 8px;
+    background: #FFFFFF;
+    border: 0.3px solid #E0E0E0;
+    box-shadow: 0px 13px 61px 0px #A9A9A95D;
+
+    .quote-icon {
+        width: 100%;
+        svg {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            display: block;
+            margin: auto;
+
+            path {
+                fill: #2BB673;
+            }
+        }
+    }
+
+    .feedback-details {
+        width: 100%;
+        height: auto;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        
+        span {
+            display: block;
+            font-family: 'Nunito Sans';
+            font-weight: 400;
+            font-size: 16px;
+            line-height: 24px;
+            text-align: center;
+            color: #242424;
+            opacity: 0.8;
+        }
+    }
+
+    .event-name {
+        width: 100%;
+        height: auto;
+        
+        span {
+            display: block;
+            font-family: 'Nunito Sans';
+            font-weight: 700;
+            font-size: 18px;
+            line-height: 100%;
+            text-align: center;
+            color: #242424;
+        }
+    }
+`;
+
+export const FeedbackList = styled(Box)`
+    max-width: 1640px;
+    width: 100%;
+    height: auto;
+    display: flex;
+    justify-content: flex-start;
+    overflow-x: scroll;
+    scrollbar-width: none;
+`;
+
+export const FeedbackContent = styled(Box)`
+    width: 100%;
+    height: auto;
+`;
+
+export const Heading = styled('p')`
+    width: 100%;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Nunito Sans';
+    font-weight: 700;
+    font-size: 45px;
+    line-height: 100%;
+    color: #242424;
+    padding: 0;
+    margin: auto;
+
+    span {
+        font-family: 'Nunito Sans';
+        font-weight: 700;
+        font-size: 45px;
+        line-height: 100%;
+        color: #2BB673;
+        margin-left: 8px;
+    }
+`;
+
+export const FeedbackPostWrapper = styled(Box)`
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 50px;
+    padding: 100px 0;
+`;
+
+export const AnimatedBox = styled(Box)<{ delay: number }>`
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp 0.5s ease-out forwards;
+  animation-delay: ${props => props.delay}s;
+
+  @keyframes fadeUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
 export const ArrowRight = styled(Box)`
     display: flex;
     justify-content: center;
@@ -10,6 +132,15 @@ export const ArrowRight = styled(Box)`
     opacity: 0.73;
     background: #F4F4F4;
     cursor: pointer;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+
+    &:hover {
+        opacity: 0.5;
+    }
 
     img {
         width: 12px;
@@ -28,6 +159,16 @@ export const ArrowLeft = styled(Box)`
     opacity: 0.73;
     background: #F4F4F4;
     cursor: pointer;
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+
+    &:hover {
+        opacity: 0.5;
+    }
+
 
     img {
         width: 12px;
@@ -65,7 +206,7 @@ export const BoxWithShadow = styled(Box)`
     border-radius: 0px 0px 19px 19px;
 
     h2 {
-        font-family: Nunito Sans;
+        font-family: 'Nunito Sans';
         font-weight: 700;
         font-size: 18px;
         line-height: 20px;
@@ -74,7 +215,7 @@ export const BoxWithShadow = styled(Box)`
     }
 
     .btn {
-        font-family: Nunito Sans;
+        font-family: 'Nunito Sans';
         font-weight: 500;
         font-size: 14px;
         line-height: 28px;
@@ -86,6 +227,10 @@ export const BoxWithShadow = styled(Box)`
         padding: 8px 23px;
         border-radius: 11px;
         background: #2BB673;
+
+        &:hover {
+            background: #155D3A;
+        }
     }
 `;
 
@@ -99,9 +244,10 @@ export const BoxContent = styled(Box)`
     position: absolute;
     padding: 80px 150px;
     background: rgba(0, 0, 0, 0.5);
+    z-index: 2;
 
     .date-now {
-        font-family: Nunito Sans;
+        font-family: 'Nunito Sans';
         font-weight: 500;
         font-size: 16px;
         line-height: 30px;
@@ -111,7 +257,7 @@ export const BoxContent = styled(Box)`
     h1 {
         max-width: 555px;
         width: 100%;
-        font-family: Nunito Sans;
+        font-family: 'Nunito Sans';
         font-weight: 900;
         font-size: 37px;
         line-height: 48px;
@@ -120,7 +266,7 @@ export const BoxContent = styled(Box)`
     }
 
     p {
-        font-family: Nunito Sans;
+        font-family: 'Nunito Sans';
         font-weight: 500;
         font-size: 16px;
         line-height: 30px;
@@ -130,7 +276,7 @@ export const BoxContent = styled(Box)`
     }
 
     .btn {
-        font-family: Nunito Sans;
+        font-family: 'Nunito Sans';
         font-weight: 500;
         font-size: 14px;
         line-height: 28px;
@@ -143,6 +289,11 @@ export const BoxContent = styled(Box)`
         border-radius: 11px;
         background: #2BB673;
         margin-top: 22px;
+        cursor: pointer;
+
+        &:hover {
+            background: #155D3A;
+        }
     }
 `;
 
@@ -175,6 +326,7 @@ export const TopImageContainer = styled(Box)`
     overflow: hidden;
     position: relative;
     border-radius: 19px;
+    position: relative;
 
     @media (max-width: 1024px) {
         min-height: unset;
