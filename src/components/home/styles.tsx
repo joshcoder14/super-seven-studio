@@ -195,6 +195,9 @@ export const TopImageContainer = styled(Box)`
                 height: 100%;
 
                 .image-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                     width: 100%;
                     height: auto;
 
@@ -208,6 +211,23 @@ export const TopImageContainer = styled(Box)`
                 }
             }
         }
+    }
+`;
+
+export const SlideContent = styled(Box)`
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: auto;
+
+    img {
+        width: 100% !important;  
+        max-height: 430px;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 19px;
     }
 `;
 

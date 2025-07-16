@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, styled, Typography } from '@mui/material';
 import { 
     HomeContentContainer, 
     ImageContainer, 
@@ -12,7 +12,8 @@ import {
     BoxWithShadow, 
     ArrowButton, 
     ArrowLeft, 
-    ArrowRight 
+    ArrowRight, 
+    SlideContent 
 } from './styles';
 import { icons } from '@/icons';
 import Image from 'next/image';
@@ -25,6 +26,20 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/autoplay';
 import 'swiper/css/effect-fade';
+
+export const AnimatedBox = styled(Box)<{ delay: number }>`
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp 0.5s ease-out forwards;
+  animation-delay: ${props => props.delay}s;
+
+  @keyframes fadeUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
 
 export function HomeContent(): React.JSX.Element {
     return (
@@ -51,7 +66,7 @@ export function HomeContent(): React.JSX.Element {
                     >
                         {swiperImage.map((image, index) => (
                             <SwiperSlide key={index}>
-                                <Box className="image-container" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <SlideContent className="image-container">
                                     <Image 
                                         width={1650} 
                                         height={100} 
@@ -64,13 +79,22 @@ export function HomeContent(): React.JSX.Element {
                                     />
                                     <BoxContent>
                                         <Box className="date-now">
-                                            <Typography component="p">{image.date}</Typography>
+                                            <AnimatedBox className="date-now" delay={0.3}>
+                                                <Typography component="p">{image.date}</Typography>
+                                            </AnimatedBox>
                                         </Box>
-                                        <Typography component="h1">{image.title}</Typography>
-                                        <Typography component="p">{image.description}</Typography>
-                                        <Button className="btn btn-primary">View Events</Button>
+                                        <AnimatedBox delay={0.6}>
+                                            <Typography component="h1">{image.title}</Typography>
+                                        </AnimatedBox>
+                                        <AnimatedBox delay={0.9}>
+                                            <Typography component="p">{image.description}</Typography>
+                                        </AnimatedBox>
+                                        <AnimatedBox delay={1.2}>
+                                            <Button className="btn btn-primary">View Events</Button>
+                                        </AnimatedBox>
+
                                     </BoxContent>
-                                </Box>
+                                </SlideContent>
                             </SwiperSlide>
                         ))}
                     </Swiper>
