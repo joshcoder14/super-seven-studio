@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Box, Button, Typography, Modal  } from '@mui/material';
+import { Box, Button, Typography, Modal } from '@mui/material';
 import { FeedbackPost } from '../home/Feedback';
 import { 
     HomeContentContainer, 
@@ -16,9 +16,7 @@ import {
     SlideContent,
     AnimatedBox
 } from './styles';
-import {
-  CloseButton
-} from '@/sections/booking/styles';
+import { CloseButton } from '@/sections/booking/styles';
 import { icons } from '@/icons';
 import Image from 'next/image';
 import { regularEvents, bigEvents } from './MapImages';

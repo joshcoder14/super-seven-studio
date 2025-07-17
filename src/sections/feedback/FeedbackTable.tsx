@@ -75,11 +75,11 @@ export function FeedBackTable({ data, loading, onViewClick }: FeedBackTableProps
           ) : (
             data.map((row) => (
               <TableRow key={row.id}>
-                <TableCell align="left">{row.eventName}</TableCell>
-                <TableCell align="left">{row.client}</TableCell>
-                <TableCell align="left">{row.bookingDate}</TableCell>
-                <TableCell align="left" className={row.status.toLowerCase()}>
-                  <Typography component="span">{row.status}</Typography>
+                <TableCell align="left">{row.event_name}</TableCell>
+                <TableCell align="left">{row.customer_name}</TableCell>
+                <TableCell align="left">{row.booking_date}</TableCell>
+                <TableCell align="left" className={row.feedback_status.toLowerCase()}>
+                  <Typography component="span">{row.feedback_status}</Typography>
                 </TableCell>
                 <TableCell align="left">
                   <Button 

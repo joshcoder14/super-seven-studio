@@ -17,11 +17,12 @@ export interface FeedbackApiItem {
 
 export interface MappedFeedbackItem {
   id: string;
-  eventName: string;
-  client: string;
-  bookingDate: string;
-  feedbackDate: string;
-  status: string;
+  event_name: string;
+  customer_name: string;
+  booking_date: string;
+  feedback_date: string;
+  feedback_status: string;
+  feedback_detail: string;
 }
 
 export interface FeedbackDetailResponse {

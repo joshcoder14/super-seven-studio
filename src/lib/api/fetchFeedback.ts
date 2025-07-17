@@ -56,11 +56,12 @@ export async function fetchFeedbacks(
         return {
             data: responseData.data.data.map((item: FeedbackApiItem) => ({
                 id: item.id.toString(),
-                eventName: item.event_name,
-                client: item.customer_name?.trim() || 'Unknown Client',
-                bookingDate: item.booking_date,
-                feedbackDate: item.feedback_date,
-                status: item.feedback_status
+                event_name: item.event_name,
+                customer_name: item.customer_name?.trim() || 'Unknown Client',
+                booking_date: item.booking_date,
+                feedback_date: item.feedback_date,
+                feedback_status: item.feedback_status,
+                feedback_detail: item.feedback_detail
             })),
             total: responseData.data.meta.total
         };

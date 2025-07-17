@@ -19,7 +19,7 @@ export async function fetchClients(
     const headers = {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${accessToken}`,
     };
 
     const queryParams = new URLSearchParams();
@@ -76,7 +76,7 @@ export async function fetchEmployees(
     const headers = {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${accessToken}`,
     };
 
     const queryParams = new URLSearchParams();
