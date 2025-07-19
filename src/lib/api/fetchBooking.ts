@@ -3,6 +3,7 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { BookingEvent, UnavailableDate, BookingFormData, BaseResponse, AdminBookingResponse, ClientBookingResponse, BookingData } from '@/types/booking';
 import { PackageProps, AddOnsProps } from '@/types/field';
+import { ensureCsrfToken } from '@/utils/crfToken';
 import Swal from 'sweetalert2';
 import { paths } from '@/paths';
 
@@ -162,6 +163,8 @@ export const markDateAsUnavailable = async (date: Date): Promise<UnavailableDate
   const phDate = normalizeToPHDate(date);
   const isoString = dayjs(phDate).tz('Asia/Manila').format();
 
+  
+  const csrfToken = await ensureCsrfToken();
   const accessToken = localStorage.getItem('access_token');
   if (!accessToken) {
     throw new Error('No access token found');
@@ -171,7 +174,8 @@ export const markDateAsUnavailable = async (date: Date): Promise<UnavailableDate
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-XSRF-TOKEN': csrfToken
     },
     body: JSON.stringify({
       date: isoString
@@ -196,6 +200,8 @@ export const markDateAsUnavailable = async (date: Date): Promise<UnavailableDate
 
 // Unmark date as available
 export const unmarkDateAsAvailable = async (id: number): Promise<void> => {
+  
+  const csrfToken = await ensureCsrfToken();
   const accessToken = localStorage.getItem('access_token');
   if (!accessToken) {
     throw new Error('No access token found');
@@ -205,7 +211,8 @@ export const unmarkDateAsAvailable = async (id: number): Promise<void> => {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-XSRF-TOKEN': csrfToken
     }
   });
 
@@ -216,6 +223,9 @@ export const unmarkDateAsAvailable = async (id: number): Promise<void> => {
 
 // Booking actions
 export const approveBooking = async (id: number): Promise<void> => {
+
+  
+  const csrfToken = await ensureCsrfToken();
   const accessToken = localStorage.getItem('access_token');
   if (!accessToken) {
     throw new Error('No access token found');
@@ -225,7 +235,8 @@ export const approveBooking = async (id: number): Promise<void> => {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-XSRF-TOKEN': csrfToken
     }
   });
 
@@ -236,6 +247,7 @@ export const approveBooking = async (id: number): Promise<void> => {
 
 export const rejectBooking = async (id: number): Promise<void> => {
   
+  const csrfToken = await ensureCsrfToken();
   const accessToken = localStorage.getItem('access_token');
   if (!accessToken) {
     throw new Error('No access token found');
@@ -246,7 +258,8 @@ export const rejectBooking = async (id: number): Promise<void> => {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-XSRF-TOKEN': csrfToken
     }
   });
 
@@ -256,6 +269,8 @@ export const rejectBooking = async (id: number): Promise<void> => {
 };
 
 export const cancelBooking = async (id: number): Promise<void> => {
+  
+  const csrfToken = await ensureCsrfToken();
   const accessToken = localStorage.getItem('access_token');
   if (!accessToken) {
     throw new Error('No access token found');
@@ -274,7 +289,8 @@ export const cancelBooking = async (id: number): Promise<void> => {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-XSRF-TOKEN': csrfToken
     }
   });
 
@@ -288,6 +304,8 @@ export const rescheduleBooking = async (
   date: dayjs.Dayjs, 
   time: dayjs.Dayjs
 ): Promise<void> => {
+  
+  const csrfToken = await ensureCsrfToken();
   const accessToken = localStorage.getItem('access_token');
   if (!accessToken) {
     throw new Error('No access token found');
@@ -301,7 +319,8 @@ export const rescheduleBooking = async (
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-XSRF-TOKEN': csrfToken
     },
     body: JSON.stringify({
       booking_date: dateTimeString,
@@ -423,6 +442,7 @@ export const submitBooking = async (
   packages: PackageProps[]
 ): Promise<any> => {
   try {
+    const csrfToken = await ensureCsrfToken();
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
 
@@ -462,7 +482,9 @@ export const submitBooking = async (
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken}`
+        'Authorization': `Bearer ${accessToken}`,
+        'X-XSRF-TOKEN': csrfToken
+
       },
       credentials: 'include',
       body: form,
@@ -643,6 +665,7 @@ export const updateBooking = async (
     ceremony_time: string
   }
 ) => {
+  const csrfToken = await ensureCsrfToken();
   const accessToken = localStorage.getItem('access_token');
   if (!accessToken) throw new Error('Authentication required');
 
@@ -670,6 +693,7 @@ export const updateBooking = async (
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
+      'X-XSRF-TOKEN': csrfToken
     },
     body: formData
   });

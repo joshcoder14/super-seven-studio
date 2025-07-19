@@ -192,7 +192,7 @@ export function NavBar(): React.JSX.Element {
         <SideBarContainer className={`navbar ${isOpen ? '' : 'minimized'}`}>
             <Box className="logo-container">
                 <Image width={60} height={60} src={icons.favIcon} alt="fav icon" />
-                <Image width={150} height={100} priority src={icons.logo} alt="logo" />
+                <Image width={150} height={50} priority src={icons.logo} alt="logo" />
             </Box>
             <Box className="menu-items-container">
                 {filteredMenuItems.map((item, index) => {

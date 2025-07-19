@@ -5,6 +5,7 @@ export const Search = styled(Box)`
     width: 100%;
     margin-left: auto;
     position: relative;
+    transition: all 0.2s ease-in-out;
 
     input[type="text"] {
         width: 100%;

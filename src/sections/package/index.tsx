@@ -15,6 +15,7 @@ import { ModalComponent } from '@/components/Modal';
 import Swal from 'sweetalert2'; 
 import { useAuth } from '@/context/AuthContext';
 import { CustomTablePagination } from '@/components/TablePagination';
+import { is } from 'date-fns/locale';
 
 export function PackageHome(): React.JSX.Element {
     const [activeTab, setActiveTab] = useState<'package' | 'add-ons'>('package');
@@ -37,7 +38,7 @@ export function PackageHome(): React.JSX.Element {
     const [addonsRowsPerPage, setAddonsRowsPerPage] = useState(10);
     const [addonsTotal, setAddonsTotal] = useState(0);
 
-    const { user } = useAuth();
+    const { user, isLoggingOut } = useAuth();
     const isClient = user?.user_role === 'Client';
 
     const fetchData = useCallback(async () => {
@@ -49,7 +50,8 @@ export function PackageHome(): React.JSX.Element {
                 const response = await fetchPackages(
                     searchTerm, 
                     packagePage, 
-                    packageRowsPerPage
+                    packageRowsPerPage,
+                    isLoggingOut
                 );
                 
                 const data = isClient 
@@ -66,7 +68,8 @@ export function PackageHome(): React.JSX.Element {
                 const response = await fetchAddons(
                     searchTerm, 
                     addonsPage, 
-                    addonsRowsPerPage
+                    addonsRowsPerPage,
+                    isLoggingOut
                 );
                 
                 const data = isClient 
@@ -93,7 +96,8 @@ export function PackageHome(): React.JSX.Element {
         packagePage,
         packageRowsPerPage,
         addonsPage,
-        addonsRowsPerPage
+        addonsRowsPerPage,
+        isLoggingOut
     ]);
 
     useEffect(() => {

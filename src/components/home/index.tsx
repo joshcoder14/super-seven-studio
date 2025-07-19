@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Box, Button, Typography, Modal } from '@mui/material';
-import { FeedbackPost } from '../home/Feedback';
+import { FeedbackPost } from '@/components/home/FeedbackPost';
 import { 
     HomeContentContainer, 
     ImageContainer, 
@@ -240,7 +240,7 @@ export function HomeContent(): React.JSX.Element {
                     </Box>
                 </Modal>
 
-                <FeedbackPost />
+                {/* <FeedbackPost /> */}
             </ImageContainer>
         </HomeContentContainer>
     );

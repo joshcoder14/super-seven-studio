@@ -16,50 +16,47 @@ import { useAuth } from '@/context/AuthContext';
 import { useSidebar } from "@/context/SidebarContext";
 
 export function TopBar(): React.JSX.Element {
-    const { user, isAuthenticated, loading  } = useAuth();
+    const { user, isAuthenticated, loading } = useAuth();
     const { toggleSidebar } = useSidebar();
 
+    // Show loading state only when initializing
     if (loading) {
         return (
         <TopBarContainer>
-            <Box 
-                className="menu-icon-container"
-                onClick={toggleSidebar}
-            >
-                <MenuIcon/>
+            <Box className="menu-icon-container" onClick={toggleSidebar}>
+            <MenuIcon/>
             </Box>
             <Box display="flex" justifyContent="flex-end" width="100%" pr={2}>
-                <CircularProgress size={24} />
+            <CircularProgress size={24} />
             </Box>
         </TopBarContainer>
-        )
+        );
     }
 
     return (
         <TopBarContainer>
-            <Box 
-                className="menu-icon-container"
-                onClick={toggleSidebar}
-            >
-                <MenuIcon/>
-            </Box>
-            <TopbarUserContainer className="user-container">
-                <TopBarUserImage>
-                    <AccountCircleIcon/>
-                </TopBarUserImage>
-                
-                <TopbarNameContainer>
+        <Box className="menu-icon-container" onClick={toggleSidebar}>
+            <MenuIcon/>
+        </Box>
+        <TopbarUserContainer className="user-container">
+            <TopBarUserImage>
+            <AccountCircleIcon/>
+            </TopBarUserImage>
+            
+            <TopbarNameContainer>
+                {isAuthenticated && user?.full_name && (
                     <TopbarUserName>
-                        {isAuthenticated && user ? user.full_name : 'Guest'}
+                        {user.full_name}
                     </TopbarUserName>
-                    
-                    {isAuthenticated && user?.user_role && (
-                        <TopbarUserRole>
-                            {user.user_role}
-                        </TopbarUserRole>
-                    )}
-                </TopbarNameContainer>
-            </TopbarUserContainer>
+                )}
+                
+                {isAuthenticated && user?.user_role && (
+                    <TopbarUserRole>
+                        {user.user_role}
+                    </TopbarUserRole>
+                )}
+            </TopbarNameContainer>
+        </TopbarUserContainer>
         </TopBarContainer>
-    )
+    );
 }

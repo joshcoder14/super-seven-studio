@@ -1,7 +1,10 @@
+import { ensureCsrfToken } from "@/utils/crfToken";
+
 export const fetchPackages = async (
     searchTerm: string = '', 
     page: number = 1,
-    perPage: number = 10
+    perPage: number = 10,
+    isLoggingOut: boolean = false
 ): Promise<any> => {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
@@ -22,7 +25,9 @@ export const fetchPackages = async (
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to fetch packages: ${response.status} ${response.statusText}`);
+        if(!isLoggingOut) {
+            throw new Error(`Failed to fetch packages: ${response.status} ${response.statusText}`);
+        }
     }
     
     return response.json();
@@ -31,7 +36,8 @@ export const fetchPackages = async (
 export const fetchAddons = async (
     searchTerm: string = '', 
     page: number = 1,
-    perPage: number = 10
+    perPage: number = 10,
+    isLoggingOut: boolean = false
 ): Promise<any> => {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
@@ -52,13 +58,16 @@ export const fetchAddons = async (
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to fetch addons: ${response.status} ${response.statusText}`);
+        if(!isLoggingOut) {
+            throw new Error(`Failed to fetch add-ons: ${response.status} ${response.statusText}`);
+        }
     }
     
     return response.json();
 };
 
 export const createPackage = async (data: { name: string; price: string; details: string }) => {
+    const csrfToken = await ensureCsrfToken();
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
 
@@ -66,7 +75,8 @@ export const createPackage = async (data: { name: string; price: string; details
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken}`,
+            'X-XSRF-TOKEN': csrfToken,
         },
         body: JSON.stringify({
             package_name: data.name,
@@ -84,6 +94,7 @@ export const createPackage = async (data: { name: string; price: string; details
 };
 
 export const createAddon = async (data: { name: string; price: string; details: string }) => {
+    const csrfToken = await ensureCsrfToken();
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
 
@@ -91,7 +102,8 @@ export const createAddon = async (data: { name: string; price: string; details: 
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken}`,
+            'X-XSRF-TOKEN': csrfToken
         },
         body: JSON.stringify({
             add_on_name: data.name,
@@ -110,6 +122,7 @@ export const createAddon = async (data: { name: string; price: string; details: 
 
 // Update functions
 export const updatePackage = async (id: number, data: { name: string; price: string; details: string }) => {
+    const csrfToken = await ensureCsrfToken();
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
 
@@ -121,7 +134,8 @@ export const updatePackage = async (id: number, data: { name: string; price: str
     const response = await fetch(`/api/packages/${id}`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken}`,
+            'X-XSRF-TOKEN': csrfToken
         },
         body: formData
     });
@@ -135,6 +149,7 @@ export const updatePackage = async (id: number, data: { name: string; price: str
 };
 
 export const updateAddon = async (id: number, data: { name: string; price: string; details: string }) => {
+    const csrfToken = await ensureCsrfToken();
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
 
@@ -146,7 +161,8 @@ export const updateAddon = async (id: number, data: { name: string; price: strin
     const response = await fetch(`/api/addons/${id}`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken}`,
+            'X-XSRF-TOKEN': csrfToken
         },
         body: formData
     });
@@ -161,13 +177,15 @@ export const updateAddon = async (id: number, data: { name: string; price: strin
 
 // Delete functions
 export const deletePackage = async (id: number) => {
+    const csrfToken = await ensureCsrfToken();
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
 
     const response = await fetch(`/api/packages/${id}/delete`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken}`,
+            'X-XSRF-TOKEN': csrfToken
         }
     });
 
@@ -180,13 +198,15 @@ export const deletePackage = async (id: number) => {
 };
 
 export const deleteAddon = async (id: number) => {
+    const csrfToken = await ensureCsrfToken();
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
 
     const response = await fetch(`/api/addons/${id}/delete`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken}`,
+            'X-XSRF-TOKEN': csrfToken
         }
     });
 

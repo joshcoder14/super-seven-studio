@@ -6,7 +6,7 @@ import { FormContainer } from './styles';
 import { FormHeading } from '../../components/Heading/FormHeading';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { updatePassword } from '@/lib/api/fetchCurrentUser';
+import { updatePassword } from '@/lib/api/fetchUser';
 import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import { paths } from '@/paths';

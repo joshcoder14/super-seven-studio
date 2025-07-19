@@ -16,7 +16,7 @@ import {
   validateEmail,
   validatePhone,
 } from '@/utils/validation';
-import { updateUserProfile } from '@/lib/api/fetchCurrentUser';
+import { updateUserProfile } from '@/lib/api/fetchUser';
 
 export function EditProfile(): React.JSX.Element {
     const { user, loading: authLoading, updateUser } = useAuth();

@@ -53,3 +53,21 @@ export interface FeedbackApiResponse {
     };
   };
 }
+
+export interface PostedFeedback {
+  id: number;
+  event_name: string;
+  customer_name: string;
+  booking_date: string;
+  ceremony_time?: string;
+  package_name?: string;
+  add_ons?: Array<{
+    id: number;
+    add_on_name: string;
+    add_on_details: string;
+    add_on_price: string;
+  }>;
+  feedback_date: string;
+  feedback_status: string;
+  feedback_detail: string;
+}

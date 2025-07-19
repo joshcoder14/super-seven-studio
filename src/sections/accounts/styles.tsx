@@ -87,6 +87,12 @@ export const AddAccount = styled(Box)`
     border: none;
     border-radius: 6px;
     transition: all 0.2s ease-in-out;
+    text-wrap: nowrap;
+
+    @media (max-width: 1024px) {
+        margin-left: auto;
+        transition: all 0.2s ease-in-out;
+    }
 
     &:hover {
         background-color: #155D3A;
@@ -133,8 +139,17 @@ export const TopArea = styled(Box)`
     display: flex;
     flex-direction: row;
     align-items: center;
+    flex-wrap: wrap;
     width: 100%;
     gap: 30px;
+    transition: all 0.2s ease-in-out;
+
+    @media (max-width: 1024px) {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        row-gap: 20px;
+        transition: all 0.2s ease-in-out;
+    }
 `;
 
 export const AccountWrapper = styled(Box)`

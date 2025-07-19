@@ -14,6 +14,7 @@ export const Filter = styled(Box)`
         line-height: 100%;
         letter-spacing: 0px;
         color: #202224;
+        text-wrap: nowrap;
     }
 
     label {

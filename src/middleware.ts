@@ -3,9 +3,9 @@ import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const authToken = request.cookies.get('authToken')?.value
+  const authToken = request.cookies.get('authToken')?.value || request.headers.get('authorization')?.split(' ')[1];
   const isAuthenticated = Boolean(authToken)
-  const role = request.cookies.get('user_role')?.value
+  let role = request.cookies.get('user_role')?.value
 
   // Public routes
   const publicRoutes = ['/login', '/register']
@@ -24,18 +24,32 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Redirect unauthenticated users
-  if (!isAuthenticated) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('from', pathname)
-    return NextResponse.redirect(loginUrl)
+  // Handle logout case explicitly
+  if (pathname === '/logout') {
+    const response = NextResponse.redirect(new URL('/login', request.url));
+    // Clear cookies in the response
+    response.cookies.delete('authToken');
+    response.cookies.delete('user_role');
+    response.cookies.delete('XSRF-TOKEN');
+    return response;
+  }
+
+  // If no auth token but has role cookie (inconsistent state)
+  if (!authToken && role) {
+    const response = NextResponse.redirect(new URL('/login', request.url));
+    response.cookies.delete('user_role');
+    return response;
+  }
+
+  // If no auth token, redirect to login
+  if (!authToken) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Redirect if role is missing
-  if (!role) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('error', 'missing_role')
-    return NextResponse.redirect(loginUrl)
+ if (!role) {
+    // Don't set error param to avoid infinite redirects
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Owner: No restrictions

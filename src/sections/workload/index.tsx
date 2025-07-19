@@ -17,7 +17,7 @@ import { CustomTablePagination } from '@/components/TablePagination';
 export function WorkloadComponent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isLoggingOut } = useAuth();
   const [filterValue, setFilterValue] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -33,10 +33,7 @@ export function WorkloadComponent(): React.JSX.Element {
   const [lastPage, setLastPage] = useState(1);
 
   const fetchData = useCallback(async () => {
-    if (authLoading) {
-      console.log('Auth still loading, skipping fetch');
-      return;
-    }
+    if (authLoading || !user) return;
 
     setLoading(true);
     try {
@@ -46,15 +43,16 @@ export function WorkloadComponent(): React.JSX.Element {
         lastPage: number;
       };
 
-      const isEmployee = user?.user_role === 'Editor' || user?.user_role === 'Photographer';
-      
+      const isEmployee = user.user_role === 'Editor' || user.user_role === 'Photographer';
+
       if (isEmployee) {
         response = await fetchEmployeeWorkloads(
           debouncedSearchTerm, 
           filterValue, 
           router,
           page,
-          rowsPerPage
+          rowsPerPage,
+          isLoggingOut
         );
       } else {
         response = await fetchWorkloads(
@@ -62,17 +60,19 @@ export function WorkloadComponent(): React.JSX.Element {
           filterValue, 
           router,
           page,
-          rowsPerPage
+          rowsPerPage,
+          isLoggingOut
         );
       }
+
       setWorkloadData(response.data);
       setTotalCount(response.total);
       setLastPage(response.lastPage);
-      
-      // Reset to first page if current page exceeds last page
+
       if (page > response.lastPage) {
         setPage(1);
       }
+
     } catch (error) {
       console.error('Data fetching error:', error);
       setWorkloadData([]);
@@ -80,7 +80,16 @@ export function WorkloadComponent(): React.JSX.Element {
     } finally {
       setLoading(false);
     }
-  }, [filterValue, debouncedSearchTerm, page, rowsPerPage, router, user, authLoading]);
+  }, [
+    filterValue,
+    debouncedSearchTerm,
+    page,
+    rowsPerPage,
+    router,
+    user,
+    authLoading,
+    isLoggingOut
+  ]);
 
   useEffect(() => {
     if (!authLoading) { // Only fetch when auth is done loading

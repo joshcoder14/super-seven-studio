@@ -4,24 +4,27 @@ import {
     MappedFeedbackItem, 
     FeedbackApiItem,
     FeedbackDetailResponse,
+    PostedFeedback,
     FeedbackApiResponse
 } from '@/types/feedback';
+import { ensureCsrfToken } from '@/utils/crfToken';
 
 export async function fetchFeedbacks(
-    searchTerm: string = '',
-    filterValue: string = '0',
-    page: number = 1,
-    perPage: number = 10,
-    router: any
+  searchTerm: string = '',
+  filterValue: string = '0',
+  page: number = 1,
+  perPage: number = 10,
 ): Promise<{ data: MappedFeedbackItem[]; total: number }> {
     try {
         const accessToken = localStorage.getItem('access_token');
-        if (!accessToken) throw new Error('No access token found');
+        if (!accessToken) {
+            throw new Error('Unauthenticated');
+        }
 
-        const headers = {
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
-        };
+        const headers = new Headers({
+            'Accept': 'application/json'
+        });
+        headers.append('Authorization', `Bearer ${accessToken}`);
 
         const params = new URLSearchParams({
             'search[value]': searchTerm || '',
@@ -29,28 +32,27 @@ export async function fetchFeedbacks(
             'perPage': perPage.toString()
         });
 
-        if (filterValue === '1') {
-            params.set('filters[posted]', 'true');
-        } else if (filterValue === '2') {
-            params.set('filters[unposted]', 'true');
-        } else if (filterValue === '3') {
-            params.set('filters[pending]', 'true');
-        }
+        if (filterValue === '1') params.set('filters[posted]', 'true');
+        else if (filterValue === '2') params.set('filters[unposted]', 'true');
+        else if (filterValue === '3') params.set('filters[pending]', 'true');
 
         const response = await fetch(`/api/feedbacks?${params.toString()}`, {
             headers,
             credentials: 'include'
         });
 
-        // Use the dedicated FeedbackApiResponse interface
-        const responseData: FeedbackApiResponse = await response.json();
+        if (response.status === 401) {
+            throw new Error('Unauthenticated');
+        }
+
+        const responseData = await response.json();
 
         if (!response.ok) {
             throw new Error(responseData.message || 'Failed to fetch feedbacks');
         }
 
-        if (!responseData.data || !Array.isArray(responseData.data.data)) {
-            throw new Error('Invalid data format received from API');
+        if (!responseData.data?.data) {
+            throw new Error('Invalid data format');
         }
 
         return {
@@ -63,22 +65,24 @@ export async function fetchFeedbacks(
                 feedback_status: item.feedback_status,
                 feedback_detail: item.feedback_detail
             })),
-            total: responseData.data.meta.total
+            total: responseData.data.meta?.total || 0
         };
 
     } catch (error) {
         console.error('Error fetching feedbacks:', error);
         
+        if (error instanceof Error && error.message === 'Unauthenticated') {
+            // Use window.location instead of router to ensure complete reload
+            window.location.href = `${paths.login}?redirect=${encodeURIComponent(window.location.pathname)}`;
+            return { data: [], total: 0 };
+        }
+
         await Swal.fire({
             title: 'Error!',
-            text: error instanceof Error ? error.message : 'An unexpected error occurred',
+            text: error instanceof Error ? error.message : 'An error occurred',
             icon: 'error',
             confirmButtonText: 'OK'
         });
-
-        if (error instanceof Error && (error.message === 'No access token found' || error.message.includes('401'))) {
-            router.push(paths.login);
-        }
 
         return { data: [], total: 0 };
     }
@@ -88,6 +92,7 @@ export async function submitFeedback(
   bookingId: number, 
   feedback_details: string
 ): Promise<void> {
+    const csrfToken = await ensureCsrfToken();
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
 
@@ -98,7 +103,8 @@ export async function submitFeedback(
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken}`,
+            'X-XSRF-TOKEN': csrfToken
         },
         body: formData
     });
@@ -145,6 +151,7 @@ export async function viewFeedback(bookingId: number): Promise<FeedbackDetailRes
 }
 
 export async function markAsPosted(feedbackId: number): Promise<void> {
+    const csrfToken = await ensureCsrfToken();
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
 
@@ -154,7 +161,8 @@ export async function markAsPosted(feedbackId: number): Promise<void> {
     const response = await fetch(url, {
         method: method,
         headers: {
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken}`,
+            'X-XSRF-TOKEN': csrfToken
         }
     });
 
@@ -167,6 +175,7 @@ export async function markAsPosted(feedbackId: number): Promise<void> {
 }
 
 export async function markAsUnposted(feedbackId: number): Promise<void> {
+    const csrfToken = await ensureCsrfToken();
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
 
@@ -176,7 +185,8 @@ export async function markAsUnposted(feedbackId: number): Promise<void> {
     const response = await fetch(url, {
         method: method,
         headers: {
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken}`,
+            'X-XSRF-TOKEN': csrfToken
         }
     });
 

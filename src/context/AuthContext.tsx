@@ -1,16 +1,22 @@
 'use client'
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { paths } from '@/paths'
 import { User, AuthResponse, UserRole } from '@/types/user'
+import { fetchCurrentUser } from '@/lib/api/fetchUser'
+
+const isUserRole = (role: string | undefined): role is UserRole => {
+  return role ? ['Owner', 'Secretary', 'Editor', 'Photographer', 'Client'].includes(role) : false
+}
 
 interface AuthContextType {
   isAuthenticated: boolean
   user: User | null
-  login: (response: AuthResponse) => Promise<void>
+  login: (response: AuthResponse) => Promise<User | null>
   logout: () => Promise<void>
   loading: boolean
   updateUser: (userData: User) => void
   canAccess: (path: string) => boolean
+  isLoggingOut: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -19,145 +25,154 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
-  // Set role cookie helper
-  const setRoleCookie = (role: UserRole) => {
-    document.cookie = `user_role=${role}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`
-  }
-
-  // Clear role cookie helper
-  const clearRoleCookie = () => {
-    document.cookie = 'user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;'
-  }
-
-  const updateUser = (userData: User) => {
-    setUser(userData)
-    localStorage.setItem('user', JSON.stringify(userData))
-    setRoleCookie(userData.user_role as UserRole)
-  }
-
-  const getCookie = (name: string): string | null => {
-    if (typeof document === 'undefined') return null
-    const value = `; ${document.cookie}`
-    const parts = value.split(`; ${name}=`)
-    if (parts.length === 2) return parts.pop()?.split(';').shift() || null
-    return null
-  }
-
-  // Initialize auth state
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const accessToken = localStorage.getItem('access_token') || getCookie('authToken')
-        const userData = localStorage.getItem('user')
-        const roleCookie = getCookie('user_role') as UserRole
-
-        if (accessToken && userData) {
-          const parsedUser: User = JSON.parse(userData)
-          setIsAuthenticated(true)
-          setUser(parsedUser)
-          
-          // Restore role cookie if missing
-          if (!roleCookie) {
-            setRoleCookie(parsedUser.user_role as UserRole)
-          }
-        } else {
-          // If no access token or user data, log out
-          await logout()
-        }
-      } catch (error) {
-        console.error('Auth initialization failed:', error)
-        await logout()
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    initializeAuth()
+  const setAuthCookies = useCallback((token: string, role: UserRole, remember: boolean = false) => {
+    const maxAge = remember ? 60 * 60 * 24 * 7 : 60 * 60 * 24; // 7 days or 1 day
+    document.cookie = `authToken=${token}; path=/; max-age=${maxAge}; samesite=lax`;
+    document.cookie = `user_role=${role}; path=/; max-age=${maxAge}; samesite=lax`;
   }, [])
 
-  const login = async (response: AuthResponse) => {
-    // Add role validation
-    if (!response.data.user_role) {
-      throw new Error('User role is missing in auth response')
+  const clearAuthCookies = useCallback(() => {
+    document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = 'user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = 'XSRF-TOKEN=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  }, [])
+
+  const updateUser = useCallback((userData: User) => {
+    if (!isUserRole(userData.user_role)) {
+      console.error('Invalid user role:', userData.user_role);
+      return;
     }
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setAuthCookies('', userData.user_role);
+  }, [setAuthCookies])
 
-    localStorage.setItem('access_token', response.access_token)
-    localStorage.setItem('user', JSON.stringify(response.data))
-    setIsAuthenticated(true)
-    setUser(response.data)
-    setRoleCookie(response.data.user_role as UserRole)
-  }
-
-  const logout = async () => {
+  // Simplified cookie handling - backend should manage sessions
+  const logout = useCallback(async () => {
     try {
-      const accessToken = localStorage.getItem('access_token')
-      
-      if (accessToken) {
-        await fetch('/api/logout', {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Accept': 'application/json'
-          }
-        })
-      }
+      // Clear frontend state immediately
+      setIsLoggingOut(true);
+      clearAuthCookies();
+      setIsAuthenticated(false);
+      setUser(null);
+      sessionStorage.removeItem('access_token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
 
-      // Clear all auth data
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('user')
-      clearRoleCookie()
+      // Call backend logout
+      await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
 
-      // Clear auth cookies
-      document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;'
-      document.cookie = 'XSRF-TOKEN=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;'
-
-      setIsAuthenticated(false)
-      setUser(null)
-      
-      // Only redirect if we're not already on the login page
-      if (window.location.pathname !== paths.login) {
-        window.location.href = paths.login
-      }
+      // Force full page reload to clear any residual state
+      window.location.href = paths.login;
     } catch (error) {
-      console.error('Logout failed:', error)
+      console.error('Logout failed:', error);
+      // Ensure state is cleared even if backend fails
+      setIsAuthenticated(false);
+      setUser(null);
+      window.location.href = paths.login;
+    } finally {
+      setIsLoggingOut(false);
     }
-  }
+  }, []);
 
-  // Add effect to check authentication status on route changes
-  useEffect(() => {
-    const checkAuth = () => {
-      if (!isAuthenticated && !loading && window.location.pathname !== paths.login) {
-        logout()
+  const login = useCallback(async (response: AuthResponse & { remember?: boolean }): Promise<User | null> => {
+    try {
+      if (!response.access_token || !response.data) {
+        throw new Error('Invalid authentication response');
       }
+
+      sessionStorage.setItem('access_token', response.access_token);
+      document.cookie = `authToken=${response.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+
+      const userData = await fetchCurrentUser();
+      if (!userData) throw new Error('Failed to fetch user data');
+
+      setUser(userData);
+      setIsAuthenticated(true);
+      localStorage.setItem('user', JSON.stringify(userData));
+      document.cookie = `user_role=${userData.user_role}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+
+      return userData;
+    } catch (error) {
+      console.error('Login failed:', error);
+      // Clear state on failure
+      setIsAuthenticated(false);
+      setUser(null);
+      sessionStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      throw error;
     }
+  }, []);
 
-    checkAuth()
-  }, [isAuthenticated, loading])
+  const initializeAuth = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Check localStorage for persisted user
+      const storedUser = localStorage.getItem('user');
+      const sessionToken = sessionStorage.getItem('access_token');
 
-  // Client-side access check
-  const canAccess = (path: string): boolean => {
-    if (!user || !isAuthenticated) return false
+      if (storedUser && sessionToken) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          if (parsedUser?.id) {
+            // Verify with backend if needed
+            const currentUser = await fetchCurrentUser();
+            console.log('Current user:', currentUser);
+
+            if (currentUser?.id === parsedUser.id) {
+              setUser(currentUser);
+              setIsAuthenticated(true);
+
+              // Optionally update localStorage with corrected user data
+              localStorage.setItem('user', JSON.stringify(currentUser));
+
+              return;
+            }
+          }
+        } catch (e) {
+          console.error('Failed to parse stored user', e);
+        }
+      }
+
+      // No valid session found
+      setIsAuthenticated(false);
+      setUser(null);
+    } catch (error) {
+      console.error('Auth initialization failed:', error);
+      setIsAuthenticated(false);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  const canAccess = useCallback((path: string): boolean => {
+    if (!user || !isAuthenticated || !isUserRole(user.user_role)) return false;
     
     switch (user.user_role) {
-      case 'Owner':
-        return true
-      case 'Secretary':
-        return !path.startsWith('/billing')
+      case 'Owner': return true;
+      case 'Secretary': return !path.startsWith('/billing');
       case 'Editor':
       case 'Photographer':
         return ['/', '/workload', '/settings'].some(
           allowed => path === allowed || path.startsWith(`${allowed}/`)
-        )
+        );
       case 'Client':
         return ['/', '/booking', '/package', '/billing', '/settings'].some(
           allowed => path === allowed || path.startsWith(`${allowed}/`)
-        )
-      default:
-        return false
+        );
+      default: return false;
     }
-  }
+  }, [user, isAuthenticated])
 
   return (
     <AuthContext.Provider value={{
@@ -167,7 +182,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       logout,
       updateUser,
       loading,
-      canAccess
+      canAccess,
+      isLoggingOut
     }}>
       {children}
     </AuthContext.Provider>
@@ -175,9 +191,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 }
 
 export const useAuth = () => {
-    const context = useContext(AuthContext)
-    if (!context) {
-      throw new Error('useAuth must be used within AuthProvider')
-    }
-    return context
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
 }

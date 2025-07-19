@@ -1,5 +1,6 @@
 const nextConfig = {
   reactStrictMode: true,
+  devIndicators: false,
   eslint: {
     ignoreDuringBuilds: true,  // Disables ESLint during builds
   },

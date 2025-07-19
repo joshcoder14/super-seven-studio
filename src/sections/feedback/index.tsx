@@ -11,9 +11,7 @@ import { paths } from '@/paths';
 import { FeedBackTable } from './FeedbackTable';
 import { fetchFeedbacks } from '@/lib/api/fetchFeedback';
 import { useAuth } from '@/context/AuthContext';
-import { 
-  MappedFeedbackItem
-} from '@/types/feedback';
+import { MappedFeedbackItem } from '@/types/feedback';
 import FeedbackViewModal from './ViewModal';
 import { CustomTablePagination } from '@/components/TablePagination';
 
@@ -27,25 +25,25 @@ export function FeedbackComponent(): React.JSX.Element {
     const [loading, setLoading] = useState(true);
     const [selectedFeedback, setSelectedFeedback] = useState<MappedFeedbackItem | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
+
     // Pagination state
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [totalCount, setTotalCount] = useState(0);
+    const accessToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 
     const fetchFeedbackData = useCallback(async () => {
-        if (authLoading || !user) return;
-        
+        if (authLoading || !user || !accessToken) return;
+        console.log('Access token from feedback page:', accessToken);
         setLoading(true);
         try {
             const response = await fetchFeedbacks(
-                searchTerm, 
-                filterValue, 
-                page + 1,  // Convert to 1-based for API
-                rowsPerPage,
-                router
+                searchTerm,
+                filterValue,
+                page + 1, // Convert to 1-based for API
+                rowsPerPage
             );
-            
+
             setFeedbackData(response.data);
             setTotalCount(response.total);
         } catch (error) {
@@ -76,10 +74,10 @@ export function FeedbackComponent(): React.JSX.Element {
 
     const handleFilterChange = (value: string) => {
         if (!feedBackFilterOptions.some(opt => opt.value === value)) return;
-        
+
         setFilterValue(value);
         setPage(0);
-        
+
         const params = new URLSearchParams(searchParams.toString());
         params.set('filter', value);
         router.push(`${paths.feedback}?${params.toString()}`, { scroll: false });
@@ -96,7 +94,7 @@ export function FeedbackComponent(): React.JSX.Element {
     };
 
     const handlePageChange = (
-        event: React.MouseEvent<HTMLButtonElement> | null, 
+        event: React.MouseEvent<HTMLButtonElement> | null,
         newPage: number
     ) => {
         setPage(newPage);
@@ -112,8 +110,8 @@ export function FeedbackComponent(): React.JSX.Element {
 
     return (
         <FeedbackContainer>
-            <HeadingComponent/>
-                
+            <HeadingComponent />
+
             <FeedbackWrapper>
                 <FilterArea>
                     <FilterBy
@@ -122,18 +120,18 @@ export function FeedbackComponent(): React.JSX.Element {
                         onFilterChange={handleFilterChange}
                         label="Filter By:"
                     />
-                    <SearchBox 
+                    <SearchBox
                         searchTerm={searchTerm}
                         onSearchChange={handleSearchChange}
                     />
                 </FilterArea>
-                
-                <FeedBackTable 
+
+                <FeedBackTable
                     data={feedbackData}
                     loading={loading}
                     onViewClick={openModal}
                 />
-                
+
                 <CustomTablePagination
                     count={totalCount}
                     rowsPerPage={rowsPerPage}
@@ -142,7 +140,7 @@ export function FeedbackComponent(): React.JSX.Element {
                     onRowsPerPageChange={handleRowsPerPageChange}
                 />
 
-                <FeedbackViewModal 
+                <FeedbackViewModal
                     open={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     feedbackId={selectedFeedback?.id || null}

@@ -260,7 +260,7 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
     setError(null);
 
@@ -281,20 +281,28 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
             customer_type: 1
           };
 
-      const data: AuthResponse = await authenticateUser(payload, isLogin);
+      const data = await authenticateUser(payload, isLogin);
+      
+      if (!data.access_token || !data.data) {
+        throw new Error('Authentication failed: Invalid response');
+      }
+      
       localStorage.setItem('access_token', data.access_token);
 
-     if (isLogin) {
-        const expires = new Date();
-        expires.setDate(expires.getDate() + (rememberMe ? 7 : 1));
-        document.cookie = `authToken=${data.access_token}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
-        login(data); // Pass full AuthResponse object
+      // Wait for login to complete and get user data
+      const user = await login({
+        ...data,
+        remember: isLogin ? rememberMe : false
+      });
+
+      // Only redirect after successful login and state update
+      if (user) {
         window.location.href = paths.home;
-      } else {
-        router.push(paths.login);
+        window.location.reload(); // Ensure client-side cache is updated
       }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Authentication failed');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
+      setError(errorMessage);
       console.error('Authentication error:', err);
     } finally {
       setIsLoading(false);

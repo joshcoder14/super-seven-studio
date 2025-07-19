@@ -1,4 +1,5 @@
 import { Billing, FetchBillingsParams } from '@/types/billing';
+import { ensureCsrfToken } from '@/utils/crfToken';
 
 export const fetchBillings = async ({ 
   start_year, 
@@ -79,6 +80,8 @@ export async function addPayment(
     paymentMethod: string,
     remarks: string
 ): Promise<void> {
+  
+    const csrfToken = await ensureCsrfToken();
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('No access token found');
 
@@ -89,7 +92,10 @@ export async function addPayment(
 
     const response = await fetch(`/api/billings/${billingId}/add-payment`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${accessToken}` },
+        headers: { 
+          'Authorization': `Bearer ${accessToken}`,
+          'X-XSRF-TOKEN': csrfToken
+        },
         body: formData
     });
 

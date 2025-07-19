@@ -183,7 +183,6 @@ export const SideBarContainer = styled(Box)`
         margin-top: 30px;
 
         img {
-            height: auto;
             transition: width 0.5s ease-in-out;
         }
     }

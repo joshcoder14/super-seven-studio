@@ -85,9 +85,10 @@ export const PackageTitle = styled(Box)`
     height: auto;
     display: flex;
     justify-content: flex-start;
-    align-items: center;
+    align-items: flex-start;
     gap: 20px;
     padding: 0 50px;
+    padding-bottom: 20px;
 
     img {
         width: 35px;
@@ -99,7 +100,7 @@ export const PackageTitle = styled(Box)`
         font-family: Nunito Sans;
         font-weight: 600;
         font-size: 30px;
-        line-height: 74px;
+        line-height: 32px;
         color: #202224;
     }
 `;
