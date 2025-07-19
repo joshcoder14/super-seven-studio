@@ -762,15 +762,6 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
                     {state.isPackageDropdownOpen && (
                       <Box 
                         className="dropdown-options"
-                        sx={{
-                          backgroundColor: '#F7FAF5',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px',
-                          marginTop: '-1px',
-                          width: '100%',
-                          maxHeight: '200px',
-                          overflowY: 'auto',
-                        }}
                       >
                         {state.packages.map((pkg) => (
                           <Box

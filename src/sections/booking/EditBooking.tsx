@@ -15,13 +15,13 @@ import CustomDatePicker from '@/components/datepicker';
 import CustomTimePicker from '@/components/TimePicker';
 import { paths } from '@/paths';
 import {
-  fetchBookingPackages,
-  fetchAddOns,
   fetchBookingDetails,
-  updateBooking
+  updateBooking,
+  fetchPackagesAddOnsData
 } from '@/lib/api/fetchBooking';
 import { AddOnsProps, PackageProps } from '@/types/field';
 import Preloader from '@/components/Preloader';
+import { formatCurrency } from '@/utils/billing';
 
 interface EditBookingProps {
   bookingId: string;
@@ -88,9 +88,8 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
 
   const fetchInitialData = async () => {
     try {
-      const [packages, addOns, booking] = await Promise.all([
-        fetchBookingPackages(),
-        fetchAddOns(),
+      const [{ packages, addOns }, booking] = await Promise.all([
+        fetchPackagesAddOnsData(),
         fetchBookingDetails(bookingId)
       ]);
 
@@ -119,7 +118,6 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
           initialData: false
         }
       }));
-
     } catch (err) {
       console.error('Error fetching initial data:', err);
       setState(prev => ({
@@ -307,7 +305,7 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
   if (loading) return <Preloader />;
 
   return (
-    <AddBookingContainer>
+    <AddBookingContainer className="edit-booking-container">
       <HeadingComponent />
       <BookingWrapper>
         <FormHeading title="Edit Booking"/>
@@ -319,9 +317,9 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
         )}
 
         <form onSubmit={handleSubmit}>
-          <Box sx={{ display: 'flex', gap: '20px', flexDirection: 'column', width: '60%' }}>
+          <Box className="form-container">
             {/* Booking Date */}
-            <Box sx={{ display: 'flex', gap: '20px' }}>
+            <Box sx={{ display: 'flex', gap: '20px' }} className="date-time-picker">
               <Box className="form-group booking-date">
                 <label className="form-label">Booking Date</label>
                 <CustomDatePicker
@@ -420,18 +418,10 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
                     {state.isPackageDropdownOpen && (
                       <Box 
                         className="dropdown-options"
-                        sx={{
-                          backgroundColor: '#F7FAF5',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px',
-                          marginTop: '-10px',
-                          width: '100%',
-                          maxHeight: '200px',
-                          overflowY: 'auto',
-                        }}
                       >
                         {state.packages.map((pkg) => (
                           <Box
+                            className="dropdown-item"
                             key={pkg.id}
                             onClick={() => handlePackageSelect(pkg.packageName, pkg.id)}
                             sx={{
@@ -442,7 +432,9 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
                               }
                             }}
                           >
-                            <Typography>{pkg.packageName}</Typography>
+                            <Typography component='p' className='package-name'><strong>{pkg.packageName}</strong></Typography>
+                            <Typography component='p' className='package-details'>{pkg.package_details}</Typography>
+                            <Typography component='p' className='package-price'><strong>{formatCurrency(pkg.package_price)}</strong></Typography>
                           </Box>
                         ))}
                       </Box>
@@ -461,13 +453,6 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
                 ) : (
                   <Box 
                     className="addon-list dropdown-list"
-                    sx={{ 
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      padding: '8px',
-                      maxHeight: '200px',
-                      overflowY: 'auto'
-                    }}
                   >
                     {state.addOns.length > 0 ? (
                       state.addOns.map((addOn) => (
@@ -496,9 +481,11 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
                             }}
                           />
                           <label htmlFor={`addon-${addOn.id}`} style={{ flex: 1 }}>
-                            <Typography fontWeight="600" textTransform="capitalize">
-                              {addOn.addOnName}
+                            <Typography component='p' fontWeight="600" textTransform="capitalize">
+                                {addOn.addOnName}
                             </Typography>
+                            <Typography component='span' className='addon-details'>{addOn.addOnDetails}</Typography>
+                            <Typography component='p' className='addon-price'>{formatCurrency(addOn.addOnPrice)}</Typography>
                           </label>
                         </Box>
                       ))

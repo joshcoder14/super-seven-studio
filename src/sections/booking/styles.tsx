@@ -180,6 +180,7 @@ export const BookingWrapper = styled(Box)`
     background: #FFFFFF;
     border: 0.3px solid #E0E0E0;
     border-radius: 14px;
+    margin-bottom: 150px;
 
     form {
 
@@ -202,11 +203,28 @@ export const BookingWrapper = styled(Box)`
             }
         }
 
+        .form-container {
+            display: flex;
+            gap: 20px;
+            flex-direction: column;
+            width: 60%;
+            height: auto;
+
+            @media (max-width: 1024px) {
+                width: 100%;
+            }
+        }
+
+        .date-time-picker {
+            @media (max-width: 1230px) {
+                flex-direction: column;
+            }
+        }
+
         .form-group {
             width: 100%;
             display: flex;
             flex-direction: column;
-            // gap: 10px;
 
             .form-label {
                 margin-bottom: 10px;
@@ -228,6 +246,16 @@ export const BookingWrapper = styled(Box)`
             }
 
             .dropdown-options {
+                width: 100%;
+                height: 200px;
+                overflow: auto;
+                scrollbar-width: thin;
+                scrollbar-behavior: smooth;
+                scrollbar-color: #D5D5D5 #FAFBFD;
+                background: #F7FAF5;
+                margin-top: -1px;
+                border-radius: 4px;
+                border: 0.6px solid #D5D5D5;
                 
                 .dropdown-item {
                     display: flex;
@@ -472,9 +500,20 @@ export const AddBookingContainer = styled(Box)`
     height: auto;
     display: flex;
     justify-content: space-between;
-    flex-direction: row;
+    flex-direction: column;
     gap: 30px;
-    margin-bottom: 150px;
+
+    &.edit-booking-container {
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        position: relative;
+        background-color: #f7faf5;
+        height: 100%;
+        overflow-y: scroll;
+        scrollbar-width: none;
+        padding: 0 30px;
+    }
 `;
 
 export const BigCalendar = styled(Box)`
