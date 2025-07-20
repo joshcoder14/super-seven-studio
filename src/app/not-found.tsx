@@ -1,4 +1,3 @@
-import React from "react";
 import { NotFound } from '@/components/notFound';
 import { Metadata } from "next";
 
