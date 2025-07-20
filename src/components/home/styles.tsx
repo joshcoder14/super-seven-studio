@@ -1,14 +1,14 @@
 import { Box, styled} from "@mui/material";
 
 export const PostCard = styled(Box)`
-    max-width: 300px;
-    width: 100%;
+    // max-width: 300px;
+    width: auto;
     height: auto;
+    min-height: 250px;
     padding: 30px;
     border-radius: 8px;
     background: #FFFFFF;
-    border: 0.3px solid #E0E0E0;
-    box-shadow: 0px 13px 61px 0px #A9A9A95D;
+    box-shadow: 0px 3.8px 22.82px 0px rgba(36, 124, 206, .05);
 
     .quote-icon {
         width: 100%;
@@ -31,7 +31,7 @@ export const PostCard = styled(Box)`
         margin-top: 20px;
         margin-bottom: 20px;
         
-        span {
+        p {
             display: block;
             font-family: 'Nunito Sans';
             font-weight: 400;
@@ -63,10 +63,45 @@ export const FeedbackList = styled(Box)`
     max-width: 1640px;
     width: 100%;
     height: auto;
-    display: flex;
-    justify-content: flex-start;
-    overflow-x: scroll;
-    scrollbar-width: none;
+
+    .swiper {
+        width: 100%;
+        height: auto;
+        min-height: 400px;
+
+        .swiper-pagination {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: auto;
+            margin-top: 40px;
+            margin-bottom: 40px;
+
+            .swiper-pagination-bullet {
+                border: 3px solid #2BB673;
+                border-radius: 2px;
+                cursor: pointer;
+                display: inline-block;
+                height: 5px;
+                margin: 0 1px !important;
+                opacity: .4;
+                transition: opacity .3s;
+                width: 22px;
+            }
+
+            .swiper-pagination-bullet-active {
+                border-color: #2BB673;
+                background-color: #fff;
+                opacity: 1 !important;
+            }
+        }
+    }
+    // display: flex;
+    // gap: 30px;
+    // justify-content: flex-start;
+    // overflow-x: scroll;
+    // scrollbar-width: none;
 `;
 
 export const FeedbackContent = styled(Box)`
@@ -99,6 +134,7 @@ export const Heading = styled('p')`
 `;
 
 export const FeedbackPostWrapper = styled(Box)`
+    max-width: 1640px;
     width: 100%;
     display: flex;
     flex-direction: column;

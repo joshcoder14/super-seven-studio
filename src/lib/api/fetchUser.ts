@@ -120,8 +120,13 @@ export const fetchCurrentUser = async (): Promise<User | null> => {
 
     // Optionally warn on missing role but still return user
     if (!isUserRole(user.user_role)) {
-      console.warn('User has no valid role:', user.user_role);
+      Swal.fire({
+        icon: 'warning',
+        title: 'User has no valid role',
+        text: 'Please contact an admin to resolve this issue.',
+      });
       user.user_role = undefined;
+      return null;
     }
 
     return user;

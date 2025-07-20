@@ -18,16 +18,15 @@ import { useSidebar } from "@/context/SidebarContext";
 export function TopBar(): React.JSX.Element {
     const { user, isAuthenticated, loading } = useAuth();
     const { toggleSidebar } = useSidebar();
-
-    // Show loading state only when initializing
+    
     if (loading) {
         return (
         <TopBarContainer>
             <Box className="menu-icon-container" onClick={toggleSidebar}>
-            <MenuIcon/>
+                <MenuIcon/>
             </Box>
             <Box display="flex" justifyContent="flex-end" width="100%" pr={2}>
-            <CircularProgress size={24} />
+                <CircularProgress size={24} />
             </Box>
         </TopBarContainer>
         );

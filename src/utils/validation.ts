@@ -62,9 +62,12 @@ export const validatePassword = (password: string): PasswordRequirements => {
 
 export const validatePhone = (phone: string): string | null => {
   const sanitized = sanitizePhone(phone);
+  const phRegex = /^(09\d{9}|\+639\d{9})$/;
+
   if (!sanitized) return 'Phone number is required';
   if (sanitized.length < 10) return 'Phone number should be at least 10 digits';
   if (sanitized.length > 11) return 'Phone number should not exceed 11 digits';
+  if (!phRegex.test(phone)) return 'Contact number must be a valid Philippine number (e.g., 09171234567 or +639171234567)';
   return null;
 };
 

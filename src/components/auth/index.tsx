@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { paths } from '@/paths';
 import { AuthResponse } from '@/types/user';
-import { authenticateUser } from '@/lib/api/fetchAuth';
+import { loginUser, registerUser } from '@/lib/api/fetchAuth';
 import {
   PasswordRequirements,
   sanitizeInput,
@@ -24,6 +24,7 @@ import {
   validatePhone,
   validateConfirmPassword
 } from '@/utils/validation';
+import Swal from 'sweetalert2';
 
 interface AuthComponentProps {
   variant?: 'login' | 'signup';
@@ -50,118 +51,180 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
     password: false,
     confirm_password: false,
   });
+  const [showPasswordRequirements, setShowPasswordRequirements] = useState<boolean>(false);
   const { login } = useAuth();
   const router = useRouter();
 
   const headingData = {
     title: isLogin ? 'Login to Account' : 'Create Account',
-    subText: isLogin 
-      ? 'Please enter your email and password to continue' 
+    subText: isLogin
+      ? 'Please enter your email and password to continue'
       : 'Please create your account to continue',
   };
 
-  const formFields: FormSection[] = isLogin 
+  const formFields: FormSection[] = isLogin
     ? [
-        {
+      {
+        id: "email",
+        columnCount: 1,
+        fields: [{
           id: "email",
-          columnCount: 1,
-          fields: [{
-            id: "email",
-            name: "email",
-            label: 'Email Address',
-            type: "email",
-            required: true,
-          }],
-        },
-        {
+          name: "email",
+          label: 'Email Address',
+          type: "email",
+          required: true,
+        }],
+      },
+      {
+        id: "password",
+        columnCount: 1,
+        fields: [{
           id: "password",
-          columnCount: 1,
-          fields: [{
-            id: "password",
-            name: "password",
-            label: 'Password',
-            type: "password",
-            required: true,
-          }],
-        }
-      ]
+          name: "password",
+          label: 'Password',
+          type: "password",
+          required: true,
+        }],
+      }
+    ]
     : [
-        {
+      {
+        id: "first_name",
+        columnCount: 1,
+        fields: [{
           id: "first_name",
-          columnCount: 1,
-          fields: [{
-            id: "first_name",
-            name: "first_name",
-            label: 'First Name',
-            type: "text",
-            required: true,
-          }],
-        },
-        {
+          name: "first_name",
+          label: 'First Name',
+          type: "text",
+          required: true,
+        }],
+      },
+      {
+        id: "last_name",
+        columnCount: 1,
+        fields: [{
           id: "last_name",
-          columnCount: 1,
-          fields: [{
-            id: "last_name",
-            name: "last_name",
-            label: 'Last Name',
-            type: "text",
-            required: true,
-          }],
-        },
-        {
+          name: "last_name",
+          label: 'Last Name',
+          type: "text",
+          required: true,
+        }],
+      },
+      {
+        id: "email",
+        columnCount: 1,
+        fields: [{
           id: "email",
-          columnCount: 1,
-          fields: [{
-            id: "email",
-            name: "email",
-            label: 'Email Address',
-            type: "email",
-            required: true,
-          }],
-        },
-        {
+          name: "email",
+          label: 'Email Address',
+          type: "email",
+          required: true,
+        }],
+      },
+      {
+        id: "password",
+        columnCount: 1,
+        fields: [{
           id: "password",
-          columnCount: 1,
-          fields: [{
-            id: "password",
-            name: "password",
-            label: 'Password',
-            type: "password",
-            required: true,
-          }],
-        },
-        {
+          name: "password",
+          label: 'Password',
+          type: "password",
+          required: true,
+        }],
+      },
+      {
+        id: "confirm_password",
+        columnCount: 1,
+        fields: [{
           id: "confirm_password",
-          columnCount: 1,
-          fields: [{
-            id: "confirm_password",
-            name: "confirm_password",
-            label: 'Confirm Password',
-            type: "password",
-            required: true,
-          }],
-        },
-        {
+          name: "confirm_password",
+          label: 'Confirm Password',
+          type: "password",
+          required: true,
+        }],
+      },
+      {
+        id: "contact_no",
+        columnCount: 1,
+        fields: [{
           id: "contact_no",
-          columnCount: 1,
-          fields: [{
-            id: "contact_no",
-            name: "contact_no",
-            label: 'Phone Number',
-            type: "text",
-            required: true,
-          }],
-        }
-      ];
+          name: "contact_no",
+          label: 'Phone Number',
+          type: "text",
+          required: true,
+        }],
+      }
+    ];
 
   const togglePasswordVisibility = (field: string) => {
     setShowPassword(prev => ({ ...prev, [field]: !prev[field as keyof typeof prev] }));
   };
 
+  const scrollToFirstError = () => {
+    const firstErrorField = Object.keys(fieldErrors)[0];
+    if (firstErrorField) {
+      const element = document.getElementById(firstErrorField);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element?.focus();
+    }
+  };
+
+  const validateField = (name: string, value: string): string | null => {
+    switch (name) {
+      case 'email':
+        if (!value) return 'Email is required';
+        return validateEmail(value) ? 'Please enter a valid email' : null;
+      case 'password':
+        if (!value) return 'Password is required';
+        if (!isLogin) {
+          const requirements = validatePassword(value);
+          setPasswordRequirements(requirements);
+          if (!Object.values(requirements).every(v => v)) {
+            return 'Password does not meet requirements';
+          }
+        }
+        return null;
+      case 'first_name':
+      case 'last_name':
+        if (!value) return `${name.split('_').join(' ')} is required`;
+        return validateName(name.split('_').join(' '), value) ? 'Please enter a valid name' : null;
+      case 'confirm_password':
+        if (!value) return 'Please confirm your password';
+        if (formData.password !== value) return 'Passwords do not match';
+        return null;
+      case 'contact_no':
+        if (!value) return 'Phone number is required';
+        return validatePhone(value) ? 'Please enter a valid phone number' : null;
+      default:
+        return null;
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errors: FieldErrors = {};
+    let isValid = true;
+
+    formFields.forEach(section => {
+      section.fields.forEach(field => {
+        if (field.required) {
+          const error = validateField(field.name, formData[field.name] || '');
+          if (error) {
+            errors[field.name] = error;
+            isValid = false;
+          }
+        }
+      });
+    });
+
+    setFieldErrors(errors);
+    if (!isValid) scrollToFirstError();
+    return isValid;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let sanitizedValue = value;
-    
+
     switch (name) {
       case 'email':
         sanitizedValue = sanitizeEmail(value);
@@ -173,88 +236,44 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
         sanitizedValue = sanitizeInput(value);
     }
 
-    let error = null;
-    
-    if (name === 'first_name' || name === 'last_name') {
-      error = validateName(name === 'first_name' ? 'First name' : 'Last name', sanitizedValue);
-    } else if (name === 'email') {
-      error = validateEmail(sanitizedValue);
-    } else if (name === 'password') {
-      if (isLogin) {
-        error = !sanitizedValue ? 'Password is required' : null;
-      } else {
-        const requirements = validatePassword(sanitizedValue);
-        setPasswordRequirements(requirements);
-        error = Object.values(requirements).every(v => v) ? null : 'Password does not meet requirements';
-        if (formData.confirm_password) {
-          setFieldErrors(prev => ({
-            ...prev,
-            confirm_password: validateConfirmPassword(sanitizedValue, formData.confirm_password)
-          }));
-        }
-      }
-    } else if (name === 'confirm_password') {
-      error = validateConfirmPassword(formData.password || '', sanitizedValue);
-    } else if (name === 'contact_no') {
-      error = validatePhone(sanitizedValue);
-    }
-    
-    setFieldErrors(prev => ({
-      ...prev,
-      [name]: error || ''
-    }));
-    
     setFormData(prev => ({
       ...prev,
       [name]: sanitizedValue
     }));
-  };
 
-  const validateForm = (): boolean => {
-    const errors: FieldErrors = {};
-    let isValid = true;
+    // Validate the field as user types
+    const error = validateField(name, sanitizedValue);
+    setFieldErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
 
-    if (!isLogin) {
-      const firstNameError = validateName('First name', formData.first_name || '');
-      const lastNameError = validateName('Last name', formData.last_name || '');
+    // Special case for password field
+    if (name === 'password') {
+      const requirements = validatePassword(sanitizedValue);
+      setPasswordRequirements(requirements);
       
-      errors.first_name = firstNameError;
-      errors.last_name = lastNameError;
+      // Show requirements if password has value and not all requirements are met
+      setShowPasswordRequirements(!!sanitizedValue && !Object.values(requirements).every(v => v));
       
-      if (firstNameError) isValid = false;
-      if (lastNameError) isValid = false;
-
-      const phoneError = validatePhone(formData.contact_no || '');
-      errors.contact_no = phoneError;
-      if (phoneError) isValid = false;
-
-      const confirmPasswordError = validateConfirmPassword(
-        formData.password || '', 
-        formData.confirm_password || ''
-      );
-      errors.confirm_password = confirmPasswordError;
-      if (confirmPasswordError) isValid = false;
-    }
-
-    const emailError = validateEmail(formData.email || '');
-    errors.email = emailError;
-    if (emailError) isValid = false;
-    
-    if (formData.password) {
-      if (!isLogin) {
-        const requirements = validatePassword(formData.password);
-        setPasswordRequirements(requirements);
-        const passwordError = Object.values(requirements).every(v => v) ? null : 'Password does not meet requirements';
-        errors.password = passwordError;
-        if (passwordError) isValid = false;
+      // Validate confirm password if it exists
+      if (formData.confirm_password) {
+        const confirmPwError = validateField('confirm_password', formData.confirm_password);
+        setFieldErrors(prev => ({
+          ...prev,
+          confirm_password: confirmPwError
+        }));
       }
-    } else {
-      errors.password = 'Password is required';
-      isValid = false;
     }
 
-    setFieldErrors(errors);
-    return isValid;
+    // Special case for confirm password - validate against password
+    if (name === 'confirm_password' && formData.password) {
+      const confirmPwError = validateField('confirm_password', sanitizedValue);
+      setFieldErrors(prev => ({
+        ...prev,
+        confirm_password: confirmPwError
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -265,45 +284,97 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
     setError(null);
 
     try {
-      const payload = isLogin 
-        ? {
-            email: formData.email,
-            password: formData.password,
-            remember: rememberMe
+      localStorage.removeItem('access_token');
+
+      if (isLogin) {
+        const data = await loginUser({
+          email: formData.email,
+          password: formData.password,
+          remember: rememberMe
+        });
+
+        if (!data.access_token || !data.data) {
+          throw new Error('Authentication failed: Invalid response');
+        }
+
+        if (rememberMe) {
+          localStorage.setItem('access_token', data.access_token);
+        } else {
+          sessionStorage.setItem('access_token', data.access_token);
+        }
+
+        const user = await login({
+          ...data,
+          remember: rememberMe
+        });
+
+        if (user) {
+          window.location.href = paths.workload;
+          window.location.reload();
+        }
+      } else {
+        Swal.fire({
+          title: 'Processing...',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
           }
-        : {
-            first_name: formData.first_name,
-            last_name: formData.last_name,
-            email: formData.email,
-            password: formData.password,
-            confirm_password: formData.confirm_password,
-            contact_no: formData.contact_no,
-            customer_type: 1
-          };
+        });
 
-      const data = await authenticateUser(payload, isLogin);
-      
-      if (!data.access_token || !data.data) {
-        throw new Error('Authentication failed: Invalid response');
-      }
-      
-      localStorage.setItem('access_token', data.access_token);
+        await registerUser({
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          email: formData.email,
+          password: formData.password,
+          confirm_password: formData.confirm_password,
+          contact_no: formData.contact_no,
+          customer_type: 1
+        });
 
-      // Wait for login to complete and get user data
-      const user = await login({
-        ...data,
-        remember: isLogin ? rememberMe : false
-      });
+        await Swal.fire({
+          title: 'Success!',
+          text: 'You have successfully registered!',
+          icon: 'success',
+          confirmButtonText: 'OK',
+          timer: 3000,
+          timerProgressBar: true,
+        });
 
-      // Only redirect after successful login and state update
-      if (user) {
-        window.location.href = paths.home;
-        window.location.reload(); // Ensure client-side cache is updated
+        setError(null);
+        router.push(paths.login);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
-      setError(errorMessage);
-      console.error('Authentication error:', err);
+      let errorMessage = 'Registration failed';
+      const backendErrors: FieldErrors = {};
+
+      if (err instanceof Error) {
+        try {
+          const errorResponse = JSON.parse(err.message);
+          
+          if (errorResponse.errors) {
+            Object.keys(errorResponse.errors).forEach(field => {
+              backendErrors[field] = errorResponse.errors[field][0];
+            });
+            
+            setFieldErrors(backendErrors);
+            scrollToFirstError();
+            return;
+          }
+          
+          if (errorResponse.message) {
+            errorMessage = errorResponse.message;
+          }
+        } catch (e) {
+          errorMessage = err.message;
+        }
+      }
+
+      await Swal.fire({
+        title: 'Error!',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -313,9 +384,9 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
     <Login>
       <LoginContainer>
         <Box className="logo">
-          <img 
-            src="/assets/site-logo.svg" 
-            alt="Logo" 
+          <img
+            src="/assets/site-logo.svg"
+            alt="Logo"
             style={{ width: "60%", height: "auto" }}
           />
         </Box>
@@ -324,12 +395,12 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
             title={headingData.title}
             subText={headingData.subText}
           />
-        
+
           <form onSubmit={handleSubmit}>
             {formFields.map((section) => (
               <FormWrapper key={section.id} className='form-wrapper'>
                 {section.fields.map((field) => (
-                  <Box className="form-group" key={field.id}>
+                  <Box className="form-group" key={field.id} sx={{ mb: 3 }}>
                     <Box className="label">
                       <label htmlFor={field.id}>{field.label}</label>
                       {section.forgotButton && (
@@ -338,77 +409,126 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
                         </Link>
                       )}
                     </Box>
-                    
-                    {field.type === 'password' ? (
-                      <Box className="password-input" sx={{ position: 'relative' }}>
+
+                    <Box sx={{ position: 'relative' }}>
+                      {field.type === 'password' ? (
+                        <Box className="password-input" sx={{ position: 'relative' }}>
+                          <input
+                            type={showPassword[field.name as keyof typeof showPassword] ? 'text' : 'password'}
+                            name={field.name}
+                            id={field.id}
+                            required={field.required}
+                            onChange={handleInputChange}
+                            value={formData[field.name] || ''}
+                            style={{
+                              width: '100%',
+                              paddingRight: '40px',
+                              borderColor: fieldErrors[field.name] ? '#ff0000' : undefined,
+                              borderWidth: fieldErrors[field.name] ? '0.3px' : undefined,
+                              backgroundColor: fieldErrors[field.name] ? '#fff0f0' : undefined,
+                              fontWeight: fieldErrors[field.name] ? '500' : undefined
+                            }}
+                          />
+                          <IconButton
+                            size="small"
+                            className='toggle-password'
+                            onClick={() => togglePasswordVisibility(field.name)}
+                            sx={{
+                              position: 'absolute',
+                              right: 8,
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              color: 'action.active',
+                            }}
+                          >
+                            {showPassword[field.name as keyof typeof showPassword] ? (
+                              <VisibilityIcon fontSize="small" />
+                            ) : (
+                              <VisibilityOffIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </Box>
+                      ) : (
                         <input
-                          type={showPassword[field.name as keyof typeof showPassword] ? 'text' : 'password'}
+                          type={field.type}
                           name={field.name}
                           id={field.id}
                           required={field.required}
                           onChange={handleInputChange}
                           value={formData[field.name] || ''}
-                          style={{ width: '100%', paddingRight: '40px' }}
-                        />
-                        <IconButton
-                          size="small"
-                          className='toggle-password'
-                          onClick={() => togglePasswordVisibility(field.name)}
-                          sx={{
-                            position: 'absolute',
-                            right: 8,
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            color: 'action.active',
+                          maxLength={field.name === 'contact_no' ? 11 : undefined}
+                          style={{
+                            borderColor: fieldErrors[field.name] ? '#ff0000' : undefined,
+                            borderWidth: fieldErrors[field.name] ? '2px' : undefined,
+                            backgroundColor: fieldErrors[field.name] ? '#fff0f0' : undefined
                           }}
-                        >
-                          {showPassword[field.name as keyof typeof showPassword] ? (
-                            <VisibilityOffIcon fontSize="small" />
-                          ) : (
-                            <VisibilityIcon fontSize="small" />
-                          )}
-                        </IconButton>
-                      </Box>
-                    ) : (
-                      <input
-                        type={field.type}
-                        name={field.name}
-                        id={field.id}
-                        required={field.required}
-                        onChange={handleInputChange}
-                        value={formData[field.name] || ''}
-                        maxLength={field.name === 'contact_no' ? 11 : undefined}
-                      />
-                    )}
-                    
+                        />
+                      )}
+                    </Box>
+
                     {fieldErrors[field.name] && (
-                      <Typography color="error" variant="caption" component="div">
-                        {fieldErrors[field.name]}
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          color: '#ff0000',
+                          fontSize: '0.75rem',
+                          mt: 0.5,
+                          ml: 1,
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        ⚠️ {fieldErrors[field.name]}
                       </Typography>
                     )}
-                    {field.name === 'password' && !isLogin && (
+
+                    {!isLogin && field.name === 'password' && showPasswordRequirements && (
                       <Box mt={1} ml={1}>
-                        {!passwordRequirements.hasMinLength && (
-                          <Typography variant="caption" component="div" color="text.secondary">
-                            • At least 8 characters
-                          </Typography>
-                        )}
-                        {!passwordRequirements.hasUpperCase && (
-                          <Typography variant="caption" component="div" color="text.secondary">
-                            • At least 1 uppercase letter
-                          </Typography>
-                        )}
-                        {!passwordRequirements.hasLowerCase && (
-                          <Typography variant="caption" component="div" color="text.secondary">
-                            • At least 1 lowercase letter
-                          </Typography>
-                        )}
-                        {!passwordRequirements.hasNumber && (
-                          <Typography variant="caption" component="div" color="text.secondary">
-                            • At least 1 number
-                          </Typography>
-                        )}
+                        <Typography variant="caption" component="div"
+                          sx={{ 
+                            color: passwordRequirements.hasMinLength ? 'green' : 'inherit',
+                            fontWeight: passwordRequirements.hasMinLength ? 'bold' : 'normal'
+                          }}>
+                          {passwordRequirements.hasMinLength ? '✓' : '•'} At least 8 characters
+                        </Typography>
+                        <Typography variant="caption" component="div"
+                          sx={{ 
+                            color: passwordRequirements.hasUpperCase ? 'green' : 'inherit',
+                            fontWeight: passwordRequirements.hasUpperCase ? 'bold' : 'normal'
+                          }}>
+                          {passwordRequirements.hasUpperCase ? '✓' : '•'} At least 1 uppercase letter
+                        </Typography>
+                        <Typography variant="caption" component="div"
+                          sx={{ 
+                            color: passwordRequirements.hasLowerCase ? 'green' : 'inherit',
+                            fontWeight: passwordRequirements.hasLowerCase ? 'bold' : 'normal'
+                          }}>
+                          {passwordRequirements.hasLowerCase ? '✓' : '•'} At least 1 lowercase letter
+                        </Typography>
+                        <Typography variant="caption" component="div"
+                          sx={{ 
+                            color: passwordRequirements.hasNumber ? 'green' : 'inherit',
+                            fontWeight: passwordRequirements.hasNumber ? 'bold' : 'normal'
+                          }}>
+                          {passwordRequirements.hasNumber ? '✓' : '•'} At least 1 number
+                        </Typography>
                       </Box>
+                    )}
+
+                    {!isLogin && field.name === 'confirm_password' && formData.confirm_password && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: formData.password === formData.confirm_password ? 'green' : 'red',
+                          fontSize: '0.75rem',
+                          mt: 0.5,
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        {formData.password === formData.confirm_password
+                          ? '✓ Passwords match'
+                          : '✗ Passwords do not match'}
+                      </Typography>
                     )}
                   </Box>
                 ))}

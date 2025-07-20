@@ -36,7 +36,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const clearAuthCookies = useCallback(() => {
     document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     document.cookie = 'user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    document.cookie = 'XSRF-TOKEN=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   }, [])
 
   const updateUser = useCallback((userData: User) => {
@@ -78,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoggingOut(false);
     }
-  }, []);
+  }, [clearAuthCookies]);
 
   const login = useCallback(async (response: AuthResponse & { remember?: boolean }): Promise<User | null> => {
     try {
@@ -86,6 +85,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('Invalid authentication response');
       }
 
+      // Clear existing tokens
+      localStorage.removeItem('access_token');
+      sessionStorage.removeItem('access_token');
+
+      // Store token based on remember me choice
+      if (response.remember) {
+        localStorage.setItem('access_token', response.access_token);
+        sessionStorage.setItem('access_token', response.access_token);
+      }
+
+      localStorage.setItem('access_token', response.access_token);
       sessionStorage.setItem('access_token', response.access_token);
       document.cookie = `authToken=${response.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
 
@@ -107,35 +117,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem('user');
       throw error;
     }
-  }, []);
+  }, [setAuthCookies]);
 
   const initializeAuth = useCallback(async () => {
     setLoading(true);
     try {
       // Check localStorage for persisted user
+      const rememberMeToken = localStorage.getItem('access_token');
       const storedUser = localStorage.getItem('user');
       const sessionToken = sessionStorage.getItem('access_token');
+      const token = sessionToken || rememberMeToken;
 
-      if (storedUser && sessionToken) {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          if (parsedUser?.id) {
-            // Verify with backend if needed
-            const currentUser = await fetchCurrentUser();
-            console.log('Current user:', currentUser);
+      if (token) {
+        // Check localStorage for persisted user
+        const storedUser = localStorage.getItem('user');
 
-            if (currentUser?.id === parsedUser.id) {
-              setUser(currentUser);
-              setIsAuthenticated(true);
+        if (storedUser) {
+          try {
+            const parsedUser = JSON.parse(storedUser);
+            if (parsedUser?.id) {
+              // Verify with backend if needed
+              const currentUser = await fetchCurrentUser();
+              console.log('Current user:', currentUser);
 
-              // Optionally update localStorage with corrected user data
-              localStorage.setItem('user', JSON.stringify(currentUser));
+              if (currentUser?.id === parsedUser.id) {
+                setUser(currentUser);
+                setIsAuthenticated(true);
 
-              return;
+                // Optionally update localStorage with corrected user data
+                localStorage.setItem('user', JSON.stringify(currentUser));
+
+                // Set cookie based on where token came from
+                if (currentUser && currentUser.user_role && isUserRole(currentUser.user_role)) {
+                  if (rememberMeToken) {
+                    setAuthCookies(token, currentUser.user_role, true);
+                  } else {
+                    setAuthCookies(token, currentUser.user_role, false);
+                  }
+                } else {
+                  console.error('Invalid user role:', currentUser?.user_role);
+                  throw new Error('Invalid user role');
+                }
+
+                return;
+              }
             }
+          } catch (e) {
+            console.error('Failed to parse stored user', e);
           }
-        } catch (e) {
-          console.error('Failed to parse stored user', e);
         }
       }
 
@@ -149,7 +178,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setAuthCookies]);
 
   useEffect(() => {
     initializeAuth();

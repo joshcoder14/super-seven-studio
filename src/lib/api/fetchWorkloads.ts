@@ -67,7 +67,7 @@ export async function fetchWorkloads(
   lastPage: number;
 }> {
   try {
-    const accessToken = sessionStorage.getItem('access_token');
+    const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('No access token found');
 
     const headers = {
@@ -133,7 +133,7 @@ export async function fetchWorkloads(
 }
 
 export const fetchAvailableEmployees = async (workloadId: string): Promise<Employee[]> => {
-    const accessToken = sessionStorage.getItem('access_token');
+    const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('No access token found');
 
     const response = await fetch(`/api/workload/${workloadId}/employees`, {
@@ -152,7 +152,7 @@ export const fetchAvailableEmployees = async (workloadId: string): Promise<Emplo
 };
 
 export const fetchWorkloadDetailsById = async (workloadId: string): Promise<WorkloadApiItem> => {
-  const accessToken = sessionStorage.getItem('access_token');
+  const accessToken = localStorage.getItem('access_token');
   if (!accessToken) throw new Error('No access token found');
 
   const response = await fetch(`/api/workload/${workloadId}`, {
@@ -184,7 +184,7 @@ export async function fetchEmployeeWorkloads(
 }> {
   try {
     const csrfToken = await ensureCsrfToken();
-    const accessToken = sessionStorage.getItem('access_token');
+    const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('No access token found');
 
     const headers = {
@@ -311,7 +311,7 @@ export const updateEmployeeWorkloadStatus = async (
   }
 ): Promise<void> => {
   const csrfToken = await ensureCsrfToken();
-  const accessToken = sessionStorage.getItem('access_token');
+  const accessToken = localStorage.getItem('access_token');
   if (!accessToken) throw new Error('No access token found');
   
   const form = new FormData();

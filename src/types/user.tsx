@@ -65,3 +65,20 @@ export interface AuthPayload {
   contact_no?: string;
   customer_type?: number;
 }
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+  remember: boolean;
+}
+
+export interface RegisterPayload {
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  confirm_password: string;
+  contact_no: string;
+  customer_type: number;
+}
+

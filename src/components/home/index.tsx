@@ -240,7 +240,7 @@ export function HomeContent(): React.JSX.Element {
                     </Box>
                 </Modal>
 
-                {/* <FeedbackPost /> */}
+                <FeedbackPost />
             </ImageContainer>
         </HomeContentContainer>
     );

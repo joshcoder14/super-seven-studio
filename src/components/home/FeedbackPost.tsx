@@ -11,7 +11,7 @@ import Preloader from '../Preloader';
 
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Autoplay, EffectFade } from 'swiper/modules';
+import { Pagination, Autoplay, EffectFade } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/autoplay';
@@ -27,7 +27,7 @@ export function FeedbackPost() {
             try {
                 const response = await fetchFeedbacks();
                 // Transform the API response to match MappedFeedbackItem
-                const feedbacks = response.data.data.map((item: any) => ({
+                const feedbacks = response.data.map((item: any) => ({
                     id: item.id.toString(),
                     event_name: item.event_name,
                     customer_name: item.customer_name || 'Anonymous',
@@ -36,6 +36,7 @@ export function FeedbackPost() {
                     feedback_status: item.feedback_status,
                     feedback_detail: item.feedback_detail
                 }));
+                console.log('Feedbacks:', feedbacks);
                 setPostedFeedbacks(feedbacks);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to load feedbacks');
@@ -72,17 +73,16 @@ export function FeedbackPost() {
                 <FeedbackList>
                     {postedFeedbacks.length > 0 ? (
                         <Swiper
-                            modules={[Navigation, Autoplay, EffectFade]}
+                            modules={[Pagination, Autoplay]}
                             spaceBetween={30}
-                            slidesPerView={3}
+                            slidesPerView={1}
                             loop={true}
-                            effect={'fade'}
                             speed={2000}
                             autoplay={{
                                 delay: 5000,
                                 disableOnInteraction: false,
                             }}
-                            navigation
+                            pagination={true}
                             breakpoints={{
                                 320: {
                                     slidesPerView: 1,

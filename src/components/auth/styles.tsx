@@ -160,7 +160,7 @@ export const LoginWrapper = styled(Box)`
         height: 100%;
         display: flex;
         flex-direction: column;
-        gap: 30px;
+        gap: 20px;
         
         button {
             display: flex;

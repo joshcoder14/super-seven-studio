@@ -19,7 +19,7 @@ export default function CheckboxComponent({
   checked = false,
   onChange,
 }: CheckboxComponentProps) {
-    const [isChecked, setIsChecked] = useState(true);
+    const [isChecked, setIsChecked] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newChecked = e.target.checked;
