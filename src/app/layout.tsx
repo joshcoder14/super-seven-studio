@@ -9,10 +9,10 @@ import { LoadingProvider } from '@/context/LoadingContext';
 
 // config.autoAddCss = false
 
-export const metadata: Metadata = {
-  title: "SUPER SEVEN STUDIO",
-  description: "Super Seven Studio",
-};
+// export const metadata: Metadata = {
+//   title: "SUPER SEVEN STUDIO",
+//   description: "Super Seven Studio",
+// };
 
 export default function RootLayout({
   children,

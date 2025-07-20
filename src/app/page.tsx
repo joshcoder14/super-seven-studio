@@ -3,6 +3,12 @@ import { AdminHome } from '@/sections/adminHome';
 import { Box } from '@mui/material';
 import { NavBar } from '@/components/SideBar';
 import { TopBar } from '@/components/topbar';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "Dashboard | Super Seven Studio",
+  description: "Super Seven Studio",
+};
 
 export default function Home() {
 

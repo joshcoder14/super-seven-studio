@@ -4,6 +4,12 @@ import { Box } from '@mui/material';
 import { NavBar } from '@/components/SideBar';
 import { TopBar } from '@/components/topbar';
 import Preloader from '@/components/Preloader';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: "Package | Super Seven Studio",
+    description: "Super Seven Studio",
+};
 
 export default function Package() {
     return (
