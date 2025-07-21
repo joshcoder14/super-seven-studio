@@ -31,7 +31,7 @@ export function AccountComponent(): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValue, setFilterValue] = useState('3');
   const [error, setError] = useState<string | null>(null);
-  const [showInactive, setShowInactive] = useState(true);
+  const [showInactive, setShowInactive] = useState(false);
   const [cache, setCache] = useState<Record<string, ApiResponse>>({});
   
   // Initialize from URL parameters

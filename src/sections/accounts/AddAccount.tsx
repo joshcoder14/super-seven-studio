@@ -299,7 +299,7 @@ export function RegisterAccount({
                 });
 
                 if (!isConfirmed) {
-                    router.push(paths.accounts);
+                    window.location.href = paths.accounts;
                 } else {
                     // Reset form for new entry
                     setFormData({
