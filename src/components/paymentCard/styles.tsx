@@ -96,7 +96,7 @@ export const PaymentCard = styled(Box)`
         padding: 0;
         padding-bottom: 30px;
 
-        h2 {
+        h1 {
             font-family: Nunito Sans;
             font-weight: 700;
             font-size: 18px;

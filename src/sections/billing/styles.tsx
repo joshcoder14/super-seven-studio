@@ -4,7 +4,7 @@ export const TransactionWrapper = styled(Box)`
     max-width: 1640px;
     width: 100%;
     height: auto;
-    margin-bottom: 30px;
+    margin-bottom: 150px;
 `;
 
 export const BillingDetails = styled(Box)`
@@ -27,8 +27,13 @@ export const BillingDetails = styled(Box)`
 
 export const BillingPaymentContainer = styled(Box)`
     width: 100%;
-    height: auto;
+    height: 100%;
     padding: 0 30px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-y: scroll;
+    scrollbar-width: none;
 `;
 
 export const YearSelector = styled(Box)`

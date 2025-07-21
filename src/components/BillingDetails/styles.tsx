@@ -57,7 +57,7 @@ export const Assessment = styled(Box)`
     .heading-component {
         padding: 0 30px;
 
-        h2 {
+        h1 {
             font-size: 18px;
             color: #2BB673;
         }
@@ -109,7 +109,7 @@ export const DetailsContent = styled(Box)`
     .heading-component {
         padding: 40px 60px 0 60px;
 
-        h2 {
+        h1 {
             font-family: Nunito Sans;
             font-weight: 700;
             font-size: 21px;

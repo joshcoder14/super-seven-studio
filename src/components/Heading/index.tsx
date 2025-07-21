@@ -55,6 +55,17 @@ export function HeadingComponent(): React.JSX.Element {
     );
   }
 
+  //Check if path starts with /workload
+  if (pathname.startsWith(paths.billing)) {
+    return (
+      <Heading className="heading">
+        <Typography component="h2" className="title">
+          {pathTitles[paths.billing]}
+        </Typography>
+      </Heading>
+    );
+  }
+
   // Find the matching path or use the current pathname as fallback
   const currentPath = Object.values(paths).find(path => path === pathname) || paths.home;
   const title = pathTitles[currentPath] || "Home";

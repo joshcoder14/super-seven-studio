@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Typography, Alert, CircularProgress } from '@mui/material';
 import { BillingDetailsComponent, AssessmentSection } from '@/components/BillingDetails';
 import { HeadingComponent } from '@/components/Heading';
@@ -12,40 +12,72 @@ import { fetchBillingDetails } from '@/lib/api/fetchBilling';
 import { useAuth } from '@/context/AuthContext';
 import { useLoading } from '@/context/LoadingContext';
 
+// Create a simple cache outside the component
+const billingCache = new Map<string, Billing>();
+
 export default function BillingPayment({ billingId }: BillingDetailsProps): React.JSX.Element {
     const { showLoader, hideLoader } = useLoading();
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const [billing, setBilling] = useState<Billing | null>(null);
     const [error, setError] = useState('');
     const { user } = useAuth();
-    const isClient = user?.user_role === 'Client';
-    const isPartial = billing?.status.toLowerCase() === 'partial';
     
+    // Memoize derived values
+    const isClient = useMemo(() => user?.user_role === 'Client', [user]);
+    const isPartial = useMemo(() => billing?.status.toLowerCase() === 'partial', [billing]);
+
     const loadBillingDetails = useCallback(async () => {
+        // Check cache first
+        if (billingCache.has(billingId)) {
+            const cachedData = billingCache.get(billingId);
+            setBilling(cachedData || null);
+            setIsLoading(false);
+            return;
+        }
+
         try {
+            setIsLoading(true);
             showLoader();
             const data = await fetchBillingDetails(billingId);
+            
+            // Update cache
+            billingCache.set(billingId, data);
+            
             setBilling(data);
             setError('');
         } catch (err) {
             setError('Failed to load billing details');
             console.error(err);
         } finally {
-            setIsInitialLoad(false);
+            setIsLoading(false);
             hideLoader();
         }
     }, [billingId, showLoader, hideLoader]);
 
-    useEffect(() => {
-        // Simulate initial load (you can remove this if you want immediate API call)
-        const timer = setTimeout(() => {
-            loadBillingDetails();
-        }, 300);
+    // Invalidate cache and refetch when needed
+    const refreshBillingDetails = useCallback(async () => {
+        billingCache.delete(billingId); // Clear cache entry
+        await loadBillingDetails();
+    }, [billingId, loadBillingDetails]);
 
-        return () => clearTimeout(timer);
+    // Fetch data only when needed
+    useEffect(() => {
+        let isMounted = true;
+        
+        const fetchData = async () => {
+            if (isMounted) {
+                await loadBillingDetails();
+            }
+        };
+
+        fetchData();
+
+        return () => {
+            isMounted = false;
+        };
     }, [loadBillingDetails]);
-    
-    if (isInitialLoad) {
+
+    if (isLoading) {
         return (
             <BillingPaymentContainer>
                 <HeadingComponent />
@@ -81,19 +113,19 @@ export default function BillingPayment({ billingId }: BillingDetailsProps): Reac
             <HeadingComponent />
             <BillingDetails>
                 <BillingDetailsComponent billing={billing} />
-                {!isClient ? (
+                {!isClient && (
                     <PaymentCardComponent 
                         billing={billing} 
                         billingId={billingId} 
-                        onPaymentSuccess={loadBillingDetails} 
+                        onPaymentSuccess={refreshBillingDetails} 
                     />
-                ): null}
-                {isClient ? (
+                )}
+                {isClient && (
                     <AssessmentSection billing={billing} isPartial={isPartial} />
-                ) : null}
+                )}
             </BillingDetails>
             <TransactionWrapper>
-                <TransactionTable transactions={billing?.transactions} />
+                <TransactionTable transactions={billing.transactions} />
             </TransactionWrapper>
         </BillingPaymentContainer>
     );
