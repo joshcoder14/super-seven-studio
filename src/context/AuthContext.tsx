@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
-    setAuthCookies('', userData.user_role);
+    // setAuthCookies('', userData.user_role);
   }, [setAuthCookies])
 
   // Simplified cookie handling - backend should manage sessions
@@ -138,7 +138,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (parsedUser?.id) {
               // Verify with backend if needed
               const currentUser = await fetchCurrentUser();
-              console.log('Current user:', currentUser);
 
               if (currentUser?.id === parsedUser.id) {
                 setUser(currentUser);

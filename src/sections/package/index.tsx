@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { HomeContainer } from '@/sections/adminHome/styles';
 import { HeadingComponent } from '@/components/Heading';
 import { SearchBox } from '@/components/Search';
@@ -8,21 +8,21 @@ import { PackageCardComponent } from '@/components/PackageCard';
 import { ActionButton, LeftButton, RightButton } from '@/sections/settings/styles';
 import { AddAccount } from '@/sections/accounts/styles';
 import { PackageContent, PackageWrapper } from './styles';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { fetchPackages, fetchAddons, deletePackage, deleteAddon } from '@/lib/api/fetchPackage';
 import DataTable from './DataTable';
 import { ModalComponent } from '@/components/Modal';
 import Swal from 'sweetalert2'; 
 import { useAuth } from '@/context/AuthContext';
 import { CustomTablePagination } from '@/components/TablePagination';
-import { is } from 'date-fns/locale';
+import { useLoading } from '@/context/LoadingContext';
 
 export function PackageHome(): React.JSX.Element {
+    const { showLoader, hideLoader } = useLoading();
     const [activeTab, setActiveTab] = useState<'package' | 'add-ons'>('package');
     const [searchTerm, setSearchTerm] = useState('');
     const [packageData, setPackageData] = useState<any[]>([]);
     const [addonsData, setAddonsData] = useState<any[]>([]);
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState<'package' | 'addon'>('package');
@@ -38,13 +38,37 @@ export function PackageHome(): React.JSX.Element {
     const [addonsRowsPerPage, setAddonsRowsPerPage] = useState(10);
     const [addonsTotal, setAddonsTotal] = useState(0);
 
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [isTableLoading, setIsTableLoading] = useState(false);
+    const [cache, setCache] = useState<Record<string, { data: any[], total: number }>>({});
+
     const { user, isLoggingOut } = useAuth();
     const isClient = user?.user_role === 'Client';
 
     const fetchData = useCallback(async () => {
+        const cacheKey = `${activeTab}-${searchTerm}-${
+            activeTab === 'package' ? packagePage : addonsPage
+        }-${activeTab === 'package' ? packageRowsPerPage : addonsRowsPerPage}`;
+        
+        // Return cached data if available (except for initial load)
+        if (cache[cacheKey] && !isInitialLoad) {
+            if (activeTab === 'package') {
+                setPackageData(cache[cacheKey].data);
+                setPackageTotal(cache[cacheKey].total);
+            } else {
+                setAddonsData(cache[cacheKey].data);
+                setAddonsTotal(cache[cacheKey].total);
+            }
+            return;
+        }
+
         try {
-            setLoading(true);
-            setError(null);
+            // Show full loader only for initial load or filter changes
+            if (isInitialLoad || (activeTab === 'package' ? packagePage === 1 : addonsPage === 1)) {
+                showLoader();
+            } else {
+                setIsTableLoading(true);
+            }
             
             if (activeTab === 'package') {
                 const response = await fetchPackages(
@@ -62,8 +86,16 @@ export function PackageHome(): React.JSX.Element {
                 
                 if (!isClient && response?.data?.meta) {
                     setPackageTotal(response.data.meta.total);
-                    // setPackageLastPage(response.data.meta.last_page);
                 }
+
+                // Update cache
+                setCache(prev => ({
+                    ...prev,
+                    [cacheKey]: {
+                        data,
+                        total: response?.data?.meta?.total || 0
+                    }
+                }));
             } else {
                 const response = await fetchAddons(
                     searchTerm, 
@@ -80,14 +112,27 @@ export function PackageHome(): React.JSX.Element {
                 
                 if (!isClient && response?.data?.meta) {
                     setAddonsTotal(response.data.meta.total);
-                    // setAddonsLastPage(response.data.meta.last_page);
                 }
+
+                // Update cache
+                setCache(prev => ({
+                    ...prev,
+                    [cacheKey]: {
+                        data,
+                        total: response?.data?.meta?.total || 0
+                    }
+                }));
             }
+            setError(null);
         } catch (err) {
             console.error('Error fetching data:', err);
             setError('Failed to fetch data');
         } finally {
-            setLoading(false);
+            if (isInitialLoad) {
+                setIsInitialLoad(false);
+            }
+            setIsTableLoading(false);
+            hideLoader();
         }
     }, [
         activeTab, 
@@ -97,19 +142,21 @@ export function PackageHome(): React.JSX.Element {
         packageRowsPerPage,
         addonsPage,
         addonsRowsPerPage,
-        isLoggingOut
+        isLoggingOut,
+        isInitialLoad,
+        cache,
+        showLoader,
+        hideLoader
     ]);
 
+    // Debounced API call effect
     useEffect(() => {
-        fetchData();
-    }, [
-        activeTab, 
-        fetchData,
-        packagePage,
-        packageRowsPerPage,
-        addonsPage,
-        addonsRowsPerPage
-    ]);
+        const timer = setTimeout(() => {
+            fetchData();
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [fetchData]);
 
     // Reset to first page when filters change
     useEffect(() => {
@@ -117,25 +164,27 @@ export function PackageHome(): React.JSX.Element {
         setAddonsPage(1);
     }, [searchTerm, activeTab]);
 
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
-    };
+    }, []);
 
-    const handleOpenModal = (item: any = null) => {
+    const handleOpenModal = useCallback((item: any = null) => {
         setCurrentItem(item);
         setModalType(activeTab === 'package' ? 'package' : 'addon');
         setIsModalOpen(true);
-    };
+    }, [activeTab]);
 
-    const handleCloseModal = () => {
+    const handleCloseModal = useCallback(() => {
         setIsModalOpen(false);
-    };
+    }, []);
 
-    const handleSuccess = () => {
+    const handleSuccess = useCallback(() => {
+        // Invalidate cache and refetch
+        setCache({});
         fetchData();
-    };
+    }, [fetchData]);
 
-    const handleDelete = async (item: any) => {
+    const handleDelete = useCallback(async (item: any) => {
         const result = await Swal.fire({
             title: 'Are you sure?',
             text: `You are about to delete this ${activeTab === 'package' ? 'package' : 'add-on'}.`,
@@ -156,6 +205,8 @@ export function PackageHome(): React.JSX.Element {
 
         try {
             setIsDeleting(true);
+            showLoader();
+            
             activeTab === 'package' 
                 ? await deletePackage(item.id) 
                 : await deleteAddon(item.id);
@@ -168,6 +219,8 @@ export function PackageHome(): React.JSX.Element {
                 customClass: { popup: 'custom-swal-popup' }
             });
             
+            // Invalidate cache and refetch
+            setCache({});
             fetchData();
         } catch (err) {
             console.error('Delete error:', err);
@@ -180,40 +233,41 @@ export function PackageHome(): React.JSX.Element {
             });
         } finally {
             setIsDeleting(false);
+            hideLoader();
         }
-    };
+    }, [activeTab, fetchData, showLoader, hideLoader]);
 
-    const handlePackagePageChange = (
+    const handlePackagePageChange = useCallback((
         event: React.MouseEvent<HTMLButtonElement> | null, 
         newPage: number
     ) => {
         setPackagePage(newPage + 1);
-    };
+    }, []);
 
-    const handlePackageRowsPerPageChange = (
+    const handlePackageRowsPerPageChange = useCallback((
         event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const newRowsPerPage = parseInt(event.target.value, 10);
         setPackageRowsPerPage(newRowsPerPage);
         setPackagePage(1);
-    };
+    }, []);
 
-    const handleAddonsPageChange = (
+    const handleAddonsPageChange = useCallback((
         event: React.MouseEvent<HTMLButtonElement> | null, 
         newPage: number
     ) => {
         setAddonsPage(newPage + 1);
-    };
+    }, []);
 
-    const handleAddonsRowsPerPageChange = (
+    const handleAddonsRowsPerPageChange = useCallback((
         event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const newRowsPerPage = parseInt(event.target.value, 10);
         setAddonsRowsPerPage(newRowsPerPage);
         setAddonsPage(1);
-    };
+    }, []);
 
-    const tableConfig = {
+    const tableConfig = useMemo(() => ({
         package: {
             headers: ['Package Name', 'Price', 'Details', 'Action'],
             data: packageData,
@@ -226,17 +280,12 @@ export function PackageHome(): React.JSX.Element {
             noDataText: 'No add-ons found',
             type: 'addon' as const
         }
-    };
+    }), [packageData, addonsData]);
 
     // Get the current data to display based on active tab and user type
-    const getCurrentData = () => {
-        if (isClient) {
-            return activeTab === 'package' ? packageData : addonsData;
-        }
+    const currentData = useMemo(() => {
         return activeTab === 'package' ? packageData : addonsData;
-    };
-
-    const currentData = getCurrentData();
+    }, [activeTab, packageData, addonsData]);
 
     return (
         <HomeContainer>
@@ -283,13 +332,13 @@ export function PackageHome(): React.JSX.Element {
                         <>
                             <DataTable
                                 {...tableConfig[activeTab]}
-                                loading={loading || isDeleting}
+                                isLoading={isTableLoading || isDeleting}
                                 onEdit={handleOpenModal}
                                 onDelete={handleDelete}
                             />
                             
                             {/* Pagination for package tab */}
-                            {activeTab === 'package' && !isClient && (
+                            {activeTab === 'package' && (
                                 <CustomTablePagination
                                     count={packageTotal}
                                     rowsPerPage={packageRowsPerPage}
@@ -300,7 +349,7 @@ export function PackageHome(): React.JSX.Element {
                             )}
                             
                             {/* Pagination for addons tab */}
-                            {activeTab === 'add-ons' && !isClient && (
+                            {activeTab === 'add-ons' && (
                                 <CustomTablePagination
                                     count={addonsTotal}
                                     rowsPerPage={addonsRowsPerPage}
@@ -314,9 +363,9 @@ export function PackageHome(): React.JSX.Element {
                 </Box>
             ) : (
                 <PackageWrapper>
-                    {loading ? (
+                    {isTableLoading ? (
                         <Box display="flex" justifyContent="center" alignItems="center" height={200}>
-                            <CircularProgress />
+                            <Typography>Loading...</Typography>
                         </Box>
                     ) : error ? (
                         <Box display="flex" justifyContent="center" alignItems="center" height={200}>

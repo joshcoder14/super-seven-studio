@@ -143,7 +143,7 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                 setBookingDetails(details);
                 setLink(details.link || '');
                 setCompletionDate(
-                    details.expected_completion_date ? dayjs(details.expected_completion_date) : null
+                    details.completion_date ? dayjs(details.completion_date) : null
                 );
 
                 const numericStatus = statusStringToNumberMap[details.booking_workload_status] || 0;
@@ -185,7 +185,6 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
 
     const formatDateForBackend = (date: dayjs.Dayjs | null): string | null => {
         if (!date) return null;
-        // Use ISO format that backend expects
         return date.format('YYYY-MM-DD');
     };
 
@@ -235,7 +234,7 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                 });
             } else {
                 await updateWorkloadAssignment(eventData.id, {
-                    expected_completion_date: formatDateForBackend(completionDate),
+                    completion_date: formatDateForBackend(completionDate),
                     deliverable_status: selectedStatus,
                     link: link || '',
                     user_id: selectedEmployeeIds
@@ -329,15 +328,57 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                     
                     {isStatusDropdownOpen && (
                         <Box className="dropdown-list">
-                            {statusOptions.map((status) => (
-                                <Box
-                                    className="row status-option"
-                                    key={status.id}
-                                    onClick={() => handleStatusSelect(status.value)}
-                                >
-                                    <Typography component="span">{status.name}</Typography>
-                                </Box>
-                            ))}
+                            {statusOptions.map((status) => {
+                                // Determine if the option should be disabled
+                                let disabled = false;
+                                
+                                // Current status is Unassigned - only allow next status (Scheduled)
+                                if (selectedStatus === 0) {
+                                    disabled = status.value !== 1 && status.value !== 0;
+                                }
+                                // Current status is Scheduled - only allow Uploaded or back to Unassigned
+                                else if (selectedStatus === 1) {
+                                    disabled = status.value !== 2 && status.value !== 0;
+                                }
+                                // Current status is Uploaded - only allow For Edit or back to Scheduled
+                                else if (selectedStatus === 2) {
+                                    disabled = status.value !== 3 && status.value !== 1;
+                                }
+                                // Current status is For Edit - only allow Editing or back to Uploaded
+                                else if (selectedStatus === 3) {
+                                    disabled = status.value !== 4 && status.value !== 2;
+                                }
+                                // Current status is Editing - only allow For Release or back to For Edit
+                                else if (selectedStatus === 4) {
+                                    disabled = status.value !== 5 && status.value !== 3;
+                                }
+                                // Current status is For Release - only allow Completed or back to Editing
+                                else if (selectedStatus === 5) {
+                                    disabled = status.value !== 6 && status.value !== 4;
+                                }
+                                // Current status is Completed - all options disabled except itself
+                                else if (selectedStatus === 6) {
+                                    disabled = status.value !== 6;
+                                }
+
+                                return (
+                                    <Box
+                                        className={`row status-option ${disabled ? 'disabled' : ''}`}
+                                        key={status.id}
+                                        onClick={() => !disabled && handleStatusSelect(status.value)}
+                                        sx={{
+                                            opacity: disabled ? 0.5 : 1,
+                                            pointerEvents: disabled ? 'none' : 'auto',
+                                            cursor: disabled ? 'not-allowed' : 'pointer',
+                                            '&:hover': {
+                                                backgroundColor: disabled ? 'inherit' : '#f5f5f5'
+                                            }
+                                        }}
+                                    >
+                                        <Typography component="span">{status.name}</Typography>
+                                    </Box>
+                                );
+                            })}
                         </Box>
                     )}
                 </StatusWrapper>
@@ -429,7 +470,6 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                         minDate={dayjs().add(1, 'day')}
                         label=""
                         required
-                        disabled
                     />
                 </ReleaseDateWrapper>
 
@@ -466,7 +506,7 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                     <Button 
                         variant="contained" 
                         onClick={handleUpdate}
-                        disabled={loading || selectedStatus === 0}
+                        disabled={loading || selectedStatus === 0 || selectedStatus === 6}
                         sx={{
                             backgroundColor: selectedStatus === 0 ? '#AAAAAA' : '#2BB673',
                             pointerEvents: selectedStatus === 0 ? 'none' : 'auto',

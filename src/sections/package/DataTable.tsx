@@ -17,7 +17,7 @@ import { formatCurrency } from '@/utils/billing';
 
 interface DataTableProps {
   data: any[];
-  loading: boolean;
+  isLoading: boolean;
   headers: string[];
   type: 'package' | 'addon';
   noDataText: string;
@@ -27,7 +27,7 @@ interface DataTableProps {
 
 export default function DataTable({ 
   data, 
-  loading, 
+  isLoading, 
   headers, 
   type,
   noDataText,
@@ -69,7 +69,7 @@ export default function DataTable({
           </TableRow>
         </TableHead>
         <TableBody>
-          {loading ? (
+          {isLoading ? (
             Array.from({ length: 3 }).map((_, index) => (
               <TableRow key={`skeleton-${index}`}>
                 <TableCell><Skeleton variant="text" /></TableCell>

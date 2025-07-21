@@ -21,6 +21,7 @@ import { paths } from '@/paths';
 import Swal from 'sweetalert2';
 import { FormSection, FormField } from '@/types/field';
 import { addEmployee, updateEmployee, updateClient } from '@/lib/api/fetchAccount';
+import { useLoading } from '@/context/LoadingContext';
 
 interface RegisterAccountProps {
     account?: User | null;
@@ -37,9 +38,10 @@ export function RegisterAccount({
     onSuccess,
     existingOwners = []
 }: RegisterAccountProps): React.JSX.Element {
+    const { showLoader, hideLoader } = useLoading();
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();
     const ownerExists = existingOwners.some(owner => owner.user_type === '3');
     const isClient = account?.user_type === '1';
@@ -217,7 +219,8 @@ export function RegisterAccount({
             return;
         }
 
-        setLoading(true);
+        setIsSubmitting(true);
+        showLoader();
 
         try {
             let result;
@@ -325,7 +328,8 @@ export function RegisterAccount({
                 confirmButtonColor: '#d33',
             });
         } finally {
-            setLoading(false);
+            setIsSubmitting(false);
+            hideLoader();
         }
     };
 
@@ -410,7 +414,7 @@ export function RegisterAccount({
                                 variant="outlined" 
                                 className="btn cancel"
                                 onClick={onBackClick}
-                                disabled={loading}
+                                disabled={isSubmitting}
                             >
                             Cancel
                             </Button>
@@ -418,10 +422,10 @@ export function RegisterAccount({
                                 variant="contained" 
                                 className="btn register"
                                 type="submit"
-                                disabled={loading}
-                                startIcon={loading ? <CircularProgress size={20} /> : null}
+                                disabled={isSubmitting}
+                                startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
                             >
-                            {isEditMode ? "Update" : "Register"}
+                            {isSubmitting ? (isEditMode ? "Updating..." : "Registering...") : (isEditMode ? "Update" : "Register")}
                             </Button>
                         </Box>
                     </form>

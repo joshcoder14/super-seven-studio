@@ -35,7 +35,7 @@ export const fetchReports = async ({
     }
 };
 
-export const fetchBookingData = async (year: number) => {
+export const fetchBookingReport = async (year: number) => {
     try {
 
         const accessToken = localStorage.getItem('access_token');
@@ -61,7 +61,7 @@ export const fetchBookingData = async (year: number) => {
     }
 };
 
-export const fetchPackageData = async (year: number, month?: number) => {
+export const fetchPackageReport = async (year: number, month?: number) => {
     try {
         const accessToken = localStorage.getItem('access_token');
         if (!accessToken) throw new Error('No access token found');

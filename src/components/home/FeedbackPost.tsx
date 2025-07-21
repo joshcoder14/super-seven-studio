@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { FeedbackPostWrapper, Heading, FeedbackContent, FeedbackList, PostCard } from './styles';
-import { Typography, Box } from '@mui/material';
+import { Typography, Box, CircularProgress } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuoteRight } from '@fortawesome/free-solid-svg-icons';
 import { fetchFeedbacks } from '@/lib/api/fetchFeedback';
 import { MappedFeedbackItem } from '@/types/feedback';
 import Preloader from '../Preloader';
+import { useLoading } from '@/context/LoadingContext';
 
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -18,12 +19,14 @@ import 'swiper/css/autoplay';
 import 'swiper/css/effect-fade';
 
 export function FeedbackPost() {
+    const { showLoader, hideLoader } = useLoading();
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [postedFeedbacks, setPostedFeedbacks] = useState<MappedFeedbackItem[]>([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const loadFeedbacks = async () => {
+            showLoader();
             try {
                 const response = await fetchFeedbacks();
                 // Transform the API response to match MappedFeedbackItem
@@ -36,22 +39,30 @@ export function FeedbackPost() {
                     feedback_status: item.feedback_status,
                     feedback_detail: item.feedback_detail
                 }));
-                console.log('Feedbacks:', feedbacks);
+                
                 setPostedFeedbacks(feedbacks);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to load feedbacks');
             } finally {
-                setLoading(false);
+                setIsInitialLoad(false);
+                hideLoader();
             }
         };
 
-        loadFeedbacks();
-    }, []);
+        // Simulate initial load (you can remove this if you want immediate API call)
+        const timer = setTimeout(() => {
+            loadFeedbacks();
+        }, 300);
 
-    if (loading) {
+        return () => clearTimeout(timer);
+    }, [showLoader, hideLoader]);
+
+    if (isInitialLoad) {
         return (
             <FeedbackPostWrapper>
-                <Preloader />
+                <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+                    <CircularProgress />
+                </Box>
             </FeedbackPostWrapper>
         );
     }

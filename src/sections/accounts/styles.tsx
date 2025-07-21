@@ -73,7 +73,7 @@ export const SearchBox = styled(Box)`
     }
 `;
 
-export const AddAccount = styled(Box)`
+export const AddAccount = styled('button')`
     width: fit-content;
     height: auto;
     padding: 10px 15px;

@@ -20,8 +20,8 @@ import {
   fetchPackagesAddOnsData
 } from '@/lib/api/fetchBooking';
 import { AddOnsProps, PackageProps } from '@/types/field';
-import Preloader from '@/components/Preloader';
 import { formatCurrency } from '@/utils/billing';
+import { useLoading } from '@/context/LoadingContext';
 
 interface EditBookingProps {
   bookingId: string;
@@ -29,12 +29,10 @@ interface EditBookingProps {
 }
 
 export default function EditBookingComponent({ bookingId, onCancel }: EditBookingProps) {
+  const { showLoader, hideLoader } = useLoading();
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(false);
-  }, []);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formatBookingDate = (date: Date | string | null | { iso: string }) => {
     if (!date) return "";
@@ -88,6 +86,7 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
 
   const fetchInitialData = async () => {
     try {
+      showLoader();
       const [{ packages, addOns }, booking] = await Promise.all([
         fetchPackagesAddOnsData(),
         fetchBookingDetails(bookingId)
@@ -133,6 +132,9 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
           initialData: err instanceof Error ? err.message : 'Failed to load data'
         }
       }));
+    } finally {
+      setIsInitialLoad(false);
+      hideLoader();
     }
   };
 
@@ -235,7 +237,8 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
     
     if (!validateForm()) return;
 
-    setState(prev => ({ ...prev, loading: { ...prev.loading, submitting: true } }));
+    setIsSubmitting(true);
+    showLoader();
 
     try {
       const selectedPackage = state.packages.find(pkg => pkg.packageName === state.selectedPackage);
@@ -274,6 +277,9 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
           submitting: false
         }
       }));
+    } finally {
+      setIsSubmitting(false);
+      hideLoader();
     }
   };
 
@@ -281,7 +287,7 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
     fetchInitialData();
   }, [bookingId]);
 
-  if (state.loading.initialData) {
+  if (isInitialLoad) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
@@ -301,8 +307,6 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
       </Box>
     );
   }
-
-  if (loading) return <Preloader />;
 
   return (
     <AddBookingContainer className="edit-booking-container">
@@ -523,8 +527,8 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
               <Button 
                 variant="contained" 
                 type="submit"
-                disabled={state.loading.submitting}
-                startIcon={state.loading.submitting ? <CircularProgress size={20} /> : null}
+                disabled={isSubmitting}
+                startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
                 sx={{
                   backgroundColor: '#2BB673',
                   '&:hover': {
@@ -535,7 +539,7 @@ export default function EditBookingComponent({ bookingId, onCancel }: EditBookin
                   fontWeight: '500 !important'
                 }}
               >
-                {state.loading.submitting ? 'Updating...' : 'Update Booking'}
+                {isSubmitting ? 'Updating...' : 'Update Booking'}
               </Button>
             </Box>
           </Box>

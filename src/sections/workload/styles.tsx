@@ -376,6 +376,10 @@ export const Details = styled(Box)`
         padding: 40px 75px;
         border: 0.3px solid #E0E0E0;
 
+        @media(max-width: 900px) {
+            padding: 40px 30px;
+        }
+
         > div .client-info {
             align-items: center;
 
@@ -399,15 +403,24 @@ export const Details = styled(Box)`
         .event-info {
             display: flex;
             justify-content: space-between;
-            gap: 20px;
+            gap: 100px;
+
+            @media(max-width: 900px) {
+                flex-direction: column;
+                gap: 20px;
+            }
 
             .right-info {
                 display: flex;
                 flex-direction: column;
                 width: 100%;
                 max-width: 600px;
-                min-width: 600px;
+                // min-width: 600px;
                 margin-top: -40px;
+
+                @media(max-width: 900px) {
+                    margin-top: 0px;
+                }
 
                 .client-info {
                     display: flex;
@@ -416,6 +429,7 @@ export const Details = styled(Box)`
                     align-items: flex-start;
 
                     span {
+                        // text-wrap: nowrap;
                         &.status {
                             padding: 7px 9px;
                             border-radius: 6px;
@@ -461,6 +475,8 @@ export const Details = styled(Box)`
                         text-decoration: underline;
                         text-underline-offset: 5px;
                         word-break: break-all;
+                        line-height: 24px;
+                        text-wrap: wrap;
                     }
                 }
             }
@@ -527,6 +543,7 @@ export const Details = styled(Box)`
             line-height: 100%;
             letter-spacing: 0px;
             color: #828282;
+            text-wrap: nowrap;
         }
     }
 `;

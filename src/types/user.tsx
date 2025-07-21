@@ -82,3 +82,12 @@ export interface RegisterPayload {
   customer_type: number;
 }
 
+export interface UserProfileFormData {
+  first_name: string;
+  mid_name: string;
+  last_name: string;
+  email: string;
+  contact_no: string;
+  address: string;
+}
+

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { HomeContainer } from '@/sections/adminHome/styles';
 import { BoxWrapper, Heading, YearDropdown, PackageBar, SelectBox, DropdownList, DropdownMonth, YearBox, HeadingWrapper } from './styles';
 import { Box, FormControl, MenuItem, Select, styled, Typography, SelectChangeEvent, Button } from '@mui/material';
@@ -20,8 +20,9 @@ import { icons } from '@/icons';
 import { ReportsTable } from './ReportTable';
 import Image from 'next/image';
 import { ReportData } from '@/types/reports';
-import { fetchReports, fetchBookingData, fetchPackageData, fetchPDFReport } from '@/lib/api/fetchReport';
+import { fetchReports, fetchBookingReport, fetchPackageReport, fetchPDFReport } from '@/lib/api/fetchReport';
 import { CustomTablePagination } from '@/components/TablePagination';
+import { useLoading } from '@/context/LoadingContext';
 
 ChartJS.register(
   CategoryScale,
@@ -63,35 +64,45 @@ type YearPair = {
 const monthLabels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export default function ReportsHome(): React.JSX.Element {
+    const { showLoader, hideLoader } = useLoading();
     const currentDate = new Date();
     const currentYearValue = currentDate.getFullYear();
     const currentMonthName = monthLabels[currentDate.getMonth()];
     
+    // State management
     const [open, setOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [currentYear, setCurrentYear] = useState(currentYearValue);
     const [year, setYear] = useState(currentYearValue);
     const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthName);
     const [reportData, setReportData] = useState<ReportData[]>([]);
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [totalCount, setTotalCount] = useState(0);
     const [bookingData, setBookingData] = useState<Record<string, number>>({});
-    const [bookingLoading, setBookingLoading] = useState(false);
     const [bookingError, setBookingError] = useState<string | null>(null);
     const [packageData, setPackageData] = useState<{package_name: string; count: number}[]>([]);
-    const [packageLoading, setPackageLoading] = useState(false);
     const [packageError, setPackageError] = useState<string | null>(null);
     const [isDownloading, setIsDownloading] = useState(false);
+
+    // Loading states
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [isTableLoading, setIsTableLoading] = useState(false);
+    const [isBookingLoading, setIsBookingLoading] = useState(false);
+    const [isPackageLoading, setIsPackageLoading] = useState(false);
+
+    // Cache states
+    const [reportCache, setReportCache] = useState<Record<string, { data: ReportData[], total: number }>>({});
+    const [bookingCache, setBookingCache] = useState<Record<string, Record<string, number>>>({});
+    const [packageCache, setPackageCache] = useState<Record<string, {package_name: string; count: number}[]>>({});
 
     const [selectedYearPair, setSelectedYearPair] = useState<YearPair>({
         start: new Date().getFullYear(),
         end: new Date().getFullYear() + 1
     });
 
-    const generateYearPairs = (): YearPair[] => {
+    const yearPairs = useMemo(() => {
         const currentYear = new Date().getFullYear();
         const pairs: YearPair[] = [];
         const startYear = currentYear - 2;
@@ -102,32 +113,113 @@ export default function ReportsHome(): React.JSX.Element {
         }
         
         return pairs;
-    };
+    }, []);
 
-    const yearPairs = generateYearPairs();
+    const fetchReportData = useCallback(async () => {
+        const cacheKey = `${selectedYearPair.start}-${selectedYearPair.end}-${page}-${rowsPerPage}`;
+        
+        // Return cached data if available (except for initial load)
+        if (reportCache[cacheKey] && !isInitialLoad) {
+            setReportData(reportCache[cacheKey].data);
+            setTotalCount(reportCache[cacheKey].total);
+            return;
+        }
 
-    const fetchReportData = async () => {
         try {
-            setLoading(true);
-            setError(null);
+            // Show full loader only for initial load or filter changes
+            if (isInitialLoad || page === 0) {
+                showLoader();
+            } else {
+                setIsTableLoading(true);
+            }
+
             const result = await fetchReports({
                 start_year: selectedYearPair.start,
                 end_year: selectedYearPair.end,
                 page: page + 1,
                 perPage: rowsPerPage
             });
+
             setReportData(result.data);
             setTotalCount(result.meta.total);
+            setError(null);
+
+            // Update cache
+            setReportCache(prev => ({
+                ...prev,
+                [cacheKey]: {
+                    data: result.data,
+                    total: result.meta.total
+                }
+            }));
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred');
         } finally {
-            setLoading(false);
+            if (isInitialLoad) {
+                setIsInitialLoad(false);
+            }
+            setIsTableLoading(false);
+            hideLoader();
         }
-    };
+    }, [selectedYearPair, page, rowsPerPage, isInitialLoad, reportCache, showLoader, hideLoader]);
+
+    const fetchBookingData = useCallback(async () => {
+        const cacheKey = `${year}`;
+        
+        if (bookingCache[cacheKey]) {
+            setBookingData(bookingCache[cacheKey]);
+            return;
+        }
+
+        try {
+            setIsBookingLoading(true);
+            setBookingError(null);
+            const data = await fetchBookingReport(year);
+            setBookingData(data);
+            
+            // Update cache
+            setBookingCache(prev => ({
+                ...prev,
+                [cacheKey]: data
+            }));
+        } catch (err) {
+            setBookingError(err instanceof Error ? err.message : 'Failed to load booking data');
+        } finally {
+            setIsBookingLoading(false);
+        }
+    }, [year, bookingCache]);
+
+    const fetchPackageData = useCallback(async () => {
+        const monthNumber = selectedMonth ? monthLabels.indexOf(selectedMonth) + 1 : undefined;
+        const cacheKey = `${currentYear}-${monthNumber}`;
+        
+        if (packageCache[cacheKey]) {
+            setPackageData(packageCache[cacheKey]);
+            return;
+        }
+
+        try {
+            setIsPackageLoading(true);
+            setPackageError(null);
+            const data = await fetchPackageReport(currentYear, monthNumber);
+            setPackageData(data);
+            
+            // Update cache
+            setPackageCache(prev => ({
+                ...prev,
+                [cacheKey]: data
+            }));
+        } catch (err) {
+            setPackageError(err instanceof Error ? err.message : 'Failed to load package data');
+        } finally {
+            setIsPackageLoading(false);
+        }
+    }, [currentYear, selectedMonth, packageCache]);
 
     const handleDownloadPDF = async () => {
         try {
             setIsDownloading(true);
+            showLoader();
             const monthNumber = selectedMonth ? monthLabels.indexOf(selectedMonth) + 1 : undefined;
             
             await fetchPDFReport({
@@ -140,100 +232,87 @@ export default function ReportsHome(): React.JSX.Element {
             
         } catch (error) {
             console.error('Failed to download PDF:', error);
-            // You might want to show an error toast/notification here
         } finally {
             setIsDownloading(false);
+            hideLoader();
         }
     };
 
+    // Debounced API call effects
     useEffect(() => {
-        const loadBookingData = async () => {
-            try {
-                setBookingLoading(true);
-                setBookingError(null);
-                const data = await fetchBookingData(year);
-                setBookingData(data);
-            } catch (err) {
-                setBookingError(err instanceof Error ? err.message : 'Failed to load booking data');
-            } finally {
-                setBookingLoading(false);
-            }
-        };
+        const timer = setTimeout(() => {
+            fetchReportData();
+        }, 300);
 
-        loadBookingData();
-    }, [year]);
+        return () => clearTimeout(timer);
+    }, [fetchReportData]);
 
     useEffect(() => {
-        const loadPackageData = async () => {
-            try {
-                setPackageLoading(true);
-                setPackageError(null);
-                const monthNumber = selectedMonth ? monthLabels.indexOf(selectedMonth) + 1 : undefined;
-                const data = await fetchPackageData(currentYear, monthNumber);
-                setPackageData(data);
-            } catch (err) {
-                setPackageError(err instanceof Error ? err.message : 'Failed to load package data');
-            } finally {
-                setPackageLoading(false);
-            }
-        };
+        const timer = setTimeout(() => {
+            fetchBookingData();
+        }, 300);
 
-        loadPackageData();
-    }, [currentYear, selectedMonth]);
+        return () => clearTimeout(timer);
+    }, [fetchBookingData]);
 
     useEffect(() => {
-        fetchReportData();
-    }, [selectedYearPair, page, rowsPerPage]);
+        const timer = setTimeout(() => {
+            fetchPackageData();
+        }, 300);
 
-    const handlePageChange = (
+        return () => clearTimeout(timer);
+    }, [fetchPackageData]);
+
+    const handlePageChange = useCallback((
         event: React.MouseEvent<HTMLButtonElement> | null,
         newPage: number,
     ) => {
         setPage(newPage);
-    };
+    }, []);
 
-    const handleRowsPerPageChange = (
+    const handleRowsPerPageChange = useCallback((
         event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     ) => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
-    };
+    }, []);
     
-    const handleYearChange = (event: SelectChangeEvent<string>) => {
+    const handleYearChange = useCallback((event: SelectChangeEvent<string>) => {
         const [start, end] = event.target.value.split('-').map(Number);
         setSelectedYearPair({ start, end });
-    };
+    }, []);
 
-    const handleChange = (event: SelectChangeEvent<number>) => {
+    const handleChange = useCallback((event: SelectChangeEvent<number>) => {
         setYear(event.target.value as number);
-    };
+    }, []);
 
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
         setOpen(false);
-    };
+    }, []);
 
-    const handleOpen = () => {
+    const handleOpen = useCallback(() => {
         setOpen(true);
-    };
+    }, []);
 
-    const toggleDropdown = () => {
+    const toggleDropdown = useCallback(() => {
         setIsDropdownOpen(!isDropdownOpen);
-    };
+    }, [isDropdownOpen]);
 
-    const handleMonthSelect = (month: string) => {
+    const handleMonthSelect = useCallback((month: string) => {
         setSelectedMonth(month);
         setIsDropdownOpen(false);
-    };
+    }, []);
 
-    const handleYearDecrease = () => {
+    const handleYearDecrease = useCallback(() => {
         setCurrentYear(prevYear => prevYear - 1);
-    };
+    }, []);
 
-    const handleYearIncrease = () => {
+    const handleYearIncrease = useCallback(() => {
         setCurrentYear(prevYear => prevYear + 1);
-    };
+    }, []);
 
-    const lineOptions = {
+    // Chart configurations
+    const lineOptions = useMemo(() => ({
         responsive: true,
         plugins: {
             legend: {
@@ -308,9 +387,9 @@ export default function ReportsHome(): React.JSX.Element {
                 }
             }
         }
-    };
+    }), [bookingData]);
 
-    const lineData = {
+    const lineData = useMemo(() => ({
         labels: monthLabels,
         datasets: [
             {
@@ -330,62 +409,22 @@ export default function ReportsHome(): React.JSX.Element {
                 shadowColor: 'rgba(0, 0, 0, 0.2)'
             },
         ],
-    };
+    }), [bookingData]);
 
-    const yearSelect = [
-        {
-            id: 1,
-            value: 2024,
-            label: '2024'
-        },
-        {
-            id: 2,
-            value: 2025,
-            label: '2025'
-        },
-        {
-            id: 3,
-            value: 2026,
-            label: '2026'
-        },
-        {
-            id: 4,
-            value: 2027,
-            label: '2027'
-        },
-        {
-            id: 5,
-            value: 2028,
-            label: '2028'
-        },
-        {
-            id: 6,
-            value: 2029,
-            label: '2029'
-        },
-        {
-            id: 7,
-            value: 2030,
-            label: '2030'
-        },
-        {
-            id: 8,
-            value: 2031,
-            label: '2031'
-        },
-        {
-            id: 9,
-            value: 2032,
-            label: '2032'
-        },
-        {
-            id: 10,
-            value: 2033,
-            label: '2033'
-        }
-    ]
+    const yearSelect = useMemo(() => [
+        { id: 1, value: 2024, label: '2024' },
+        { id: 2, value: 2025, label: '2025' },
+        { id: 3, value: 2026, label: '2026' },
+        { id: 4, value: 2027, label: '2027' },
+        { id: 5, value: 2028, label: '2028' },
+        { id: 6, value: 2029, label: '2029' },
+        { id: 7, value: 2030, label: '2030' },
+        { id: 8, value: 2031, label: '2031' },
+        { id: 9, value: 2032, label: '2032' },
+        { id: 10, value: 2033, label: '2033' }
+    ], []);
 
-    const barOptions = {
+    const barOptions = useMemo(() => ({
         indexAxis: 'y' as const,
         responsive: true,
         plugins: {
@@ -411,9 +450,9 @@ export default function ReportsHome(): React.JSX.Element {
         },
         categoryPercentage: 0.9,
         barPercentage: 0.8
-    };
+    }), [packageData]);
 
-    const barData = {
+    const barData = useMemo(() => ({
         labels: packageData.map(item => item.package_name),
         datasets: [
             {
@@ -427,7 +466,7 @@ export default function ReportsHome(): React.JSX.Element {
                 display: 'flex' as const
             }
         ]
-    };
+    }), [packageData]);
 
     return (
         <HomeContainer>
@@ -437,10 +476,11 @@ export default function ReportsHome(): React.JSX.Element {
                     {isDownloading ? 'Generating PDF...' : 'Download as PDF'}
                 </Button>
             </HeadingWrapper>
+            
+            {/* Bookings Chart */}
             <BoxWrapper>
                 <Heading>
                     <Typography component="p">Number of Bookings</Typography>
-                    
                     <YearDropdown sx={{ minWidth: 120 }}>
                         <FormControl className='form' fullWidth>
                             <Select
@@ -477,7 +517,7 @@ export default function ReportsHome(): React.JSX.Element {
                     </YearDropdown>
                 </Heading>
                 <Box sx={{ width: '100%', height: 'auto' }}>
-                    {bookingLoading ? (
+                    {isBookingLoading ? (
                         <Box sx={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Loading booking data...</Box>
                     ) : bookingError ? (
                         <Typography color="error">Error loading booking data: {bookingError}</Typography>
@@ -491,10 +531,10 @@ export default function ReportsHome(): React.JSX.Element {
                 </Box>
             </BoxWrapper>
             
+            {/* Packages Chart */}
             <BoxWrapper>
                 <Heading>
                     <Typography component="p">Availed Packages</Typography>
-
                     <YearDropdown sx={{ minWidth: 120 }}>
                         <FormControl className='form' fullWidth>
                             <SelectBox onClick={toggleDropdown}>
@@ -550,7 +590,7 @@ export default function ReportsHome(): React.JSX.Element {
                     </YearDropdown>
                 </Heading>
                 <PackageBar sx={{ width: '100%', height: '300px' }}>
-                    {packageLoading ? (
+                    {isPackageLoading ? (
                         <Box sx={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                             Loading package data...
                         </Box>
@@ -562,18 +602,15 @@ export default function ReportsHome(): React.JSX.Element {
                             options={barOptions} 
                             data={barData}
                         />
-                    ) : packageData.length < 0 ? (
+                    ) : (
                         <Typography>No package data available</Typography>
-                    ) : null}
+                    )}
                 </PackageBar>
             </BoxWrapper>
 
+            {/* Reports Table */}
             <BoxWrapper sx={{ padding: '0px' }}>
-                <Box
-                    sx={{
-                        padding: '30px 30px 0px 30px',
-                    }}
-                >
+                <Box sx={{ padding: '30px 30px 0px 30px' }}>
                     <FormControl size="small">
                         <Select
                             value={`${selectedYearPair.start}-${selectedYearPair.end}`}
@@ -581,16 +618,16 @@ export default function ReportsHome(): React.JSX.Element {
                             IconComponent={CalendarIcon}
                             inputProps={{ 'aria-label': 'Select billing year range' }}
                             sx={{ 
-                            width: "100%", 
-                            minWidth: "300px", 
-                            height: "50px", 
-                            borderRadius: "4px", 
-                            backgroundColor: "#F7FAF5",
-                            '.MuiSelect-select': { 
-                                paddingRight: '40px !important',
-                                display: 'flex',
-                                alignItems: 'center'
-                            }
+                                width: "100%", 
+                                minWidth: "300px", 
+                                height: "50px", 
+                                borderRadius: "4px", 
+                                backgroundColor: "#F7FAF5",
+                                '.MuiSelect-select': { 
+                                    paddingRight: '40px !important',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                }
                             }}
                         >
                             {yearPairs.map((pair, index) => (
@@ -602,8 +639,11 @@ export default function ReportsHome(): React.JSX.Element {
                     </FormControl>
                 </Box>
 
-                <ReportsTable data={reportData} loading={loading} error={error} />
-
+                <ReportsTable 
+                    data={reportData} 
+                    loading={isTableLoading} 
+                    error={error} 
+                />
             </BoxWrapper>
 
             <Box sx={{ marginBottom: '150px', marginTop: '-40px', padding: '0px', maxWidth: '1640px' }}>

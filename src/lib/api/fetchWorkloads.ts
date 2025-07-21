@@ -42,7 +42,7 @@ function mapApiItem(item: WorkloadApiItem): MappedWorkloadItem {
     client: item.customer_name?.trim() || 'Unknown Client',
     bookingDate: item.booking_date,
     assigned: avatars,
-    releaseDate: item.expected_completion_date,
+    releaseDate: item.completion_date,
     ceremony_time: item.ceremony_time,
     package_name: item.package_name,
     status: statusMap[item.deliverable_status || 0],
@@ -257,7 +257,7 @@ export async function fetchEmployeeWorkloads(
 export const updateWorkloadAssignment = async (
   workloadId: string,
   payload: {
-    expected_completion_date: string | null;
+    completion_date: string | null;
     deliverable_status: DeliverableStatus;
     link: string;
     user_id: number[];
@@ -275,10 +275,8 @@ export const updateWorkloadAssignment = async (
     };
 
     const form = new FormData();
-    if (payload.expected_completion_date) {
-      form.append('expected_completion_date', payload.expected_completion_date);
-    } else {
-      form.append('expected_completion_date', '');
+    if (payload.completion_date) {
+      form.append('completion_date', payload.completion_date);
     }
     form.append('deliverable_status', payload.deliverable_status.toString());
     form.append('link', payload.link || '');
@@ -294,7 +292,10 @@ export const updateWorkloadAssignment = async (
       credentials: 'include'
     });
 
-    return handleApiResponse(response);
+    const responseData = await response.json();
+
+    // return handleApiResponse(response);
+    return responseData
   } catch (error) {
     console.error('Error updating workload assignment:', error);
     return { 

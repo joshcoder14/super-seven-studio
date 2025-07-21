@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState } from 'react';
-import { Box, Button, Typography, Modal } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Button, Typography, Modal, CircularProgress } from '@mui/material';
 import { FeedbackPost } from '@/components/home/FeedbackPost';
 import { 
     HomeContentContainer, 
@@ -22,6 +22,7 @@ import Image from 'next/image';
 import { regularEvents, bigEvents } from './MapImages';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useLoading } from '@/context/LoadingContext';
 
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -31,22 +32,49 @@ import 'swiper/css/navigation';
 import 'swiper/css/autoplay';
 import 'swiper/css/effect-fade';
 
+
 export function HomeContent(): React.JSX.Element {
+    const { showLoader, hideLoader } = useLoading();
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [activeIndex, setActiveIndex] = useState(0);
     const [openModal, setOpenModal] = useState(false);
     const [currentVariations, setCurrentVariations] = useState<string[]>([]);
     const [currentTitle, setCurrentTitle] = useState('');
     
+    useEffect(() => {
+        // Simulate loading (replace with actual data fetching if needed)
+        const timer = setTimeout(() => {
+            setIsInitialLoad(false);
+            hideLoader();
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [hideLoader]);
+
     const handleOpenModal = (variations: string[], title: string) => {
-        setCurrentVariations(variations);
-        setCurrentTitle(title);
-        setOpenModal(true);
+        showLoader();
+        setTimeout(() => {
+            setCurrentVariations(variations);
+            setCurrentTitle(title);
+            setOpenModal(true);
+            hideLoader();
+        }, 200);
     };
 
     const handleCloseModal = () => {
         setOpenModal(false);
     };
     
+    if (isInitialLoad) {
+        return (
+            <HomeContentContainer>
+                <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+                    <CircularProgress />
+                </Box>
+            </HomeContentContainer>
+        );
+    }
+
     return (
         <HomeContentContainer className="admin-home-content-container">
             <ImageContainer className="admin-image-container">

@@ -17,11 +17,11 @@ import { useAuth } from '@/context/AuthContext';
 
 interface BillingTableProps {
     billingData: Billing[];
-    loading: boolean;
     onView: (billingId: string) => void;
+    isLoading: boolean;
 }
 
-export default function BillingTable({ billingData, loading, onView }: BillingTableProps) {
+export default function BillingTable({ billingData, onView, isLoading }: BillingTableProps) {
     const { user } = useAuth();
     const isClient = user?.user_role === 'Client';
 
@@ -37,7 +37,6 @@ export default function BillingTable({ billingData, loading, onView }: BillingTa
     ];
     
     return (
-
         <TableContainer
             component={Paper}
             style={{
@@ -51,37 +50,34 @@ export default function BillingTable({ billingData, loading, onView }: BillingTa
                 <TableHead>
                     <TableRow>
                         {tableHeader.map((header, index) => (
-                                <TableCell key={index} align="left"><b>{header}</b></TableCell>
-                            ))}
+                            <TableCell key={index} align="left"><b>{header}</b></TableCell>
+                        ))}
                     </TableRow>
                 </TableHead>
                 
                 <TableBody>
-                    {loading ? (
-                        // Loading skeleton
+                    {isLoading ? (
                         Array.from(new Array(3)).map((_, index) => (
                         <TableRow key={index}>
                             <TableCell><Skeleton variant="text" /></TableCell>
                             <TableCell><Skeleton variant="text" /></TableCell>
-                            <TableCell><Skeleton variant="text" /></TableCell>
-                            <TableCell><Skeleton variant="text" /></TableCell>
-                            <TableCell><Skeleton variant="text" /></TableCell>
-                            <TableCell><Skeleton variant="text" /></TableCell>
-                            <TableCell><Skeleton variant="text" /></TableCell>
                             {!isClient && <TableCell><Skeleton variant="text" /></TableCell>}
+                            <TableCell><Skeleton variant="text" /></TableCell>
+                            <TableCell><Skeleton variant="text" /></TableCell>
+                            <TableCell><Skeleton variant="text" /></TableCell>
+                            <TableCell><Skeleton variant="text" /></TableCell>
+                            <TableCell><Skeleton variant="text" /></TableCell>
                         </TableRow>
                         ))
                     ) : billingData.length === 0 ? (
-                        // Empty state
                         <TableRow>
-                            <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                            <TableCell colSpan={tableHeader.length} align="center" sx={{ py: 4 }}>
                                 <Typography variant="body1" color="textSecondary">
-                                No billing records found
+                                    No billing records found
                                 </Typography>
                             </TableCell>
                         </TableRow>
                     ) : (
-                        // Actual data
                         billingData.map((billing) => (
                             <TableRow key={billing.id} hover>
                                 <TableCell>{billing.booking_id}</TableCell>
@@ -109,6 +105,5 @@ export default function BillingTable({ billingData, loading, onView }: BillingTa
                 </TableBody>
             </Table>
         </TableContainer>
-        
     );
 }

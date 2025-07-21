@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import HeadingComponent from "./Heading";
+import HeadingComponent from "@/components/Heading/AuthHeading";
 import { LoginContainer, LoginWrapper, Login, FormWrapper, ActionButton } from "./styles";
 import type { FormSection } from '@/types/field';
 import CheckboxComponent from '@/components/checkbox';
@@ -11,7 +11,6 @@ import Link from "next/link";
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { paths } from '@/paths';
-import { AuthResponse } from '@/types/user';
 import { loginUser, registerUser } from '@/lib/api/fetchAuth';
 import {
   PasswordRequirements,
@@ -21,8 +20,7 @@ import {
   validateName,
   validateEmail,
   validatePassword,
-  validatePhone,
-  validateConfirmPassword
+  validatePhone
 } from '@/utils/validation';
 import Swal from 'sweetalert2';
 
@@ -287,6 +285,14 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
       localStorage.removeItem('access_token');
 
       if (isLogin) {
+        Swal.fire({
+          title: 'Processing...',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+        
         const data = await loginUser({
           email: formData.email,
           password: formData.password,

@@ -17,80 +17,88 @@ import {
   validatePhone,
 } from '@/utils/validation';
 import { updateUserProfile } from '@/lib/api/fetchUser';
+import { UserProfileFormData } from '@/types/user'
 
 export function EditProfile(): React.JSX.Element {
     const { user, loading: authLoading, updateUser } = useAuth();
     const router = useRouter();
-    const [formData, setFormData] = useState({
-        firstName: '',
-        middleName: '',
-        lastName: '',
+    const [formData, setFormData] = useState<UserProfileFormData>({
+        first_name: '',
+        mid_name: '',
+        last_name: '',
         email: '',
-        contactNumber: '',
+        contact_no: '',
         address: '',
     });
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [errors, setErrors] = useState<Partial<UserProfileFormData>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (user) {
             setFormData({
-                firstName: user.first_name || '',
-                middleName: user.mid_name || '',
-                lastName: user.last_name || '',
+                first_name: user.first_name || '',
+                mid_name: user.mid_name || '',
+                last_name: user.last_name || '',
                 email: user.email || '',
-                contactNumber: user.contact_no || '',
+                contact_no: user.contact_no || '',
                 address: user.address || '',
             });
         }
     }, [user]);
 
+    const validateField = (name: keyof UserProfileFormData, value: string): string | null => {
+        switch (name) {
+        case 'first_name':
+        case 'last_name':
+            return validateName(`${name === 'first_name' ? 'First' : 'Last'} name`, value);
+        case 'mid_name':
+            return value ? validateName('Middle name', value) : null;
+        case 'email':
+            return validateEmail(value);
+        case 'contact_no':
+            return validatePhone(value);
+        case 'address':
+            return value.trim() ? null : 'Address is required';
+        default:
+            return null;
+        }
+    };
+
     const validateForm = (): boolean => {
-        const newErrors: Record<string, string> = {};
-        
-        const firstNameError = validateName('First name', formData.firstName);
-        if (firstNameError) newErrors.firstName = firstNameError;
-        
-        const lastNameError = validateName('Last name', formData.lastName);
-        if (lastNameError) newErrors.lastName = lastNameError;
-        
-        if (formData.middleName) {
-            const middleNameError = validateName('Middle name', formData.middleName);
-            if (middleNameError) newErrors.middleName = middleNameError;
-        }
-        
-        const emailError = validateEmail(formData.email);
-        if (emailError) newErrors.email = emailError;
-        
-        const phoneError = validatePhone(formData.contactNumber);
-        if (phoneError) newErrors.contactNumber = phoneError;
-        
-        if (!formData.address.trim()) {
-            newErrors.address = 'Address is required';
-        }
-        
+        const newErrors: Partial<UserProfileFormData> = {};
+        let isValid = true;
+
+        (Object.keys(formData) as Array<keyof UserProfileFormData>).forEach((key) => {
+            const error = validateField(key, formData[key]);
+            if (error) {
+                newErrors[key] = error;
+                isValid = false;
+            }
+        });
+
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        return isValid;
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         let sanitizedValue = value;
-        
+
         if (name === 'email') {
             sanitizedValue = sanitizeEmail(value);
-        } else if (name === 'contactNumber') {
+        } else if (name === 'contact_no') {
             sanitizedValue = sanitizePhone(value);
         } else {
             sanitizedValue = sanitizeInput(value);
         }
-        
+
         setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
-        
-        if (errors[name]) {
+
+        // Clear error when user types
+        if (errors[name as keyof UserProfileFormData]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
-                delete newErrors[name];
+                delete newErrors[name as keyof UserProfileFormData];
                 return newErrors;
             });
         }
@@ -98,28 +106,14 @@ export function EditProfile(): React.JSX.Element {
 
     const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        let error: string | null = null;
-
-        if (name === 'firstName') {
-            error = validateName('First name', value);
-        } else if (name === 'middleName' && value) {
-            error = validateName('Middle name', value);
-        } else if (name === 'lastName') {
-            error = validateName('Last name', value);
-        } else if (name === 'email') {
-            error = validateEmail(value);
-        } else if (name === 'contactNumber') {
-            error = validatePhone(value);
-        } else if (name === 'address' && !value.trim()) {
-            error = 'Address is required';
-        }
+        const error = validateField(name as keyof UserProfileFormData, value);
 
         if (error) {
-            setErrors(prev => ({ ...prev, [name]: error as string }));
-        } else if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: error }));
+        } else if (errors[name as keyof UserProfileFormData]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
-                delete newErrors[name];
+                delete newErrors[name as keyof UserProfileFormData];
                 return newErrors;
             });
         }
@@ -133,18 +127,9 @@ export function EditProfile(): React.JSX.Element {
         setIsSubmitting(true);
 
         try {
-            const formDataToSend = new FormData();
-            formDataToSend.append("first_name", formData.firstName);
-            formDataToSend.append("mid_name", formData.middleName);
-            formDataToSend.append("last_name", formData.lastName);
-            formDataToSend.append("email", formData.email);
-            formDataToSend.append("contact_no", formData.contactNumber);
-            formDataToSend.append("address", formData.address);
-
-            const updatedUser = await updateUserProfile(formDataToSend);
-            
+            const updatedUser = await updateUserProfile(formData);
             updateUser(updatedUser);
-            
+
             await Swal.fire({
                 title: 'Success!',
                 text: 'Profile updated successfully',
@@ -153,6 +138,13 @@ export function EditProfile(): React.JSX.Element {
             });
             
             router.push(paths.home);
+        } catch (error) {
+            await Swal.fire({
+                title: 'Error!',
+                text: error instanceof Error ? error.message : 'Failed to update profile',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -177,9 +169,9 @@ export function EditProfile(): React.JSX.Element {
 
     if (authLoading) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                <CircularProgress />
-            </Box>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+            <CircularProgress />
+        </Box>
         );
     }
 
@@ -187,18 +179,18 @@ export function EditProfile(): React.JSX.Element {
         return <div>User not found.</div>;
     }
 
-    return (
+  return (
         <FormContainer>
             <Box className="wrapper">
                 <FormHeading title="Edit Profile"/>
 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} noValidate>
                     <Box className="row col-3">
                         <Box className="form-group">
                             <label className="form-label">First Name</label>
                             <TextField
-                                name="firstName"
-                                value={formData.firstName}
+                                name="first_name"
+                                value={formData.first_name}
                                 onChange={handleInputChange}
                                 onBlur={handleBlur}
                                 variant="outlined"
@@ -206,30 +198,30 @@ export function EditProfile(): React.JSX.Element {
                                 fullWidth
                                 className="form-control"
                                 required
-                                error={!!errors.firstName}
-                                helperText={errors.firstName}
+                                error={!!errors.first_name}
+                                helperText={errors.first_name}
                             />
                         </Box>
                         <Box className="form-group">
                             <label className="form-label">Middle Name</label>
                             <TextField
-                                name="middleName"
-                                value={formData.middleName}
+                                name="mid_name"
+                                value={formData.mid_name}
                                 onChange={handleInputChange}
                                 onBlur={handleBlur}
                                 variant="outlined"
                                 size="small"
                                 fullWidth
                                 className="form-control"
-                                error={!!errors.middleName}
-                                helperText={errors.middleName}
+                                error={!!errors.mid_name}
+                                helperText={errors.mid_name}
                             />
                         </Box>
                         <Box className="form-group">
                             <label className="form-label">Last Name</label>
                             <TextField
-                                name="lastName"
-                                value={formData.lastName}
+                                name="last_name"
+                                value={formData.last_name}
                                 onChange={handleInputChange}
                                 onBlur={handleBlur}
                                 variant="outlined"
@@ -237,8 +229,8 @@ export function EditProfile(): React.JSX.Element {
                                 fullWidth
                                 className="form-control"
                                 required
-                                error={!!errors.lastName}
-                                helperText={errors.lastName}
+                                error={!!errors.last_name}
+                                helperText={errors.last_name}
                             />
                         </Box>
                     </Box>
@@ -265,16 +257,16 @@ export function EditProfile(): React.JSX.Element {
                         <Box className="form-group">
                             <label className="form-label">Contact Number</label>
                             <TextField
-                                name="contactNumber"
-                                value={formData.contactNumber}
+                                name="contact_no"
+                                value={formData.contact_no}
                                 onChange={handleInputChange}
                                 onBlur={handleBlur}
                                 variant="outlined"
                                 size="small"
                                 fullWidth
                                 className="form-control"
-                                error={!!errors.contactNumber}
-                                helperText={errors.contactNumber}
+                                error={!!errors.contact_no}
+                                helperText={errors.contact_no}
                             />
                         </Box>
                     </Box>

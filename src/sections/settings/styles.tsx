@@ -3,7 +3,7 @@ import { Box, styled } from "@mui/material";
 export const Heading = styled(Box)`
     widht: 100%;
 
-    h2 {
+    h1 {
         font-family: Nunito Sans;
         font-weight: 700;
         font-size: 32px;
@@ -210,12 +210,12 @@ export const FormContainer = styled(Box)`
     }
 `;
 
-export const RightButton = styled(Box)`
+export const RightButton = styled('button')`
     width: 100%;
     border-radius: 0px 10px 10px 0px;
 `;
 
-export const LeftButton = styled(Box)`
+export const LeftButton = styled('button')`
     width: 100%;
     border-radius: 10px 0px 0px 10px;
     border-right: none !important;

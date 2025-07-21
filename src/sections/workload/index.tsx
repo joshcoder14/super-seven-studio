@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { WorkloadContainer, WorkloadWrapper, FilterArea } from './styles';
 import { HeadingComponent } from '@/components/Heading';
 import { FilterBy } from '@/components/Filter';
@@ -13,18 +13,22 @@ import { fetchWorkloads, fetchEmployeeWorkloads } from '@/lib/api/fetchWorkloads
 import { MappedWorkloadItem } from '@/types/workload';
 import { useAuth } from '@/context/AuthContext';
 import { CustomTablePagination } from '@/components/TablePagination';
+import { useLoading } from '@/context/LoadingContext';
 
 export function WorkloadComponent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { showLoader, hideLoader } = useLoading();
   const { user, loading: authLoading, isLoggingOut } = useAuth();
+  
+  // State management
   const [filterValue, setFilterValue] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [workloadData, setWorkloadData] = useState<MappedWorkloadItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<MappedWorkloadItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Pagination state
   const [page, setPage] = useState(1); // API uses 1-based indexing
@@ -32,11 +36,36 @@ export function WorkloadComponent(): React.JSX.Element {
   const [totalCount, setTotalCount] = useState(0);
   const [lastPage, setLastPage] = useState(1);
 
+  // Loading states
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isTableLoading, setIsTableLoading] = useState(false);
+  const [cache, setCache] = useState<Record<string, { 
+    data: MappedWorkloadItem[]; 
+    total: number;
+    lastPage: number;
+  }>>({});
+
   const fetchData = useCallback(async () => {
     if (authLoading || !user) return;
 
-    setLoading(true);
+    const cacheKey = `${user.user_role}-${filterValue}-${debouncedSearchTerm}-${page}-${rowsPerPage}`;
+    
+    // Return cached data if available (except for initial load)
+    if (cache[cacheKey] && !isInitialLoad) {
+      setWorkloadData(cache[cacheKey].data);
+      setTotalCount(cache[cacheKey].total);
+      setLastPage(cache[cacheKey].lastPage);
+      return;
+    }
+
     try {
+      // Show full loader only for initial load or filter changes
+      if (isInitialLoad || page === 1) {
+        showLoader();
+      } else {
+        setIsTableLoading(true);
+      }
+
       let response: { 
         data: MappedWorkloadItem[]; 
         total: number;
@@ -68,6 +97,17 @@ export function WorkloadComponent(): React.JSX.Element {
       setWorkloadData(response.data);
       setTotalCount(response.total);
       setLastPage(response.lastPage);
+      setError(null);
+
+      // Update cache
+      setCache(prev => ({
+        ...prev,
+        [cacheKey]: {
+          data: response.data,
+          total: response.total,
+          lastPage: response.lastPage
+        }
+      }));
 
       if (page > response.lastPage) {
         setPage(1);
@@ -75,10 +115,15 @@ export function WorkloadComponent(): React.JSX.Element {
 
     } catch (error) {
       console.error('Data fetching error:', error);
+      setError('Failed to fetch workload data');
       setWorkloadData([]);
       setTotalCount(0);
     } finally {
-      setLoading(false);
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
+      setIsTableLoading(false);
+      hideLoader();
     }
   }, [
     filterValue,
@@ -88,12 +133,21 @@ export function WorkloadComponent(): React.JSX.Element {
     router,
     user,
     authLoading,
-    isLoggingOut
+    isLoggingOut,
+    isInitialLoad,
+    cache,
+    showLoader,
+    hideLoader
   ]);
 
+  // Debounced API call effect
   useEffect(() => {
     if (!authLoading) { // Only fetch when auth is done loading
-      fetchData();
+      const timer = setTimeout(() => {
+        fetchData();
+      }, 300);
+
+      return () => clearTimeout(timer);
     }
   }, [fetchData, authLoading]);
 
@@ -106,49 +160,52 @@ export function WorkloadComponent(): React.JSX.Element {
     }
   }, [searchParams]);
 
-  const handleFilterChange = (value: string) => {
+  const handleFilterChange = useCallback((value: string) => {
     if (!workloadFilterOptions.some(opt => opt.value === value)) return;
     
     setFilterValue(value);
+    setPage(1);
     
     const params = new URLSearchParams();
     params.set('filter', value);
     router.push(`${paths.workload}?${params.toString()}`, { scroll: false });
-  };
+  }, [router]);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-  };
+  }, []);
 
-  const handlePageChange = (
+  const handlePageChange = useCallback((
     event: React.MouseEvent<HTMLButtonElement> | null, 
     newPage: number
   ) => {
     // Convert to 1-based index for API
     setPage(newPage + 1);
-  };
+  }, []);
 
-  const handleRowsPerPageChange = (
+  const handleRowsPerPageChange = useCallback((
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const newRowsPerPage = parseInt(event.target.value, 10);
     setRowsPerPage(newRowsPerPage);
     setPage(1);  // Reset to first page
-  };
+  }, []);
 
-  const openModal = (eventData: MappedWorkloadItem) => {
+  const openModal = useCallback((eventData: MappedWorkloadItem) => {
     setSelectedEvent(eventData);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setIsModalOpen(false);
     setSelectedEvent(null);
-  };
+  }, []);
 
-  const handleUpdateSuccess = () => {
+  const handleUpdateSuccess = useCallback(() => {
+    // Invalidate cache and refetch
+    setCache({});
     fetchData();
-  };
+  }, [fetchData]);
 
   return (
     <WorkloadContainer>
@@ -170,9 +227,15 @@ export function WorkloadComponent(): React.JSX.Element {
           />
         </FilterArea>
 
+        {error && (
+          <div style={{ padding: '16px' }}>
+            <div className="alert alert-danger">{error}</div>
+          </div>
+        )}
+
         <WorkLoadTable 
           data={workloadData} 
-          loading={loading}
+          loading={isTableLoading}
           onEditClick={openModal}
         />
 

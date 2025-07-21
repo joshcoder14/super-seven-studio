@@ -1,10 +1,10 @@
 import React from 'react';
-import { Heading } from "./styles";
+import { Heading } from "@/components/auth/styles";
 import { Typography } from "@mui/material";
 
 export interface HeadingProps {
     title: string;
-    subText: string;
+    subText?: string;
 }
 
 export default function HeadingComponent({title, subText}: HeadingProps): React.JSX.Element {
