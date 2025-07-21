@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Alert } from '@mui/material';
+import { Box, Typography, Alert, CircularProgress } from '@mui/material';
 import { BillingDetailsComponent, AssessmentSection } from '@/components/BillingDetails';
 import { HeadingComponent } from '@/components/Heading';
 import { BillingPaymentContainer, BillingDetails, TransactionWrapper } from './styles';
@@ -10,51 +10,70 @@ import { PaymentCardComponent } from '@/components/paymentCard';
 import { TransactionTable } from '@/components/TransactionTable';
 import { fetchBillingDetails } from '@/lib/api/fetchBilling';
 import { useAuth } from '@/context/AuthContext';
-import Preloader from '@/components/Preloader';
+import { useLoading } from '@/context/LoadingContext';
 
 export default function BillingPayment({ billingId }: BillingDetailsProps): React.JSX.Element {
+    const { showLoader, hideLoader } = useLoading();
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [billing, setBilling] = useState<Billing | null>(null);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-        
     const { user } = useAuth();
     const isClient = user?.user_role === 'Client';
     const isPartial = billing?.status.toLowerCase() === 'partial';
     
     const loadBillingDetails = useCallback(async () => {
         try {
-            setLoading(true);
+            showLoader();
             const data = await fetchBillingDetails(billingId);
             setBilling(data);
+            setError('');
         } catch (err) {
             setError('Failed to load billing details');
             console.error(err);
         } finally {
-            setLoading(false);
+            setIsInitialLoad(false);
+            hideLoader();
         }
-    }, [billingId]);
+    }, [billingId, showLoader, hideLoader]);
 
     useEffect(() => {
-        setLoading(false);
-    }, []);
-    
-    useEffect(() => {
-        loadBillingDetails();
+        // Simulate initial load (you can remove this if you want immediate API call)
+        const timer = setTimeout(() => {
+            loadBillingDetails();
+        }, 300);
+
+        return () => clearTimeout(timer);
     }, [loadBillingDetails]);
     
-    
-    if (loading) return <Preloader />;
+    if (isInitialLoad) {
+        return (
+            <BillingPaymentContainer>
+                <HeadingComponent />
+                <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+                    <CircularProgress />
+                </Box>
+            </BillingPaymentContainer>
+        );
+    }
     
     if (error) {
         return (
-            <Box sx={{ p: 2 }}>
-                <Alert severity="error">{error}</Alert>
-            </Box>
+            <BillingPaymentContainer>
+                <HeadingComponent />
+                <Box sx={{ p: 2 }}>
+                    <Alert severity="error">{error}</Alert>
+                </Box>
+            </BillingPaymentContainer>
         );
     }
     
     if (!billing) {
-        return <Typography sx={{ p: 2 }}>Billing not found</Typography>;
+        return (
+            <BillingPaymentContainer>
+                <HeadingComponent />
+                <Typography sx={{ p: 2 }}>Billing not found</Typography>
+            </BillingPaymentContainer>
+        );
     }
     
     return (
@@ -77,5 +96,5 @@ export default function BillingPayment({ billingId }: BillingDetailsProps): Reac
                 <TransactionTable transactions={billing?.transactions} />
             </TransactionWrapper>
         </BillingPaymentContainer>
-    )
+    );
 }
