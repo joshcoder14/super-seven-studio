@@ -56,7 +56,7 @@ export function AssessmentSection({ billing, isPartial }: { billing: Billing; is
         <AssessmentDetails>
           <DetailItem label="Package Amount" value={formatAmount(billing.package_amount)} />
           <DetailItem label="Add-on Amount" value={formatAmount(billing.add_on_amount)} />
-          <DetailItem label="Discount (LESS)" value={formatAmount(billing.discount)} />
+          <DetailItem label="Discount (LESS)" value={formatAmount(billing.discounted_amount)} />
           <DetailItem label="Total Amount" value={formatAmount(billing.total_amount)} />
         </AssessmentDetails>
       )}

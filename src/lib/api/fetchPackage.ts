@@ -181,7 +181,7 @@ export const deletePackage = async (id: number) => {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
 
-    const response = await fetch(`/api/packages/${id}/delete`, {
+    const response = await fetch(`/api/packages/${id}/inactive`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -202,7 +202,7 @@ export const deleteAddon = async (id: number) => {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) throw new Error('Authentication required');
 
-    const response = await fetch(`/api/addons/${id}/delete`, {
+    const response = await fetch(`/api/addons/${id}/inactive`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${accessToken}`,

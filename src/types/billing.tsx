@@ -31,6 +31,7 @@ export interface Billing {
   package_amount: string;
   add_on_amount: string;
   discount: string;
+  discounted_amount: string;
   total_amount: string;
   total_amount_paid: string;
   balance: string;
