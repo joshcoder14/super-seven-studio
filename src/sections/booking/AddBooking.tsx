@@ -590,28 +590,38 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
   const renderFormField = (field: FormField) => {
     if (field.type === "custom-date") {
       return (
-        <CustomDatePicker
-          key={field.id}
-          value={state.formData.bookingDate}
-          onChange={handleDateChange}
-          onMonthChange={handleMonthChange}
-          label="Booking Date"
-          required
-          error={state.errors.bookingDate || state.errors.booking_date}
-          minDate={dayjs().add(30, 'day')}
-          shouldDisableDate={shouldDisableDate}
-        />
+        <Box className="form-group" key={field.id}>
+          <label className="form-label">
+            {field.label}
+            {field.required && <span style={{ color: 'red' }}>*</span>}
+          </label>
+          <CustomDatePicker
+            value={state.formData.bookingDate}
+            onChange={handleDateChange}
+            onMonthChange={handleMonthChange}
+            label=""
+            required
+            error={state.errors.bookingDate || state.errors.booking_date}
+            minDate={dayjs().add(30, 'day')}
+            shouldDisableDate={shouldDisableDate}
+          />
+        </Box>
       );
     }
 
     if (field.type === "custom-time") {
       return (
-        <CustomTimePicker 
-          key={field.id}
-          value={state.formData.ceremonyTime}
-          onChange={handleTimeChange}
-          label="Ceremony Time"
-        />
+        <Box className="form-group" key={field.id}>
+          <label className="form-label">
+            {field.label}
+            {field.required && <span style={{ color: 'red' }}>*</span>}
+          </label>
+          <CustomTimePicker 
+            value={state.formData.ceremonyTime}
+            onChange={handleTimeChange}
+            label=""
+          />
+        </Box>
       );
     }
 
@@ -624,7 +634,10 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
 
     return (
       <Box className="form-group" key={field.id}>
-        <label className="form-label">{field.label}</label>
+        <label className="form-label">
+          {field.label}
+          {field.required && <span style={{ color: 'red' }}>*</span>}
+        </label>
         <TextField 
           name={field.name}
           type={field.type}
@@ -703,7 +716,10 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
               }}
             >
               <Box className="form-group">
-                <label className="form-label">Reception:</label>
+                <label className="form-label">
+                  Reception:
+                  <span style={{ color: 'red' }}>*</span>
+                </label>
                 <TextField
                   name="bookingAddress"
                   value={state.formData.bookingAddress}
@@ -718,7 +734,10 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
               </Box>
 
               <Box className="form-group">
-                <label className="form-label">Package:</label>
+                <label className="form-label">
+                  Package:
+                  <span style={{ color: 'red' }}>*</span>
+                </label>
                 {state.loading.packages ? (
                   <CircularProgress size={20} />
                 ) : state.error.packages ? (

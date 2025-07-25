@@ -408,7 +408,10 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
                 {section.fields.map((field) => (
                   <Box className="form-group" key={field.id} sx={{ mb: 3 }}>
                     <Box className="label">
-                      <label htmlFor={field.id}>{field.label}</label>
+                      <label htmlFor={field.id}>
+                        {field.label}
+                        {field.required && <span style={{ color: 'red' }}>*</span>}
+                      </label>
                       {section.forgotButton && (
                         <Link href={section.forgotButton.linkUrl}>
                           {section.forgotButton.linkLabel}
