@@ -35,7 +35,7 @@ interface FieldErrors {
 export default function AuthComponent({ variant = 'login' }: AuthComponentProps): React.JSX.Element {
   const isLogin = variant === 'login';
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [rememberMe, setRememberMe] = useState<boolean>(false);
+  const [rememberMe, setRememberMe] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -479,12 +479,11 @@ export default function AuthComponent({ variant = 'login' }: AuthComponentProps)
                           display: 'block',
                           color: '#ff0000',
                           fontSize: '0.75rem',
-                          mt: 0.5,
                           ml: 1,
-                          fontWeight: 'bold'
+                          fontWeight: '500'
                         }}
                       >
-                        ⚠️ {fieldErrors[field.name]}
+                        {fieldErrors[field.name]}
                       </Typography>
                     )}
 

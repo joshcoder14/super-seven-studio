@@ -2,7 +2,6 @@ import { Dayjs } from 'dayjs';
 
 export interface StatusFilters {
   pending: boolean;
-  unavailable: boolean;
   booked: boolean;
 }
 

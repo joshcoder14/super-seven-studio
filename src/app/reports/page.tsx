@@ -17,9 +17,7 @@ export default function Reports() {
             <NavBar />
             <Box sx={{ flexDirection: 'column', flex: 1 }}>
                 <TopBar />
-                <Suspense fallback={<Preloader />}>
-                    <ReportsHome/>
-                </Suspense>
+                <ReportsHome/>
             </Box>
         </Box>
     )

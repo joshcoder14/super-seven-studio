@@ -77,7 +77,6 @@ export function BookingComponent(): React.JSX.Element {
   const [statusFilters, setStatusFilters] = useState<StatusFilters>({
     booked: true,
     pending: true,
-    unavailable: true,
   });
 
   // Derived values
@@ -192,8 +191,7 @@ export function BookingComponent(): React.JSX.Element {
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
       return (
-        (statusFilters.pending && event.booking_status === "pending") ||
-        (statusFilters.unavailable && event.booking_status === "unavailable") ||
+        (statusFilters.pending && event.booking_status === "pending") || 
         (statusFilters.booked && event.booking_status === "approved")
       );
     });
@@ -524,15 +522,29 @@ export function BookingComponent(): React.JSX.Element {
         textOverflow: 'ellipsis'
       };
 
-      const deliverable_status = event.deliverable_status === 'Completed';
-
+      // First handle booking status
       switch(event.booking_status) {
-        case 'approved':
-          return { ...baseStyle, backgroundColor: deliverable_status ? '#2BB673' : '#979797' };
         case 'pending':
           return { ...baseStyle, backgroundColor: '#FFA500' };
         case 'unavailable':
           return { ...baseStyle, backgroundColor: '#CCCCCC' };
+        case 'approved':
+          // For approved bookings, check deliverable_status
+          switch(event.deliverable_status) {
+            case 'Unassigned':
+              return { ...baseStyle, backgroundColor: '#9CA3AF' };
+            case 'Scheduled':
+              return { ...baseStyle, backgroundColor: '#EF3826' };
+            case 'Uploaded':
+              return { ...baseStyle, backgroundColor: '#FACC15'};
+            case 'For Edit':
+            case 'Editing':
+              return { ...baseStyle, backgroundColor: '#FF7B00' };
+            case 'Completed':
+              return { ...baseStyle, backgroundColor: '#2BB673' };
+            default:
+              return { ...baseStyle, backgroundColor: '#979797' };
+          }
         default:
           return { ...baseStyle, backgroundColor: '#FF7B00' };
       }

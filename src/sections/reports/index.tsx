@@ -4,18 +4,6 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { HomeContainer } from '@/sections/adminHome/styles';
 import { BoxWrapper, Heading, YearDropdown, PackageBar, SelectBox, DropdownList, DropdownMonth, YearBox, HeadingWrapper } from './styles';
 import { Box, FormControl, MenuItem, Select, styled, Typography, SelectChangeEvent, Button } from '@mui/material';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
 import { icons } from '@/icons';
 import { ReportsTable } from './ReportTable';
 import Image from 'next/image';
@@ -23,12 +11,22 @@ import { ReportData } from '@/types/reports';
 import { fetchReports, fetchBookingReport, fetchPackageReport, fetchPDFReport } from '@/lib/api/fetchReport';
 import { CustomTablePagination } from '@/components/TablePagination';
 import { useLoading } from '@/context/LoadingContext';
+import DynamicApexChart from '@/components/chart/DynamicApexChart';
+import { ApexOptions } from 'apexcharts';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
   BarElement,
   Title,
   Tooltip,
@@ -118,7 +116,6 @@ export default function ReportsHome(): React.JSX.Element {
     const fetchReportData = useCallback(async () => {
         const cacheKey = `${selectedYearPair.start}-${selectedYearPair.end}-${page}-${rowsPerPage}`;
         
-        // Return cached data if available (except for initial load)
         if (reportCache[cacheKey] && !isInitialLoad) {
             setReportData(reportCache[cacheKey].data);
             setTotalCount(reportCache[cacheKey].total);
@@ -126,7 +123,6 @@ export default function ReportsHome(): React.JSX.Element {
         }
 
         try {
-            // Show full loader only for initial load or filter changes
             if (isInitialLoad || page === 0) {
                 showLoader();
             } else {
@@ -144,7 +140,6 @@ export default function ReportsHome(): React.JSX.Element {
             setTotalCount(result.meta.total);
             setError(null);
 
-            // Update cache
             setReportCache(prev => ({
                 ...prev,
                 [cacheKey]: {
@@ -177,7 +172,6 @@ export default function ReportsHome(): React.JSX.Element {
             const data = await fetchBookingReport(year);
             setBookingData(data);
             
-            // Update cache
             setBookingCache(prev => ({
                 ...prev,
                 [cacheKey]: data
@@ -204,7 +198,6 @@ export default function ReportsHome(): React.JSX.Element {
             const data = await fetchPackageReport(currentYear, monthNumber);
             setPackageData(data);
             
-            // Update cache
             setPackageCache(prev => ({
                 ...prev,
                 [cacheKey]: data
@@ -238,7 +231,6 @@ export default function ReportsHome(): React.JSX.Element {
         }
     };
 
-    // Debounced API call effects
     useEffect(() => {
         const timer = setTimeout(() => {
             fetchReportData();
@@ -311,105 +303,104 @@ export default function ReportsHome(): React.JSX.Element {
         setCurrentYear(prevYear => prevYear + 1);
     }, []);
 
-    // Chart configurations
-    const lineOptions = useMemo(() => ({
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'top' as const,
-                labels: {
-                    font: {
-                        family: "'Nunito Sans', sans-serif",
-                        size: 12,
-                        weight: 600
-                    }
+    const lineOptions: ApexOptions = useMemo(() => ({
+        legend: {
+            show: false,
+            position: 'top',
+            horizontalAlign: 'left',
+        },
+        colors: ['#2BB673'],
+        chart: {
+            fontFamily: "Nunito Sans, sans-serif",
+            height: 310,
+            type: "line", // Set the chart type to 'line'
+            toolbar: {
+                show: false, // Hide chart toolbar
+            },
+        },
+        stroke: {
+            curve: "straight", // Define the line style (straight, smooth, or step)
+            width: [2, 2], // Line width for each dataset
+        },
+        fill: {
+            type: "gradient",
+            gradient: {
+                opacityFrom: 0.55,
+                opacityTo: 0,
+            },
+        },
+        markers: {
+            size: 2, // Size of the marker points
+            strokeColors: "#2BB673", // Marker border color
+            strokeWidth: 2,
+            hover: {
+                size: 6, // Marker size on hover
+            },
+        },
+        grid: {
+            xaxis: {
+                lines: {
+                show: false, // Hide grid lines on x-axis
+                },
+            },
+            yaxis: {
+                padding: 100,
+                lines: {
+                    show: true, // Show grid lines on y-axis
+                },
+            },
+        },
+        dataLabels: {
+            enabled: false, // Disable data labels
+        },
+        tooltip: {
+            enabled: true, // Enable tooltip
+            x: {
+                format: "dd MMM yyyy", // Format for x-axis tooltip
+            },
+        },
+        xaxis: {
+            categories: monthLabels,
+            labels: {
+                style: {
+                    fontFamily: "'Nunito Sans', sans-serif",
+                    fontSize: '14px',
+                    colors: '#333'
+                }
+            },
+            axisBorder: {
+                show: false
+            },
+            axisTicks: {
+                show: false
+            }
+        },
+        yaxis: {
+            min: 0,
+            max: Math.max(...Object.values(bookingData), 10) + 5,
+            labels: {
+                style: {
+                    fontFamily: "'Nunito Sans', sans-serif",
+                    fontSize: '14px',
+                    colors: '#333'
                 }
             },
             title: {
-                display: true,
-                text: 'Bookings Over Time',
-                font: {
-                    family: "'Nunito Sans', sans-serif",
-                    size: 16,
-                    weight: 600
-                }
-            },
-            tooltip: {
-                bodyFont: {
-                    family: "'Nunito Sans', sans-serif"
-                },
-                titleFont: {
-                    family: "'Nunito Sans', sans-serif"
-                }
-            }
-        },
-        layout: {
-            padding: {
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 0
-            }
-        },
-        scales: {
-            y: {
-                min: 0,
-                max: Math.max(...Object.values(bookingData), 10) + 5,
-                ticks: {
-                    stepSize: 5,
-                    color: '#000',
-                    padding: 40,
-                    font: {
-                        family: "'Nunito Sans', sans-serif",
-                        size: 14
-                    }
-                },
-                grid: {
-                    display: true,
-                    drawBorder: true
+                text: "", // Remove y-axis title
+                style: {
+                    fontSize: "0px",
                 },
             },
-            x: {
-                grid: {
-                    display: false,
-                    drawBorder: false
-                },
-                border: {
-                    display: false
-                },
-                ticks: {
-                    color: '#000',
-                    padding: 20,
-                    font: {
-                        family: "'Nunito Sans', sans-serif",
-                        size: 14
-                    }
-                }
-            }
-        }
+        },
+
     }), [bookingData]);
 
-    const lineData = useMemo(() => ({
-        labels: monthLabels,
-        datasets: [
-            {
-                label: 'Bookings',
-                data: monthLabels.map(month => bookingData[month] || 0),
-                borderColor: '#2BB673',
-                backgroundColor: '#2BB673',
-                tension: 0,
-                pointBackgroundColor: '#fff',
-                pointBorderColor: '#2BB673',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                shadowOffsetX: 2,
-                shadowOffsetY: 2,
-                shadowBlur: 8,
-                shadowColor: 'rgba(0, 0, 0, 0.2)'
-            },
-        ],
-    }), [bookingData]);
+    const lineSeries = useMemo(() => [
+        {
+            name: 'Bookings',
+            data: monthLabels.map(month => bookingData[month] || 0)
+        }
+    ], [bookingData]);
 
     const yearSelect = useMemo(() => [
         { id: 1, value: 2024, label: '2024' },
@@ -522,10 +513,11 @@ export default function ReportsHome(): React.JSX.Element {
                     ) : bookingError ? (
                         <Typography color="error">Error loading booking data: {bookingError}</Typography>
                     ) : (
-                        <Line 
-                            height={100}
-                            options={lineOptions} 
-                            data={lineData}
+                        <DynamicApexChart 
+                            options={lineOptions}
+                            series={lineSeries}
+                            type="area"
+                            height={350}
                         />
                     )}
                 </Box>
@@ -598,7 +590,6 @@ export default function ReportsHome(): React.JSX.Element {
                         <Typography color="error">Error loading package data: {packageError}</Typography>
                     ) : packageData.length > 0 ? (
                         <Bar 
-                            height={100}
                             options={barOptions} 
                             data={barData}
                         />

@@ -158,12 +158,14 @@ export const YearDropdown = styled(Box)`
         .select {
             width: fit-content !important;
             font-family: Nunito Sans;
-            font-weight: 600;
+            font-weight: 500;
             font-size: 16px;
             line-height: 10px;
-            color: #2B303466;
+            // color: #2B303466;
             height: 40px;
-            padding: 10px 10px 10px 20px;
+            box-shadow: 0px 13px 61px 0px #A9A9A95D;
+            border-radius: 4px;
+            padding: 10px 20px;
 
             div.MuiSelect-select {
                 padding: 0 !important;

@@ -16,14 +16,11 @@ export default function CheckboxComponent({
   id,
   name,
   label,
-  checked = false,
+  checked = true,
   onChange,
 }: CheckboxComponentProps) {
-    const [isChecked, setIsChecked] = useState(false);
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newChecked = e.target.checked;
-        setIsChecked(newChecked);
         if (onChange) {
             onChange(newChecked);
         }
@@ -35,7 +32,7 @@ export default function CheckboxComponent({
                 type="checkbox" 
                 name={name} 
                 id={id}
-                checked={isChecked}
+                checked={checked}
                 onChange={handleChange}
                 style={{
                     width: 24,
@@ -48,7 +45,7 @@ export default function CheckboxComponent({
                     borderColor: '#A3A3A3',
                 }}
             />
-            {isChecked && (
+            {checked && (
                 <FontAwesomeIcon 
                     icon={faCheck} 
                     style={{

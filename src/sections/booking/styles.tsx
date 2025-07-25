@@ -37,32 +37,26 @@ export const Details = styled(Box)`
 
         &.unassigned {
             .event-icon {
-                background: #979797;
+                background: #9CA3AF;
             }
         }
 
         &.scheduled {
             .event-icon {
-                background: #ef3826;
+                background: #EF3826;
             }
         }
 
         &.uploaded {
             .event-icon {
-                background: #d7e606;
+                background: #FACC15;
             }
         }
         
         &.for-edit,
         &.editing {
             .event-icon {
-                background: #3749a6;
-            }
-        }
-        
-        &.editing {
-            .event-icon {
-                background: #ff7b00;
+                background: #FF7B00;
             }
         }
         
