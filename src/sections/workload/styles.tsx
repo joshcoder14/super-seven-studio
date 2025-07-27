@@ -183,18 +183,16 @@ export const ReleaseDateWrapper = styled(Box)`
         color: #ADADAD;
     }
 
-    
+    .form-group {
+        .date-picker {
 
-        .form-group {
-            .date-picker {
-
-                .Mui-disabled {
-                    background-color: #f5f5f5;
-                    
+            .Mui-disabled {
+                background-color: #f5f5f5;
                 height: 48px;
-                }
+                pointer-events: none;
             }
         }
+    }
 
     .release {
         width: 100%;

@@ -338,27 +338,27 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                                 }
                                 // Current status is Scheduled - only allow Uploaded or back to Unassigned
                                 else if (selectedStatus === 1) {
-                                    disabled = status.value !== 2 && status.value !== 0;
+                                    disabled = status.value !== 2 && status.value !== 1 && status.value !== 0;
                                 }
                                 // Current status is Uploaded - only allow For Edit or back to Scheduled
                                 else if (selectedStatus === 2) {
-                                    disabled = status.value !== 3 && status.value !== 1;
+                                    disabled = status.value !== 3 && status.value !== 2 && status.value !== 1;
                                 }
                                 // Current status is For Edit - only allow Editing or back to Uploaded
                                 else if (selectedStatus === 3) {
-                                    disabled = status.value !== 4 && status.value !== 2;
+                                    disabled = status.value !== 4 && status.value !== 3 && status.value !== 2;
                                 }
                                 // Current status is Editing - only allow For Release or back to For Edit
                                 else if (selectedStatus === 4) {
-                                    disabled = status.value !== 5 && status.value !== 3;
+                                    disabled = status.value !== 5 && status.value !== 4 && status.value !== 3;
                                 }
                                 // Current status is For Release - only allow Completed or back to Editing
                                 else if (selectedStatus === 5) {
-                                    disabled = status.value !== 6 && status.value !== 4;
+                                    disabled = status.value !== 6 && status.value !== 5 && status.value !== 4;
                                 }
                                 // Current status is Completed - all options disabled except itself
                                 else if (selectedStatus === 6) {
-                                    disabled = status.value !== 6;
+                                    disabled = !(status.value === 5 || status.value === 6);
                                 }
 
                                 return (
@@ -462,14 +462,13 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                     )}
                 </AssignedWrapper>
 
-                <ReleaseDateWrapper>
+                <ReleaseDateWrapper sx={{ pointerEvents: 'none' }}>
                     <Box className="label">Release Date:</Box>
                     <CustomDatePicker
                         value={completionDate}
                         onChange={(newValue) => setCompletionDate(newValue)}
                         minDate={dayjs().add(1, 'day')}
                         label=""
-                        required
                     />
                 </ReleaseDateWrapper>
 
@@ -506,7 +505,11 @@ export default function EditModal({ open, onClose, eventData, onUpdateSuccess }:
                     <Button 
                         variant="contained" 
                         onClick={handleUpdate}
-                        disabled={loading || selectedStatus === 0 || selectedStatus === 6}
+                        disabled={
+                            loading || 
+                            selectedStatus === 0 || 
+                            bookingDetails?.booking_workload_status === 'Completed'
+                        }
                         sx={{
                             backgroundColor: selectedStatus === 0 ? '#AAAAAA' : '#2BB673',
                             pointerEvents: selectedStatus === 0 ? 'none' : 'auto',
