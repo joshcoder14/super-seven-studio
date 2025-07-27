@@ -32,9 +32,10 @@ import {
 
 interface AddBookingComponentProps {
   onCancel: () => void;
+  packageId?: string | null;
 }
 
-export default function AddBookingComponent({ onCancel }: AddBookingComponentProps) {
+export default function AddBookingComponent({ onCancel, packageId }: AddBookingComponentProps) {
   const { user } = useAuth();
   const userRole = user?.user_role;
   
@@ -188,12 +189,18 @@ export default function AddBookingComponent({ onCancel }: AddBookingComponentPro
     const loadData = async () => {
       try {
         const { approvedDates, packages, addOns, initialUnavailableDates } = await fetchInitialBookingData();
+
+        // Find the selected package if packageId is provided
+        const selectedPackage = packageId 
+          ? packages.find(pkg => pkg.id.toString() === packageId)?.packageName || ""
+          : "";
         
         setState(prev => ({
           ...prev,
           disabledDates: [...approvedDates, ...initialUnavailableDates],
           packages,
           addOns,
+          selectedPackage,
           loading: { 
             ...prev.loading, 
             packages: false,

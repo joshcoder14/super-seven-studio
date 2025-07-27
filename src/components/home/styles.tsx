@@ -97,11 +97,6 @@ export const FeedbackList = styled(Box)`
             }
         }
     }
-    // display: flex;
-    // gap: 30px;
-    // justify-content: flex-start;
-    // overflow-x: scroll;
-    // scrollbar-width: none;
 `;
 
 export const FeedbackContent = styled(Box)`

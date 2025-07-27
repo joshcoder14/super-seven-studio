@@ -5,11 +5,11 @@ import {
   Box, 
   Button, 
   Typography, 
-  Modal, 
-  CircularProgress,
+  Modal,
   styled 
 } from '@mui/material';
 import { FeedbackPost } from '@/components/home/FeedbackPost';
+import { DashboardPackageCard } from '@/components/PackageCard/DashboardPackage';
 import { 
   HomeContentContainer, 
   ImageContainer, 
@@ -216,7 +216,6 @@ export default function HomeContent(): React.JSX.Element {
             <Image width={20} height={20} src={icons.angleRight} alt="angle right" />
           </ArrowRight>
         </TopImageContainer>
-
         <BottomImageContainer className="bottom-image-container">
           {regularEvents.map(renderRegularEvent)}
         </BottomImageContainer>
@@ -270,6 +269,8 @@ export default function HomeContent(): React.JSX.Element {
             </ArrowRight>
           </ModalContent>
         </Modal>
+
+        <DashboardPackageCard />
 
         <FeedbackPost />
       </ImageContainer>

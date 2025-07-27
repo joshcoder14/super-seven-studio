@@ -1,6 +1,6 @@
 'use client';
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { Box, Button, styled, TextField } from "@mui/material";
+import { Box, Button, styled, TextField, Typography } from "@mui/material";
 import Image from "next/image";
 import { CloseWrapper } from "@/sections/workload/styles";
 import { FormHeading } from '@/components/Heading/FormHeading';
@@ -8,6 +8,9 @@ import { icons } from '@/icons';
 import { createPackage, createAddon, updatePackage, updateAddon } from '@/lib/api/fetchPackage';
 import Swal from "sweetalert2";
 import { fadeInRight, fadeOutRight } from "@/utils/animate";
+
+// Allowed image file types
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
 interface ModalProps {
     open: boolean;
@@ -38,7 +41,7 @@ const StyledModalContainer = styled(Box, {
   borderRadius: '4px',
 }));
 
-export function ModalComponent({ 
+export function PackageModalComponent({ 
     open, 
     onClose, 
     modalType, 
@@ -49,7 +52,10 @@ export function ModalComponent({
     const [formData, setFormData] = useState({
         name: '',
         price: '',
-        details: ''
+        details: '',
+        image: null as File | null,
+        removeImage: false,
+        imagePreview: ''
     });
     const [errors, setErrors] = useState({
         name: '',
@@ -66,13 +72,18 @@ export function ModalComponent({
     
     const isEditing = !!item;
 
+    // Cleanup effects
     useEffect(() => {
         return () => {
             isMounted.current = false;
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
+                URL.revokeObjectURL(formData.imagePreview);
+            }
         };
-    }, []);
+    }, [formData.imagePreview]);
 
+    // Animation handling
     useEffect(() => {
         if (open) {
             setShouldRender(true);
@@ -90,6 +101,10 @@ export function ModalComponent({
         if (isClosing.current) return;
         isClosing.current = true;
         
+        // Reset file input
+        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+        
         setClosing(true);
         onClose();
         timeoutRef.current = setTimeout(() => {
@@ -100,6 +115,7 @@ export function ModalComponent({
         }, 300);
     }, [onClose]);
 
+    // Escape key handler
     useEffect(() => {
         const handleEscapeKey = (event: KeyboardEvent) => {
             if (event.key === 'Escape' && open) {
@@ -107,26 +123,19 @@ export function ModalComponent({
             }
         };
 
-        if (open) {
-            document.addEventListener('keydown', handleEscapeKey);
-        }
-
-        return () => {
-            document.removeEventListener('keydown', handleEscapeKey);
-        };
+        if (open) document.addEventListener('keydown', handleEscapeKey);
+        return () => document.removeEventListener('keydown', handleEscapeKey);
     }, [open, handleClose]);
 
+    // Initialize form data
     useEffect(() => {
         if (open) {
             if (isEditing && item) {
-                let initialPrice = '';
-                if (modalType === 'package') {
-                    initialPrice = item.package_price || '';
-                } else {
-                    initialPrice = item.add_on_price || '';
-                }
+                let initialPrice = modalType === 'package' 
+                    ? item.package_price || '' 
+                    : item.add_on_price || '';
 
-                // Format initial price with commas
+                // Format price
                 if (initialPrice) {
                     const numericValue = parseFloat(initialPrice);
                     if (!isNaN(numericValue)) {
@@ -137,13 +146,31 @@ export function ModalComponent({
                     }
                 }
 
+                // Handle image path
+                let imagePreview = '';
+                if (modalType === 'package' && item.image_path) {
+                    imagePreview = item.image_path.startsWith('http') 
+                        ? item.image_path 
+                        : `${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/${item.image_path}`;
+                }
+
                 setFormData({
                     name: modalType === 'package' ? item.package_name : item.add_on_name,
                     price: initialPrice,
-                    details: modalType === 'package' ? item.package_details : item.add_on_details
+                    details: modalType === 'package' ? item.package_details : item.add_on_details,
+                    image: null,
+                    removeImage: false,
+                    imagePreview: imagePreview
                 });
             } else {
-                setFormData({ name: '', price: '', details: '' });
+                setFormData({ 
+                    name: '', 
+                    price: '', 
+                    details: '', 
+                    image: null,
+                    removeImage: false,
+                    imagePreview: '' 
+                });
             }
             setErrors({ name: '', price: '', details: '' });
             setSubmitError(null);
@@ -154,18 +181,12 @@ export function ModalComponent({
         const { name, value } = e.target;
         
         if (name === 'price') {
-            // Allow only numbers, commas, and a single decimal point with max 2 decimal places
             const regex = /^[0-9,]*(\.[0-9]{0,2})?$/;
-            
             if (value === '' || regex.test(value)) {
-                // Remove all commas to check the numeric value
                 const rawValue = value.replace(/,/g, '');
-                
-                // Format with commas as thousand separators
                 if (rawValue.includes('.')) {
                     const parts = rawValue.split('.');
                     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-                    // Ensure we only keep 2 decimal places
                     parts[1] = parts[1].slice(0, 2);
                     setFormData(prev => ({ ...prev, [name]: parts.join('.') }));
                 } else if (rawValue) {
@@ -186,6 +207,49 @@ export function ModalComponent({
         }
     };
 
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSubmitError(null);
+        
+        if (!e.target.files || !e.target.files[0]) {
+            return;
+        }
+
+        const file = e.target.files[0];
+        
+        // Reset file input to allow re-uploading the same file
+        e.target.value = '';
+        
+        // Validate file type only
+        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+            setSubmitError('Only JPEG, PNG, GIF, or WebP images are allowed');
+            return;
+        }
+
+        // Clean up previous preview if it exists
+        if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
+            URL.revokeObjectURL(formData.imagePreview);
+        }
+        
+        setFormData(prev => ({
+            ...prev,
+            image: file,
+            removeImage: false,
+            imagePreview: URL.createObjectURL(file)
+        }));
+    };
+
+    const handleRemoveImage = () => {
+        if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
+            URL.revokeObjectURL(formData.imagePreview);
+        }
+        setFormData(prev => ({
+            ...prev,
+            image: null,
+            removeImage: true,
+            imagePreview: ''
+        }));
+    };
+
     const validateForm = () => {
         let isValid = true;
         const newErrors = { name: '', price: '', details: '' };
@@ -199,7 +263,6 @@ export function ModalComponent({
             newErrors.price = 'Price is required';
             isValid = false;
         } else {
-            // Remove commas before validation
             const priceWithoutCommas = formData.price.replace(/,/g, '');
             const priceRegex = /^\d+(\.\d{1,2})?$/;
             
@@ -251,47 +314,45 @@ export function ModalComponent({
         try {
             setIsSubmitting(true);
             
-            // Remove commas and format price
-            let formattedPrice = formData.price.replace(/,/g, '');
-            if (!formattedPrice.includes('.')) {
-                formattedPrice += '.00';
-            } else {
-                const [whole, decimal] = formattedPrice.split('.');
-                if (decimal.length === 1) formattedPrice += '0';
-            }
-            
+            const formattedPrice = formData.price.replace(/,/g, '');
             const data = {
                 name: formData.name,
-                price: formattedPrice,
-                details: formData.details
+                price: formattedPrice.includes('.') ? formattedPrice : `${formattedPrice}.00`,
+                details: formData.details,
+                ...(modalType === 'package' && {
+                    image: formData.image,
+                    removeImage: formData.removeImage
+                })
             };
 
             if (isEditing && item) {
-                if (modalType === 'package') {
-                    await updatePackage(item.id, data);
-                } else {
-                    await updateAddon(item.id, data);
-                }
+                await (modalType === 'package' 
+                    ? updatePackage(item.id, data) 
+                    : updateAddon(item.id, data));
             } else {
-                if (modalType === 'package') {
-                    await createPackage(data);
-                } else {
-                    await createAddon(data);
-                }
+                await (modalType === 'package' 
+                    ? createPackage(data) 
+                    : createAddon(data));
             }
 
-            onClose();
             onSuccess();
             handleClose();
-        
+            
         } catch (err) {
             console.error('Submission error:', err);
             
-            if (err instanceof Error) {
-                setSubmitError(err.message);
-            } else {
-                setSubmitError('Failed to submit form');
-            }
+            const errorMessage = err instanceof Error 
+                ? err.message 
+                : 'An unknown error occurred';
+                
+            setSubmitError(errorMessage);
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: errorMessage,
+                confirmButtonColor: '#2BB673',
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -315,10 +376,10 @@ export function ModalComponent({
     useEffect(() => {
         if (submitError) {
             Swal.fire({
-            icon: 'error',
-            text: submitError,
-            background: '#ffebee',
-            color: 'error.main'
+                icon: 'error',
+                text: submitError,
+                background: '#ffebee',
+                color: 'error.main'
             });
         }
     }, [submitError]);
@@ -383,6 +444,63 @@ export function ModalComponent({
                                     helperText={errors.details}
                                 />
                             </Box>
+                            
+                            {modalType === 'package' && (
+                                <Box className="form-group" sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                    <label className="form-label">Package Image</label>
+                                    
+                                    {formData.imagePreview ? (
+                                        <Box sx={{ position: 'relative', width: '100%', mb: 2 }}>
+                                            <img 
+                                                src={formData.imagePreview}
+                                                alt="Package preview"
+                                                style={{ 
+                                                    width: '100%', 
+                                                    height: '200px',
+                                                    objectFit: 'cover', 
+                                                    borderRadius: '4px' 
+                                                }}
+                                            />
+                                            <Button 
+                                                onClick={handleRemoveImage}
+                                                variant="contained"
+                                                color="error"
+                                                size="small"
+                                                sx={{ 
+                                                    position: 'absolute', 
+                                                    top: 8, 
+                                                    right: 8,
+                                                    minWidth: 'auto',
+                                                    padding: '8px',
+                                                    backgroundColor: '#E0E0E0',
+                                                }}
+                                            >
+                                                <Image width={16} height={16} src={icons.closeIcon} alt="remove" />
+                                            </Button>
+                                        </Box>
+                                    ) : (
+                                        <>
+                                            <TextField
+                                                type="file"
+                                                inputProps={{
+                                                    accept: ALLOWED_FILE_TYPES.join(',')
+                                                }}
+                                                onChange={handleImageChange}
+                                                fullWidth
+                                            />
+                                            <Typography variant="caption" color="textSecondary">
+                                                Allowed: JPEG, PNG, GIF, WebP
+                                            </Typography>
+                                        </>
+                                    )}
+                                    
+                                    {isEditing && formData.imagePreview && !formData.image && (
+                                        <Typography variant="caption" color="textSecondary">
+                                            Current image will be kept unless you upload a new one or remove it
+                                        </Typography>
+                                    )}
+                                </Box>
+                            )}
                             
                             <Box className="action-btn" sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', gap: 1 }}>
                                 <Button

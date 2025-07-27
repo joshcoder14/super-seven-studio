@@ -11,7 +11,7 @@ import { PackageContent, PackageWrapper } from './styles';
 import { Box, Typography } from '@mui/material';
 import { fetchPackages, fetchAddons, deletePackage, deleteAddon } from '@/lib/api/fetchPackage';
 import DataTable from './DataTable';
-import { ModalComponent } from '@/components/Modal';
+import { PackageModalComponent } from '@/components/Modal/PackageModal';
 import Swal from 'sweetalert2'; 
 import { useAuth } from '@/context/AuthContext';
 import { CustomTablePagination } from '@/components/TablePagination';
@@ -400,7 +400,7 @@ export function PackageHome(): React.JSX.Element {
             )}
 
             {isModalOpen && (
-                <ModalComponent 
+                <PackageModalComponent 
                     open={isModalOpen}
                     onClose={handleCloseModal}
                     modalType={modalType}

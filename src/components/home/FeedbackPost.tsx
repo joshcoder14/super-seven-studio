@@ -5,41 +5,31 @@ import { FeedbackPostWrapper, Heading, FeedbackContent, FeedbackList, PostCard }
 import { Typography, Box, CircularProgress } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuoteRight } from '@fortawesome/free-solid-svg-icons';
-import { fetchFeedbacks } from '@/lib/api/fetchFeedback';
-import { MappedFeedbackItem } from '@/types/feedback';
-import Preloader from '../Preloader';
+import { fetchPostedFeedbacks } from '@/lib/api/fetchFeedback';
+import { PostedFeedback } from '@/types/feedback';
 import { useLoading } from '@/context/LoadingContext';
 
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination, Autoplay, EffectFade } from 'swiper/modules';
+import { Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/autoplay';
 import 'swiper/css/effect-fade';
+import { useAuth } from '@/context/AuthContext';
 
 export function FeedbackPost() {
     const { showLoader, hideLoader } = useLoading();
     const [isInitialLoad, setIsInitialLoad] = useState(true);
-    const [postedFeedbacks, setPostedFeedbacks] = useState<MappedFeedbackItem[]>([]);
+    const [postedFeedbacks, setPostedFeedbacks] = useState<PostedFeedback[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const { isLoggingOut } = useAuth();
 
     useEffect(() => {
         const loadFeedbacks = async () => {
             showLoader();
             try {
-                const response = await fetchFeedbacks();
-                // Transform the API response to match MappedFeedbackItem
-                const feedbacks = response.data.map((item: any) => ({
-                    id: item.id.toString(),
-                    event_name: item.event_name,
-                    customer_name: item.customer_name || 'Anonymous',
-                    booking_date: item.booking_date,
-                    feedback_date: item.feedback_date,
-                    feedback_status: item.feedback_status,
-                    feedback_detail: item.feedback_detail
-                }));
-                
+                const feedbacks = await fetchPostedFeedbacks(isLoggingOut);
                 setPostedFeedbacks(feedbacks);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to load feedbacks');
@@ -56,7 +46,6 @@ export function FeedbackPost() {
 
         return () => clearTimeout(timer);
     }, [showLoader, hideLoader]);
-
     if (isInitialLoad) {
         return (
             <FeedbackPostWrapper>
@@ -93,7 +82,9 @@ export function FeedbackPost() {
                                 delay: 5000,
                                 disableOnInteraction: false,
                             }}
-                            pagination={true}
+                            pagination={{
+                                clickable: true,
+                            }}
                             breakpoints={{
                                 320: {
                                     slidesPerView: 1,

@@ -197,3 +197,71 @@ export async function markAsUnposted(feedbackId: number): Promise<void> {
 
     return response.json();
 }
+
+export async function fetchPostedFeedbacks(
+    isLoggingOut: boolean
+): Promise<PostedFeedback[]> {
+    try {
+        const accessToken = localStorage.getItem('access_token');
+        if (!accessToken) {
+            throw new Error('Unauthenticated');
+        }
+
+        const headers = new Headers({
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+        });
+
+        const response = await fetch('/api/dashboard/feedbacks', {
+            method: 'GET',
+            headers,
+            credentials: 'include'
+        });
+
+        if (response.status === 401) {
+            throw new Error('Unauthenticated');
+        }
+
+        const responseData = await response.json();
+
+        if (!response.ok) {
+            if(!isLoggingOut) {
+                throw new Error(`Failed to fetch add-ons: ${response.status} ${response.statusText}`);
+            }
+        }
+
+        if (!Array.isArray(responseData.data)) {
+            throw new Error('Invalid data format');
+        }
+
+        return responseData.data.map((item: any) => ({
+            id: item.id,
+            event_name: item.event_name,
+            customer_name: item.customer_name,
+            booking_date: item.booking_date,
+            ceremony_time: item.ceremony_time,
+            package_name: item.package_name,
+            add_ons: item.add_ons || [],
+            feedback_date: item.feedback_date,
+            feedback_status: item.feedback_status,
+            feedback_detail: item.feedback_detail
+        }));
+
+    } catch (error) {
+        console.error('Error fetching posted feedbacks:', error);
+        
+        if (error instanceof Error && error.message === 'Unauthenticated') {
+            window.location.href = `${paths.login}?redirect=${encodeURIComponent(window.location.pathname)}`;
+            return [];
+        }
+
+        await Swal.fire({
+            title: 'Error!',
+            text: error instanceof Error ? error.message : 'An error occurred',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+
+        return [];
+    }
+}

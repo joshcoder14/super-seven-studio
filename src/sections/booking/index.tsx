@@ -1002,6 +1002,7 @@ export function BookingComponent(): React.JSX.Element {
       {showAddBooking && (
         <AddBookingComponent 
           onCancel={handleCancelBooking}
+          packageId={searchParams.get('package')}
         />
       )}
     </BookingContainer>

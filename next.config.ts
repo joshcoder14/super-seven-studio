@@ -1,8 +1,11 @@
 const nextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  images: {
+    domains: ['localhost'],
+  },
   eslint: {
-    ignoreDuringBuilds: true,  // Disables ESLint during builds
+    ignoreDuringBuilds: true,
   },
   async rewrites() {
     return [
