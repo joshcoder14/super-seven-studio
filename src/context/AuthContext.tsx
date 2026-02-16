@@ -5,7 +5,7 @@ import { User, AuthResponse, UserRole } from '@/types/user'
 import { fetchCurrentUser } from '@/lib/api/fetchUser'
 
 const isUserRole = (role: string | undefined): role is UserRole => {
-  return role ? ['Owner', 'Secretary', 'Editor', 'Photographer', 'Client'].includes(role) : false
+  return role ? ['Owner', 'Secretary', 'Editor', 'Photographer', 'Client', 'Coordinator'].includes(role) : false
 }
 
 interface AuthContextType {
@@ -198,6 +198,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           allowed => path === allowed || path.startsWith(`${allowed}/`)
         );
       case 'Client':
+        return ['/', '/booking', '/package', '/billing', '/settings'].some(
+          allowed => path === allowed || path.startsWith(`${allowed}/`)
+        );
+      case 'Coordinator':
         return ['/', '/booking', '/package', '/billing', '/settings'].some(
           allowed => path === allowed || path.startsWith(`${allowed}/`)
         );
