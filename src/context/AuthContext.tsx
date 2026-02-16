@@ -67,7 +67,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       // Force full page reload to clear any residual state
+
       window.location.href = paths.login;
+      setLoading(true);
     } catch (error) {
       console.error('Logout failed:', error);
       // Ensure state is cleared even if backend fails
@@ -76,6 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       window.location.href = paths.login;
     } finally {
       setIsLoggingOut(false);
+      setLoading(false);
     }
   }, [clearAuthCookies]);
 
