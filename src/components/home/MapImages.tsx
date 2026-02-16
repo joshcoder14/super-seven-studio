@@ -58,7 +58,7 @@ export const regularEvents = [
     },
     {
         src: '/assets/adminHome/solo-beach.png',
-        title: 'Harold and Lonie Prenup',
+        title: 'Amot and Lonie Prenup',
         variations: [
             '/assets/adminHome/image21.jpg',
             '/assets/adminHome/image20.jpg',

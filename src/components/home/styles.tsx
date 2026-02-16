@@ -446,8 +446,8 @@ export const BottomImageContent = styled(Box)`
     }
 
     img{
-        width: 100%;
-        height: 100%;
+        // width: 100%;
+        // height: 100%;
         object-fit: cover;
         border-radius: 19px;
     }
