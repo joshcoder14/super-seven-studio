@@ -60,6 +60,13 @@ export default function BillingComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { showLoader, hideLoader } = useLoading();
+  const setLoading = (isLoading: boolean) => {
+    if (isLoading) {
+      showLoader();
+    } else {
+      hideLoader();
+    }
+  };
 
   // State
   const [selectedYearPair, setSelectedYearPair] = useState<YearPair>({
@@ -128,69 +135,85 @@ export default function BillingComponent() {
       setCache({}); // clear cache for new filter
   };    
 
-  // Load billing data from API
     const loadBillingData = useCallback(async () => {
-      const cacheKey = `${selectedYearPair.start}-${selectedYearPair.end}-${filterValue}-${page}-${rowsPerPage}`;
+    try {
+        setLoading(true);
 
-      // Serve cached data if available
-      if (cache[cacheKey]) {
-          setBillingData(cache[cacheKey].data);
-          setTotalCount(cache[cacheKey].total);
-          return;
-      }
+        const firstPageResponse = await fetchBillings({
+            page: 1,
+            perPage: rowsPerPage,
+            start_year: selectedYearPair.start,
+            end_year: selectedYearPair.end,
+        });
 
-      try {
-          setIsTableLoading(true);
-          showLoader();
+        const totalRecords = firstPageResponse.total;
 
-          // Map numeric filter to actual category name for API
-          const apiCategory = filterValue && filterValue !== '' ? categoryMap[filterValue] : '';
+        // Calculate how many pages exist in backend
+        const totalPages = Math.ceil(totalRecords / rowsPerPage);
 
-          const response = await fetchBillings({
-              start_year: selectedYearPair.start,
-              end_year: selectedYearPair.end,
-              category: apiCategory,
-              page: page + 1, // API is 1-based
-              perPage: rowsPerPage
-          });
+        // Store all records here
+        let allData = [...firstPageResponse.data];
 
-            // totals from API
-            if (response.extra) {
-                setTotalBilling(Number(response.extra.total_bill));
-                setTotalBalance(Number(response.extra.total_balance));
+        if (totalPages > 1) {
+            for (let currentPage = 2; currentPage <= totalPages; currentPage++) {
+                const response = await fetchBillings({
+                    page: currentPage,
+                    perPage: rowsPerPage,
+                    start_year: selectedYearPair.start,
+                    end_year: selectedYearPair.end,
+                });
+
+                // Merge results into one array
+                allData = [...allData, ...response.data];
             }
+        }
 
-          // Local fallback: in case API ignores category, filter manually
-          const finalData = apiCategory
-              ? response.data.filter(item => item.category === apiCategory)
-              : response.data;
+        const categoryFiltered = filterValue && filterValue !== ''
+        ? allData.filter(item => item.category === categoryMap[filterValue])
+        : allData;
 
-          setBillingData(finalData);
-          setTotalCount(finalData.length);
-          setError(null);
+        const searchFiltered = searchTerm && searchTerm.trim() !== ''
+        ? categoryFiltered.filter(item =>
+                item.event_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.package?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.status?.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+        : categoryFiltered;
 
-          // Update cache
-          setCache(prev => ({
-              ...prev,
-              [cacheKey]: {
-                  data: finalData,
-                  total: finalData.length
-              }
-          }));
+        const computedTotalBilling = searchFiltered.reduce(
+            (sum, item) => sum + Number(item.total_amount || 0),
+            0
+        );
 
-          // Sync URL query
-          const params = new URLSearchParams();
-          params.set('filter', filterValue);
-          params.set('page', page.toString());
-          router.replace(`/billing?${params.toString()}`, { scroll: false });
+        const computedTotalBalance = searchFiltered.reduce(
+            (sum, item) => sum + Number(item.balance || 0),
+            0
+        );
 
-      } catch (err) {
-          setError(err instanceof Error ? err.message : 'Failed to fetch billing data');
-      } finally {
-          setIsTableLoading(false);
-          hideLoader();
-      }
-  }, [selectedYearPair, filterValue, page, rowsPerPage, cache, showLoader, hideLoader, router]);
+        const startIndex = page * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+
+        const paginatedData = searchFiltered.slice(startIndex, endIndex);
+        
+        setTotalBilling(computedTotalBilling);
+        setTotalBalance(computedTotalBalance);
+        setBillingData(paginatedData);
+        setTotalCount(searchFiltered.length);
+
+    } catch (error) {
+        console.error('Error loading billing data:', error);
+    } finally {
+        setLoading(false);
+    }
+    }, [
+        page,
+        rowsPerPage,
+        selectedYearPair,
+        filterValue,
+        searchTerm
+    ]);
+
 
   // Debounced fetch
   useEffect(() => {

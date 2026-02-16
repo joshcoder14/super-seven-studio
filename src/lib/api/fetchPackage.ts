@@ -35,7 +35,7 @@ export const fetchPackages = async (
     // Get user from localStorage to determine role
     const userString = localStorage.getItem('user');
     const user = userString ? JSON.parse(userString) : null;
-    const isClient = user?.user_role === 'Client';
+  const isClient = ['Client', 'Coordinator'].includes(user?.user_role ?? '');
 
     let url = isClient 
         ? `/api/customer/packages`
@@ -68,7 +68,7 @@ export const fetchAddons = async (
     // Get user from localStorage to determine role
     const userString = localStorage.getItem('user');
     const user = userString ? JSON.parse(userString) : null;
-    const isClient = user?.user_role === 'Client';
+  const isClient = ['Client', 'Coordinator'].includes(user?.user_role ?? '');
 
     let url = isClient 
         ? `/api/customer/addons`

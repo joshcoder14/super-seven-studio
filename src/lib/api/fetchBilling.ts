@@ -22,7 +22,7 @@ export const fetchBillings = async ({
     // Get user from localStorage to determine role
     const userString = localStorage.getItem('user');
     const user = userString ? JSON.parse(userString) : null;
-    const isClient = user?.user_role === 'Client';
+  const isClient = ['Client', 'Coordinator'].includes(user?.user_role ?? '');
 
     const params = new URLSearchParams({
       'search[value]': '',

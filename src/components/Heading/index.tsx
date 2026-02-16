@@ -70,7 +70,7 @@ export function HeadingComponent({
     );
   }
 
-  //Check if path starts with /workload
+  //Check if path starts with /billing
   if (pathname.startsWith(paths.billing)) {
     return (
       <Heading className="heading">

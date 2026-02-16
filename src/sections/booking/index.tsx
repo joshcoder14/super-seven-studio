@@ -80,7 +80,7 @@ export function BookingComponent(): React.JSX.Element {
   });
 
   // Derived values
-  const isClient = user?.user_role === 'Client';
+  const isClient = ['Client', 'Coordinator'].includes(user?.user_role ?? '');
   const canDisableDates = user?.user_role === 'Owner' || user?.user_role === 'Secretary';
   const showAddBooking = searchParams.get('add') === 'true';
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -123,6 +123,8 @@ export function BookingComponent(): React.JSX.Element {
         fetchBookings(month, year),
         fetchUnavailableDateRecords(month, year)
       ]);
+
+      console.log('Fetched bookings:', bookings);
       
       setEvents(bookings);
       setUnavailableDates(unavailable);
@@ -817,109 +819,111 @@ export function BookingComponent(): React.JSX.Element {
                     </Box>
                   </Box>
                 </Box>
-                <Box className={`action-btn ${selectedEvent.booking_status === 'approved' ? 'approved' : ''}`}>
-                  {(() => {
-                    // For non-client users (Owner/Secretary)
-                    if (!isClient) {
-                      return (
-                        <>
-                          {/* Reschedule button - always visible for non-clients */}
-                          <Button 
-                            className="btn reschedule" 
-                            onClick={() => handleAction('reschedule')}
-                            disabled={isTableLoading}
-                          >
-                            Reschedule
-                          </Button>
-                          
-                          {/* Action buttons based on booking status */}
-                          {selectedEvent.booking_status === 'approved' ? (
-                            <>
-                              <Button 
-                                className="btn cancel" 
-                                onClick={() => handleAction('cancel')}
-                                disabled={isTableLoading}
-                              >
-                                Cancel
-                              </Button>
-                              <Button 
-                                className="btn update" 
-                                onClick={() => handleAction('update')}
-                                disabled={isTableLoading}
-                                startIcon={isTableLoading ? <CircularProgress size={16} /> : null}
-                              >
-                                {isTableLoading ? 'Loading...' : 'Update'}
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button 
-                                className="btn reject" 
-                                onClick={() => handleAction('reject')}
-                                disabled={isTableLoading}
-                              >
-                                Reject
-                              </Button>
-                              <Button 
-                                className="btn approve" 
-                                onClick={() => handleAction('approve')}
-                                disabled={isTableLoading}
-                              >
-                                Approve
-                              </Button>
-                            </>
-                          )}
-                        </>
-                      );
-                    }
-                    // For client users
-                      const feedbackDisabled =
-                        selectedEvent.deliverable_status !== 'Completed' ||
-                        selectedEvent.has_feedback;
-
-                      return (
-                        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                          {/* Clients only see these buttons regardless of status */}
-                          {selectedEvent.booking_status === 'approved' ? (
+                {selectedEvent.deliverable_status !== 'Completed' && (                
+                  <Box className={`action-btn ${selectedEvent.booking_status === 'approved' ? 'approved' : ''}`}>
+                    {(() => {
+                      // For non-client users (Owner/Secretary)
+                      if (!isClient) {
+                        return (
+                          <>
+                            {/* Reschedule button - always visible for non-clients */}
                             <Button 
-                              className="btn cancel" 
-                              onClick={() => handleAction('feedback')}
-                              disabled={isTableLoading || feedbackDisabled}
-                              sx={{ 
-                                pointerEvents: feedbackDisabled  ? 'none' : 'auto',
-                                backgroundColor: feedbackDisabled  ? '#cccccc' : '#2BB673 !important', 
-                                color: '#fff',
-                                '&:hover': {
-                                  backgroundColor: feedbackDisabled  ? '#cccccc' : '#155D3A !important',
-                                  color: '#fff',
-                                }
-                              }}
+                              className="btn reschedule" 
+                              onClick={() => handleAction('reschedule')}
+                              disabled={isTableLoading}
                             >
-                              {selectedEvent.has_feedback ? 'Feedback Submitted' : 'Give Feedback'}
+                              Reschedule
                             </Button>
-                          ) : (
-                            <>
+                            
+                            {/* Action buttons based on booking status */}
+                            {selectedEvent.booking_status === 'approved' ? (
+                              <>
+                                <Button 
+                                  className="btn cancel" 
+                                  onClick={() => handleAction('cancel')}
+                                  disabled={isTableLoading}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button 
+                                  className="btn update" 
+                                  onClick={() => handleAction('update')}
+                                  disabled={isTableLoading}
+                                  startIcon={isTableLoading ? <CircularProgress size={16} /> : null}
+                                >
+                                  {isTableLoading ? 'Loading...' : 'Update'}
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button 
+                                  className="btn reject" 
+                                  onClick={() => handleAction('reject')}
+                                  disabled={isTableLoading}
+                                >
+                                  Reject
+                                </Button>
+                                <Button 
+                                  className="btn approve" 
+                                  onClick={() => handleAction('approve')}
+                                  disabled={isTableLoading}
+                                >
+                                  Approve
+                                </Button>
+                              </>
+                            )}
+                          </>
+                        );
+                      }
+                      // For client users
+                        const feedbackDisabled =
+                          selectedEvent.deliverable_status !== 'Completed' ||
+                          selectedEvent.has_feedback;
+
+                        return (
+                          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                            {/* Clients only see these buttons regardless of status */}
+                            {selectedEvent.booking_status === 'approved' ? (
                               <Button 
                                 className="btn cancel" 
-                                onClick={() => handleAction('cancel')}
-                                disabled={isTableLoading}
-                                sx={{ backgroundColor: '#EF3826 !important', color: '#fff' }}
+                                onClick={() => handleAction('feedback')}
+                                disabled={isTableLoading || feedbackDisabled}
+                                sx={{ 
+                                  pointerEvents: feedbackDisabled  ? 'none' : 'auto',
+                                  backgroundColor: feedbackDisabled  ? '#cccccc' : '#2BB673 !important', 
+                                  color: '#fff',
+                                  '&:hover': {
+                                    backgroundColor: feedbackDisabled  ? '#cccccc' : '#155D3A !important',
+                                    color: '#fff',
+                                  }
+                                }}
                               >
-                                Cancel Booking
+                                {selectedEvent.has_feedback ? 'Feedback Submitted' : 'Give Feedback'}
                               </Button>
-                              <Button 
-                                className="btn update" 
-                                onClick={() => handleAction('update')}
-                                disabled={isTableLoading}
-                              >
-                                Update
-                              </Button>
-                            </>
-                          )}
-                        </Box>
-                      );
-                  })()}
-                </Box>
+                            ) : (
+                              <>
+                                <Button 
+                                  className="btn cancel" 
+                                  onClick={() => handleAction('cancel')}
+                                  disabled={isTableLoading}
+                                  sx={{ backgroundColor: '#EF3826 !important', color: '#fff' }}
+                                >
+                                  Cancel Booking
+                                </Button>
+                                <Button 
+                                  className="btn update" 
+                                  onClick={() => handleAction('update')}
+                                  disabled={isTableLoading}
+                                >
+                                  Update
+                                </Button>
+                              </>
+                            )}
+                          </Box>
+                        );
+                    })()}
+                  </Box>
+                )}
               </>
             )}
           </Details>

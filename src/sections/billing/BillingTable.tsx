@@ -24,7 +24,7 @@ interface BillingTableProps {
 
 export default function BillingTable({ billingData, onView, isLoading }: BillingTableProps) {
     const { user } = useAuth();
-    const isClient = user?.user_role === 'Client';
+  const isClient = ['Client', 'Coordinator'].includes(user?.user_role ?? '');
 
     const tableHeader = [
         'ID',

@@ -43,7 +43,7 @@ export function PackageHome(): React.JSX.Element {
     const [cache, setCache] = useState<Record<string, { data: any[], total: number }>>({});
 
     const { user, isLoggingOut } = useAuth();
-    const isClient = user?.user_role === 'Client';
+    const isClient = ['Client', 'Coordinator'].includes(user?.user_role ?? '');
 
     const fetchData = useCallback(async () => {
         const cacheKey = `${activeTab}-${searchTerm}-${
