@@ -20,9 +20,10 @@ interface AccountTableProps {
   hasSearchTerm: boolean;
   onEditClick: (account: User) => void;
   loading: boolean;
+  currentFilter: string;
 }
 
-export function AccountTable({ rows, editIcon, hasSearchTerm, onEditClick, loading }: AccountTableProps) {
+export function AccountTable({ rows, editIcon, hasSearchTerm, onEditClick, loading, currentFilter }: AccountTableProps) {
 
   const tableHeader = [
     'ID',
@@ -31,7 +32,7 @@ export function AccountTable({ rows, editIcon, hasSearchTerm, onEditClick, loadi
     'CONTACT NUMBER',
     'ADDRESS',
     'STATUS',
-    'ACTION'
+    ...(currentFilter !== '1' ? ['ACTION'] : [])
   ];
 
   // Function to handle null/undefined fields
@@ -97,11 +98,13 @@ export function AccountTable({ rows, editIcon, hasSearchTerm, onEditClick, loadi
                     {row.status === '1' ? 'Active' : 'Inactive'}
                   </Typography>
                 </TableCell>
-                <TableCell align="left">
-                  <IconButton onClick={() => onEditClick(row)}>
-                    <img src={editIcon} className="edit-icon" alt="edit" />
-                  </IconButton>
-                </TableCell>
+                {currentFilter !== '1' && (
+                  <TableCell align="left">
+                    <IconButton onClick={() => onEditClick(row)}>
+                      <img src={editIcon} className="edit-icon" alt="edit" />
+                    </IconButton>
+                  </TableCell>
+                )}
               </TableRow>
             ))
           )}
