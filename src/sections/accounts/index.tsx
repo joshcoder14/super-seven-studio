@@ -243,6 +243,7 @@ export function AccountComponent(): React.JSX.Element {
           hasSearchTerm={searchTerm.length >= 2}
           onEditClick={handleEditClick}
           loading={isTableLoading}
+          currentFilter={filterValue}
         />
         
         <CustomTablePagination
