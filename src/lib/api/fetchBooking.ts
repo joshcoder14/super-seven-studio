@@ -106,6 +106,7 @@ export const fetchBookings = async (month: number, year: number): Promise<Bookin
 
     return {
       id: booking.id,
+      billing_id: booking.billing_id,
       start: startDate,
       end: endDate,
       booking_date: bookingDate,
@@ -451,8 +452,11 @@ export const submitBooking = async (
     const user = userString ? JSON.parse(userString) : null;
     const isClient = user?.user_role === 'Client';
 
-    const selectedPkg = packages.find(pkg => pkg.packageName === selectedPackage);
+    const selectedPkg = packages.find(
+      pkg => pkg.id.toString() === selectedPackage
+    );
     if (!selectedPkg) throw new Error('Please select a valid package');
+    if (!formData.categoryType) throw new Error('Event category is required');
 
     const form = new FormData();
 
@@ -468,6 +472,7 @@ export const submitBooking = async (
     form.append('formatted_booking_date', formData.formattedBookingDate || '');
     form.append('ceremony_time', formData.ceremonyTime.format('HH:mm'));
     form.append('event_name', formData.eventName);
+    form.append('category', formData.categoryType);
     form.append('booking_address', formData.bookingAddress);
     form.append('package_id', String(selectedPkg.id));
 

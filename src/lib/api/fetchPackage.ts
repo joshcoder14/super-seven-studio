@@ -38,7 +38,7 @@ export const fetchPackages = async (
     const isClient = user?.user_role === 'Client';
 
     let url = isClient 
-        ? '/api/customer/packages'
+        ? `/api/customer/packages`
         : `/api/packages?search[value]=${encodeURIComponent(searchTerm)}&page=${page}&per_page=${perPage}`;
 
     const response = await fetch(url, {
@@ -71,7 +71,7 @@ export const fetchAddons = async (
     const isClient = user?.user_role === 'Client';
 
     let url = isClient 
-        ? '/api/customer/addons'
+        ? `/api/customer/addons`
         : `/api/addons?search[value]=${encodeURIComponent(searchTerm)}&page=${page}&per_page=${perPage}`;
 
     const response = await fetch(url, {
