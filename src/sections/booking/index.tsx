@@ -86,6 +86,12 @@ export function BookingComponent(): React.JSX.Element {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isTableLoading, setIsTableLoading] = useState(false);
 
+
+  // Event handlers : redirect helper (same pattern as BillingComponent)
+  const handleViewBilling = useCallback((billingId: number) => {
+    router.push(`/billing/${billingId}`);
+  }, [router]);
+
   // Cache states
   const [cache, setCache] = useState<{
     bookings: Record<string, BookingEvent[]>;
@@ -310,6 +316,21 @@ export function BookingComponent(): React.JSX.Element {
   const handleAction = async (action: 'reschedule' | 'reject' | 'approve' | 'update' | 'cancel' | 'feedback') => {
     if (!selectedEvent) return;
 
+    if (action === 'approve') {
+      if (!selectedEvent.billing_id) {
+        Swal.fire(
+          'Missing Billing',
+          'No billing record is linked to this booking.',
+          'error'
+        );
+        return;
+      }
+
+      handleViewBilling(selectedEvent.billing_id);
+      setSelectedEvent(null);
+      return;
+    }
+
     if (action === 'reschedule') {
       setShowRescheduleForm(true);
       setRescheduleDate(dayjs(selectedEvent.start));
@@ -337,15 +358,6 @@ export function BookingComponent(): React.JSX.Element {
     );
 
     let confirmationMessage = '';
-    if (action === 'approve') {
-      if (otherPendingBookings.length > 0) {
-        confirmationMessage = "This will automatically reject other pending bookings for the same date.";
-      } else {
-        confirmationMessage = "Approving this booking will finalize the schedule.";
-      }
-    } else {
-      confirmationMessage = `This action cannot be undone.`;
-    }
 
     const confirmation = await Swal.fire({
       title: `Are you sure you want to ${action} this booking?`,
@@ -368,35 +380,6 @@ export function BookingComponent(): React.JSX.Element {
     setIsTableLoading(true);
     try {
       switch(action) {
-        case 'approve':
-          await approveBooking(selectedEvent.id);
-
-          const otherPendingBookings = events.filter(event => 
-            event.id !== selectedEvent.id &&
-            event.booking_status === 'pending' &&
-            normalizeToPHDate(new Date(event.start)).getTime() === normalizeToPHDate(selectedEvent.start).getTime()
-          );
-
-          await Promise.all(otherPendingBookings.map(booking => 
-            rejectBooking(booking.id)
-          ));
-
-          setEvents(prevEvents => 
-            prevEvents.map(event => {
-              if (event.id === selectedEvent.id) {
-                return { ...event, status: 'approved' };
-              }
-              if (otherPendingBookings.some(b => b.id === event.id)) {
-                return { ...event, status: 'unavailable' };
-              }
-              return event;
-            })
-          );
-
-          await fetchData();
-          Swal.fire('Approved!', 'The booking has been approved.', 'success');
-          break;
-
         case 'reject':
           await rejectBooking(selectedEvent.id);
           setEvents(prevEvents => 
@@ -834,111 +817,109 @@ export function BookingComponent(): React.JSX.Element {
                     </Box>
                   </Box>
                 </Box>
-                {selectedEvent.deliverable_status !== 'Completed' && (
-                  <Box className={`action-btn ${selectedEvent.booking_status === 'approved' ? 'approved' : ''}`}>
-                    {(() => {
-                      // For non-client users (Owner/Secretary)
-                      if (!isClient) {
-                        return (
-                          <>
-                            {/* Reschedule button - always visible for non-clients */}
-                            <Button 
-                              className="btn reschedule" 
-                              onClick={() => handleAction('reschedule')}
-                              disabled={isTableLoading}
-                            >
-                              Reschedule
-                            </Button>
-                            
-                            {/* Action buttons based on booking status */}
-                            {selectedEvent.booking_status === 'approved' ? (
-                              <>
-                                <Button 
-                                  className="btn cancel" 
-                                  onClick={() => handleAction('cancel')}
-                                  disabled={isTableLoading}
-                                >
-                                  Cancel
-                                </Button>
-                                <Button 
-                                  className="btn update" 
-                                  onClick={() => handleAction('update')}
-                                  disabled={isTableLoading}
-                                  startIcon={isTableLoading ? <CircularProgress size={16} /> : null}
-                                >
-                                  {isTableLoading ? 'Loading...' : 'Update'}
-                                </Button>
-                              </>
-                            ) : (
-                              <>
-                                <Button 
-                                  className="btn reject" 
-                                  onClick={() => handleAction('reject')}
-                                  disabled={isTableLoading}
-                                >
-                                  Reject
-                                </Button>
-                                <Button 
-                                  className="btn approve" 
-                                  onClick={() => handleAction('approve')}
-                                  disabled={isTableLoading}
-                                >
-                                  Approve
-                                </Button>
-                              </>
-                            )}
-                          </>
-                        );
-                      }
-                      // For client users
-                      else {
-                        const isDisabled = selectedEvent.deliverable_status !== 'Completed' || selectedEvent.has_feedback;
-
-                        return (
-                          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                            {/* Clients only see these buttons regardless of status */}
-                            {selectedEvent.booking_status === 'approved' ? (
+                <Box className={`action-btn ${selectedEvent.booking_status === 'approved' ? 'approved' : ''}`}>
+                  {(() => {
+                    // For non-client users (Owner/Secretary)
+                    if (!isClient) {
+                      return (
+                        <>
+                          {/* Reschedule button - always visible for non-clients */}
+                          <Button 
+                            className="btn reschedule" 
+                            onClick={() => handleAction('reschedule')}
+                            disabled={isTableLoading}
+                          >
+                            Reschedule
+                          </Button>
+                          
+                          {/* Action buttons based on booking status */}
+                          {selectedEvent.booking_status === 'approved' ? (
+                            <>
                               <Button 
                                 className="btn cancel" 
-                                onClick={() => handleAction('feedback')}
-                                disabled={isTableLoading || isDisabled}
-                                sx={{ 
-                                  pointerEvents: isDisabled  ? 'none' : 'auto',
-                                  backgroundColor: isDisabled  ? '#cccccc' : '#2BB673 !important', 
-                                  color: '#fff',
-                                  '&:hover': {
-                                    backgroundColor: isDisabled  ? '#cccccc' : '#155D3A !important',
-                                    color: '#fff',
-                                  }
-                                }}
+                                onClick={() => handleAction('cancel')}
+                                disabled={isTableLoading}
                               >
-                                {selectedEvent.has_feedback ? 'Feedback Submitted' : 'Give Feedback'}
+                                Cancel
                               </Button>
-                            ) : (
-                              <>
-                                <Button 
-                                  className="btn cancel" 
-                                  onClick={() => handleAction('cancel')}
-                                  disabled={isTableLoading}
-                                  sx={{ backgroundColor: '#EF3826 !important', color: '#fff' }}
-                                >
-                                  Cancel Booking
-                                </Button>
-                                <Button 
-                                  className="btn update" 
-                                  onClick={() => handleAction('update')}
-                                  disabled={isTableLoading}
-                                >
-                                  Update
-                                </Button>
-                              </>
-                            )}
-                          </Box>
-                        );
-                      }
-                    })()}
-                  </Box>
-                )}
+                              <Button 
+                                className="btn update" 
+                                onClick={() => handleAction('update')}
+                                disabled={isTableLoading}
+                                startIcon={isTableLoading ? <CircularProgress size={16} /> : null}
+                              >
+                                {isTableLoading ? 'Loading...' : 'Update'}
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button 
+                                className="btn reject" 
+                                onClick={() => handleAction('reject')}
+                                disabled={isTableLoading}
+                              >
+                                Reject
+                              </Button>
+                              <Button 
+                                className="btn approve" 
+                                onClick={() => handleAction('approve')}
+                                disabled={isTableLoading}
+                              >
+                                Approve
+                              </Button>
+                            </>
+                          )}
+                        </>
+                      );
+                    }
+                    // For client users
+                      const feedbackDisabled =
+                        selectedEvent.deliverable_status !== 'Completed' ||
+                        selectedEvent.has_feedback;
+
+                      return (
+                        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                          {/* Clients only see these buttons regardless of status */}
+                          {selectedEvent.booking_status === 'approved' ? (
+                            <Button 
+                              className="btn cancel" 
+                              onClick={() => handleAction('feedback')}
+                              disabled={isTableLoading || feedbackDisabled}
+                              sx={{ 
+                                pointerEvents: feedbackDisabled  ? 'none' : 'auto',
+                                backgroundColor: feedbackDisabled  ? '#cccccc' : '#2BB673 !important', 
+                                color: '#fff',
+                                '&:hover': {
+                                  backgroundColor: feedbackDisabled  ? '#cccccc' : '#155D3A !important',
+                                  color: '#fff',
+                                }
+                              }}
+                            >
+                              {selectedEvent.has_feedback ? 'Feedback Submitted' : 'Give Feedback'}
+                            </Button>
+                          ) : (
+                            <>
+                              <Button 
+                                className="btn cancel" 
+                                onClick={() => handleAction('cancel')}
+                                disabled={isTableLoading}
+                                sx={{ backgroundColor: '#EF3826 !important', color: '#fff' }}
+                              >
+                                Cancel Booking
+                              </Button>
+                              <Button 
+                                className="btn update" 
+                                onClick={() => handleAction('update')}
+                                disabled={isTableLoading}
+                              >
+                                Update
+                              </Button>
+                            </>
+                          )}
+                        </Box>
+                      );
+                  })()}
+                </Box>
               </>
             )}
           </Details>
@@ -960,7 +941,7 @@ export function BookingComponent(): React.JSX.Element {
               setEvents(prevEvents => 
                 prevEvents.map(event => 
                   event.id === feedbackBooking.id 
-                    ? { ...event, feedback_submitted: true } 
+                    ? { ...event, has_feedback: true } 
                     : event
                 )
               );
@@ -968,7 +949,7 @@ export function BookingComponent(): React.JSX.Element {
               // Also update the selectedEvent if it's currently open
               setSelectedEvent(prev => 
                 prev && prev.id === feedbackBooking.id 
-                  ? { ...prev, feedback_submitted: true } 
+                  ? { ...prev, has_feedback: true } 
                   : prev
               );
 
@@ -980,7 +961,7 @@ export function BookingComponent(): React.JSX.Element {
                   container: 'swal-z-index'
                 }
               });
-              window.location.reload();
+              // window.location.reload();
               setShowFeedbackModal(false);
             } catch (err) {
               Swal.fire({
