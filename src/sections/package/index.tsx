@@ -287,6 +287,15 @@ export function PackageHome(): React.JSX.Element {
         return activeTab === 'package' ? packageData : addonsData;
     }, [activeTab, packageData, addonsData]);
 
+    const filteredClientData = useMemo(() => {
+        if (!isClient) return currentData;
+
+            return currentData.filter((item) => {
+                const name = activeTab === 'package' ? item.package_name : item.add_on_name;
+                return name.toLowerCase().includes(searchTerm.toLowerCase());
+        });
+    }, [currentData, searchTerm, activeTab, isClient]);
+
     return (
         <HomeContainer>
             <HeadingComponent />
@@ -312,6 +321,14 @@ export function PackageHome(): React.JSX.Element {
                             {activeTab === 'package' ? 'Add Package' : 'Add Add-on'}
                         </AddAccount>
                     )}
+                    
+
+                    {isClient && (
+                        <SearchBox 
+                            searchTerm={searchTerm}
+                            onSearchChange={handleSearchChange}
+                        />
+                    )}
                 </ActionButton>
                 
                 {!isClient && (
@@ -320,6 +337,8 @@ export function PackageHome(): React.JSX.Element {
                         onSearchChange={handleSearchChange}
                     />
                 )}
+
+                
             </PackageContent>
             
             {!isClient ? (
@@ -371,14 +390,14 @@ export function PackageHome(): React.JSX.Element {
                         <Box display="flex" justifyContent="center" alignItems="center" height={200}>
                             <Typography color="error">Error: {error}</Typography>
                         </Box>
-                    ) : currentData.length === 0 ? (
+                    ) : filteredClientData.length === 0 ? (
                         <Box display="flex" justifyContent="center" alignItems="center" height={200}>
                             <Typography variant="body1">
                                 No {activeTab === 'package' ? 'packages' : 'add-ons'} available
                             </Typography>
                         </Box>
                     ) : (
-                        currentData.map((item) => {
+                        filteredClientData.map((item) => {
                             const isPackage = activeTab === 'package';
                             return (
                                 <PackageCardComponent 
